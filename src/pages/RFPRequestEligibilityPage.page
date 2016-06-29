@@ -1,0 +1,363 @@
+<apex:page id="pgId" standardController="Case"  extensions="RFPRequestEligibilityExtension" showHeader="false" sidebar="false">
+    <apex:form id="frmId">
+        <apex:pageMessages id="pgMsgId"/>
+        <head>
+            <style>
+                .row{
+                    margin-right:0px !important;
+                    margin-left:0px !important;
+                }
+                .pbBody{
+                    background-color: white !important;
+                }
+                select{
+                    width:190px !important;
+                }
+            </style>
+            
+            <script>
+                function autoPopulateValue(){
+                    var totalPayrollValue = (document.getElementById('pgId:frmId:pbId:pbsId:payRollId').value != '' ? document.getElementById('pgId:frmId:pbId:pbsId:payRollId').value :0 );
+                    var cobraValue = (document.getElementById('pgId:frmId:pbId:pbsId:cobraId').value != '' ? document.getElementById('pgId:frmId:pbId:pbsId:cobraId').value :0 );
+                    var retireesValue = (document.getElementById('pgId:frmId:pbId:pbsId:RetireesId').value != '' ? document.getElementById('pgId:frmId:pbId:pbsId:RetireesId').value : 0);
+                    var partTimeValue = (document.getElementById('pgId:frmId:pbId:pbsId:PartTimeId').value != '' ? document.getElementById('pgId:frmId:pbId:pbsId:PartTimeId').value : 0);
+                    var waitingPeriodValue = (document.getElementById('pgId:frmId:pbId:pbsId:WaitingPeriodId').value != '' ? document.getElementById('pgId:frmId:pbId:pbsId:WaitingPeriodId').value : 0);
+                    var coveredElseWhereValue = (document.getElementById('pgId:frmId:pbId:pbsId:coveredElseWhereId').value != '' ?document.getElementById('pgId:frmId:pbId:pbsId:coveredElseWhereId').value : 0);
+                    var waivingCoveredElseWhereId = (document.getElementById('pgId:frmId:pbId:pbsId:WaivingCoveredElseWhereId').value != '' ? document.getElementById('pgId:frmId:pbId:pbsId:WaivingCoveredElseWhereId').value : 0);
+                    
+                    var TotalEligibleHealth = parseInt(totalPayrollValue) +  parseInt(cobraValue) + parseInt( retireesValue) - parseInt(partTimeValue) - parseInt(waitingPeriodValue);
+                    //if( parseInt(TotalEligibleHealth) <0)
+                        //TotalEligibleHealth = 0;
+                    if({!medicalRecordType})
+                    	document.getElementById('pgId:frmId:pbId:pbsId:EligibleHealthId').innerHTML = parseInt(TotalEligibleHealth);
+                    else 
+                    	document.getElementById('pgId:frmId:pbId:pbsId:EligibleDentalId').innerHTML = parseInt(TotalEligibleHealth);
+                    var coveredElseWhereValue = (document.getElementById('pgId:frmId:pbId:pbsId:coveredElseWhereId').value != '' ? document.getElementById('pgId:frmId:pbId:pbsId:coveredElseWhereId').value :0 );
+                    
+                    var TotalEligible = parseInt(TotalEligibleHealth) - parseInt(coveredElseWhereValue);
+                    //if(parseInt(TotalEligible) < 0)
+                        //TotalEligible = 0;
+                    document.getElementById('pgId:frmId:pbId:pbsId:TotalEligibleId').innerHTML = parseInt(TotalEligible);
+                    
+                    var waivingNotCovered = (document.getElementById('pgId:frmId:pbId:pbsId:WaivingCoveredElseWhereId').value != '' ? document.getElementById('pgId:frmId:pbId:pbsId:WaivingCoveredElseWhereId').value :0 );
+                    
+                    var TotalCovered = parseInt(TotalEligible) - parseInt(waivingNotCovered);
+                    
+                    //if(parseInt(TotalCovered) < 0)
+                        //TotalCovered = 0;
+                    document.getElementById('pgId:frmId:pbId:pbsId:TotalCoveredId').innerHTML = parseInt(TotalCovered);
+                    
+                    var percentEligible = TotalCovered / TotalEligible * 100;
+                    document.getElementById("pgId:frmId:pbId:pbsId:percentEnrolled").innerHTML = parseInt(percentEligible)+'%';
+                }
+                function checkForRiskPopup(){
+                	if({!medicalRecordType}){
+	                    var value1 = document.getElementById('pgId:frmId:pbId:pbs1Id:claimExceededPast').value;
+	                    var value2 = document.getElementById('pgId:frmId:pbId:pbs1Id:claimExceededFuture').value;
+	                    var value3 = document.getElementById('pgId:frmId:pbId:pbs1Id:participantDisabled').value;
+	                    var value4 = document.getElementById('pgId:frmId:pbId:pbs1Id:participantsDiagonsed').value;
+	                    
+
+	                    if(value1 == "Yes" || value2 == "Yes" || value3 == "Yes" || value4 == "Yes" ){
+	                        alert('{!$Label.UW_Risk_Popup}');
+	                    }
+	                }
+
+                    saveRecord();
+                }
+            </script>
+        </head>
+        
+        <body>
+            <Apex:pageBlock id="pbId" >
+                <apex:pageMessages id="pgMsgId"/>
+                <Apex:pageBlockButtons location="bottom" rendered="{!showEditMode}"> 
+                    <apex:actionStatus id="ButtonStatus1">
+                     <apex:facet name="stop">
+                        <apex:outputPanel >
+                           <apex:commandButton value="Save" onclick="checkForRiskPopup();"  rerender="pbId" />
+                           <apex:commandButton value="Cancel" action="{!CancelRecord}" status="ButtonStatus1" rerender="pbId"/>
+                        </apex:outputPanel>
+                     </apex:facet>
+                     <apex:facet name="start">
+                        <apex:outputPanel >
+                           <apex:commandButton value="Processing..." disabled="true" />
+                           <apex:commandButton value="Processing..." disabled="true" />
+                        </apex:outputPanel>
+                     </apex:facet>
+                  </apex:actionStatus>
+                </Apex:pageBlockButtons>
+                <Apex:actionfunction name="saveRecord" status="ButtonStatus1" action="{!saveRecord}" rerender="pbId"/>
+                <Apex:pageBlockSection id="pbsId" columns="2" title="{!pageBlockTitle}">
+                        
+                        <Apex:outputPanel >
+                            <apex:outputPanel style="width:100%;float: left;  margin-bottom: 10px; text-align: center;" layout="block">
+                                <div style="width:50%;text-align:right;float:left;">
+                                    <Apex:outputLabel value="{!$ObjectType.Case.fields.Total_on_Payroll__c.label}"/>
+                                </div>
+                                <div style="width:40%;float:left;text-align:left;margin-left: 20px;">
+                                    <apex:inputField rendered="{!showEditMode}"   onkeyUp="autoPopulateValue();" id="payRollId" style="  " value="{!caseObj.Total_on_Payroll__c}"/>
+                                    <Apex:outputField value="{!caseObj.Total_on_Payroll__c}" rendered="{!!showEditMode}"/>
+                                </div>
+                            </apex:outputPanel>
+                            <apex:outputPanel style="width:100%;float: left;  margin-bottom: 10px;text-align: center;" layout="block">
+                                <div style="width:50%;text-align:right;float:left;">
+                                    <Apex:outputLabel value="+ {!$ObjectType.Case.fields.COBRA__c.label}"/>
+                                </div>
+                                <div style="width:40%;text-align:left;float: left;margin-left: 20px;">
+                                    <apex:inputField rendered="{!showEditMode}"  onkeyUp="autoPopulateValue();" id="cobraId" style="" value="{!caseObj.COBRA__c}"/>
+                                    <Apex:outputField value="{!caseObj.COBRA__c}" rendered="{!!showEditMode}"/>
+                                </div>
+                            </apex:outputPanel>
+                            <apex:outputPanel style="width:100%;float: left;  margin-bottom: 10px;text-align: center;" layout="block">
+                                <div style="width:50%;text-align:right;float:left;">
+                                    <Apex:outputLabel value="+ {!$ObjectType.Case.fields.Retirees__c.label}"/>
+                                </div>
+                                <div style="width:40%;text-align:left;float: left;margin-left: 20px;">
+                                    <apex:inputField rendered="{!showEditMode}"  onkeyUp="autoPopulateValue();" id="RetireesId" style="  " value="{!caseObj.Retirees__c}"/>
+                                    <Apex:outputField value="{!caseObj.Retirees__c}" rendered="{!!showEditMode}"/>
+                                </div>
+                            </apex:outputPanel>
+                            <apex:outputPanel style="width:100%;float: left;  margin-bottom: 10px;text-align: center;" layout="block">
+                                <div style="width:50%;text-align:right;float:left;">
+                                    <Apex:outputLabel value="- {!$ObjectType.Case.fields.Part_Time__c.label}"/>
+                                </div>
+                                <div style="width:40%;text-align:left;float: left;margin-left: 20px;">
+                                    <apex:inputField rendered="{!showEditMode}"  onkeyUp="autoPopulateValue();" id="PartTimeId" style="  " value="{!caseObj.Part_Time__c}"/>
+                                    <Apex:outputField value="{!caseObj.Part_Time__c}" rendered="{!!showEditMode}"/>
+                                </div>
+                            </apex:outputPanel>
+                            <apex:outputPanel style="width:100%;float: left;  margin-bottom: 10px;text-align: center;" layout="block">
+                                <div style="width:50%;text-align:right;float:left;">
+                                    <Apex:outputLabel value="- {!$ObjectType.Case.fields.Waiting_Period__c.label}"/>
+                                </div>
+                                <div style="width:40%;text-align:left;float: left;margin-left: 20px;">
+                                    <apex:inputField rendered="{!showEditMode}"  onkeyUp="autoPopulateValue();" id="WaitingPeriodId" style="  " value="{!caseObj.Waiting_Period__c}"/>
+                                    <Apex:outputField value="{!caseObj.Waiting_Period__c}" rendered="{!!showEditMode}"/>
+                                </div>
+                            </apex:outputPanel>
+                            <apex:outputPanel rendered="{!medicalRecordType}" style="width:100%;float: left;padding-top: 5px;  padding-bottom: 5px;font-weight: bold;  margin-bottom: 10px;text-align: center;" layout="block">
+                                <div style="width:50%;text-align:right;float:left;">
+                                    <Apex:outputLabel value="= {!$ObjectType.Case.fields.Total_Eligible_for_Health__c.label}"/>
+                                </div>
+                                <div style="width:40%;text-align:left;float: left;margin-left: 20px;">
+                                    <apex:outputField id="EligibleHealthId"  style=" " value="{!caseObj.Total_Eligible_for_Health__c}"/>
+                                </div>
+                            </apex:outputPanel>
+                            <apex:outputPanel rendered="{!!medicalRecordType}" style="width:100%;float: left;padding-top: 5px;  padding-bottom: 5px;font-weight: bold;  margin-bottom: 10px;text-align: center;" layout="block">
+                                <div style="width:50%;text-align:right;float:left;">
+                                    <Apex:outputLabel value="= {!$ObjectType.Case.fields.Total_Eligible_for_Dental__c.label}"/>
+                                </div>
+                                <div style="width:40%;text-align:left;float: left;margin-left: 20px;">
+                                    <apex:outputField id="EligibleDentalId"  style=" " value="{!caseObj.Total_Eligible_for_Dental__c}"/>
+                                </div>
+                            </apex:outputPanel>
+                            <apex:outputPanel style="width:100%;float: left;  margin-bottom: 10px;text-align: center;" layout="block">
+                                <div style="width:50%;text-align:right;float:left;">
+                                    <Apex:outputLabel value="- {!$ObjectType.Case.fields.Covered_ElseWhere__c.label}"/>
+                                </div>
+                                <div style="width:40%;text-align:left;float: left;margin-left: 20px;">
+                                    <apex:inputField rendered="{!showEditMode}"  onkeyUp="autoPopulateValue();" id="coveredElseWhereId" style=" " value="{!caseObj.Covered_ElseWhere__c}"/>
+                                    <Apex:outputField value="{!caseObj.Covered_ElseWhere__c}" rendered="{!!showEditMode}"/>
+                                </div>
+                            </apex:outputPanel>
+                            <apex:outputPanel style="width:100%;padding-top: 5px;  padding-bottom: 5px;float: left;font-weight: bold;  margin-bottom: 10px;text-align: center;" layout="block">
+                                <div style="width:50%;text-align:right;float:left;">
+                                    <Apex:outputLabel value="= {!$ObjectType.Case.fields.Total_Eligible__c.label}"/>
+                                </div>
+                                <div style="width:40%;text-align:left;float: left;margin-left: 20px;">
+                                    <apex:outputField id="TotalEligibleId" style="  " value="{!caseObj.Total_Eligible__c}"/>
+                                </div>
+                            </apex:outputPanel>
+                            <apex:outputPanel style="width:100%;float: left;  margin-bottom: 10px;text-align: center;" layout="block">
+                                <div style="width:50%;text-align:right;float:left;">
+                                    <Apex:outputLabel value="- {!$ObjectType.Case.fields.Waiving_Not_Covered_ElseWhere__c.label}"/>
+                                </div>
+                                <div style="width:40%;text-align:left;float: left;margin-left: 20px;">
+                                    <apex:inputField rendered="{!showEditMode}"  onkeyUp="autoPopulateValue();" id="WaivingCoveredElseWhereId" style=" " value="{!caseObj.Waiving_Not_Covered_ElseWhere__c}"/>
+                                    <Apex:outputField value="{!caseObj.Waiving_Not_Covered_ElseWhere__c}" rendered="{!!showEditMode}"/>
+                                </div>
+                            </apex:outputPanel>
+                            <apex:outputPanel style="width:100%;padding-top: 5px;  padding-bottom: 5px;float: left;font-weight: bold; margin-bottom: 10px;text-align: center;" layout="block">
+                                <div style="width:50%;text-align:right;float:left;">
+                                    <Apex:outputLabel value="= {!$ObjectType.Case.fields.Total_Covered__c.label}"/>
+                                </div>
+                                <div style="width:40%;text-align:left;float: left;margin-left: 20px;">
+                                    <apex:outputField id="TotalCoveredId" style="  " value="{!caseObj.Total_Covered__c}"/>
+                                </div>
+                            </apex:outputPanel>
+                            <apex:outputPanel style="width:100%;padding-top: 5px;  padding-bottom: 5px;float: left;font-weight: bold;  margin-bottom: 10px;text-align: center;" layout="block">
+                                <div style="width:50%;text-align:right;float:left;">
+                                    <Apex:outputLabel value="{!$ObjectType.Case.fields.Percent_Enrolled__c.label}"/>
+                                </div>
+                                <div style="width:40%;text-align:left;float: left;margin-left: 20px;">
+                                    <apex:outputField style="  " id="percentEnrolled" value="{!caseObj.Percent_Enrolled__c}"/>
+                                </div>
+                            </apex:outputPanel>
+                        </Apex:outputPanel>
+                    
+                    
+                        <Apex:outputPanel >
+                            <Apex:outputPanel style="width:100%;float: left;  margin-bottom: 10px;">
+                                <Apex:outputLabel value="Eligibility Waiting Period Information"/>
+                            </Apex:outputPanel>
+                            <apex:outputPanel style="width:100%;float: left;  margin-bottom: 10px;text-align: center;" layout="block">
+                                <div style="width:30%;text-align:right;float:left;">
+                                    <Apex:outputLabel value="{!$ObjectType.Case.fields.Waive_on_Initial_Enrollment__c.label}"/>
+                                </div>
+                                <div style="width:40%;text-align:left;float: left;margin-left: 20px;">
+                                    <apex:inputField rendered="{!showEditMode}" style="  " value="{!caseObj.Waive_on_Initial_Enrollment__c}"/>
+                                    <Apex:outputField value="{!caseObj.Waive_on_Initial_Enrollment__c}" rendered="{!!showEditMode}"/>
+                                </div>
+                            </apex:outputPanel>
+                            <apex:outputPanel rendered="{!medicalRecordType}" style="width:100%;float: left;  margin-bottom: 10px;text-align: center;" layout="block">
+                                <div style="width:30%;text-align:right;float:left;">
+                                    <Apex:outputLabel value="{!$ObjectType.Case.fields.Health__c.label}"/>
+                                </div>
+                                <div style="width:40%;text-align:left;float: left;margin-left: 20px;">
+                                    <apex:inputField rendered="{!showEditMode}"   style="  " value="{!caseObj.Health__c}"/>
+                                    <Apex:outputField value="{!caseObj.Health__c}" rendered="{!!showEditMode}"/>
+                                </div>
+                            </apex:outputPanel>
+                            <apex:outputPanel rendered="{!medicalRecordType}"  style="width:100%;float: left;  margin-bottom: 10px;text-align: center;" layout="block">
+                                <div style="width:30%;text-align:right;float:left;">
+                                    <Apex:outputLabel value="{!$ObjectType.Case.fields.Life_days__c.label}"/>
+                                </div>
+                                <div style="width:40%;text-align:left;float: left;margin-left: 20px;">
+                                    <apex:inputField rendered="{!showEditMode}"   style="  " value="{!caseObj.Life_days__c}"/>
+                                    <Apex:outputField value="{!caseObj.Life_days__c}" rendered="{!!showEditMode}"/>
+                                </div>
+                            </apex:outputPanel>
+                            <apex:outputPanel rendered="{!medicalRecordType}"  style="width:100%;float: left;  margin-bottom: 10px;text-align: center;" layout="block">
+                                <div style="width:30%;text-align:right;float:left;">
+                                    <Apex:outputLabel value="{!$ObjectType.Case.fields.STD_days__c.label}"/>
+                                </div>
+                                <div style="width:40%;text-align:left;float: left;margin-left: 20px;">
+                                    <apex:inputField rendered="{!showEditMode}"   style="  " value="{!caseObj.STD_days__c}"/>
+                                    <Apex:outputField value="{!caseObj.STD_days__c}" rendered="{!!showEditMode}"/>
+                                </div>
+                            </apex:outputPanel>
+                            <apex:outputPanel style="width:100%;float: left;  margin-bottom: 10px;text-align: center;" layout="block">
+                                <div style="width:30%;text-align:right;float:left;">
+                                    <Apex:outputLabel value="{!$ObjectType.Case.fields.Dental_days__c.label}"/>
+                                </div>
+                                <div style="width:40%;text-align:left;float: left;margin-left: 20px;">
+                                    <apex:inputField required="{!!medicalRecordType}"  rendered="{!showEditMode}"   style="  " value="{!caseObj.Dental_days__c}"/>
+                                    <Apex:outputField value="{!caseObj.Dental_days__c}" rendered="{!!showEditMode}"/>
+                                </div>
+                            </apex:outputPanel>
+                            
+                            <Apex:outputPanel style="width:100%;float: left;  margin-bottom: 10px;">
+                                <Apex:outputLabel value="Current Participation"/>
+                            </Apex:outputPanel>
+                            
+                            
+                            <apex:outputPanel rendered="{!medicalRecordType}"  style="width:100%;float: left;  margin-bottom: 10px;text-align: center;" layout="block">
+                                <div style="width:30%;text-align:right;float:left;">
+                                    <Apex:outputLabel value="{!$ObjectType.Case.fields.Non_HMO__c.label}"/>
+                                </div>
+                                <div style="width:40%;text-align:left;float: left;margin-left: 20px;">
+                                    <apex:inputField required="true" rendered="{!showEditMode}"  style="  " value="{!caseObj.Non_HMO__c}"/>
+                                    <Apex:outputField value="{!caseObj.Non_HMO__c}" rendered="{!!showEditMode}"/>
+                                </div>
+                            </apex:outputPanel>
+                            <apex:outputPanel rendered="{!medicalRecordType}"  style="width:100%;float: left;  margin-bottom: 10px;text-align: center;" layout="block">
+                                <div style="width:30%;text-align:right;float:left;">
+                                    <Apex:outputLabel value="{!$ObjectType.Case.fields.HMO_Current_Participation__c.label}"/>
+                                </div>
+                                <div style="width:40%;text-align:left;float: left;margin-left: 20px;">
+                                    <apex:inputField required="true" rendered="{!showEditMode}"  style="  " value="{!caseObj.HMO_Current_Participation__c}"/>
+                                    <Apex:outputField value="{!caseObj.HMO_Current_Participation__c}" rendered="{!!showEditMode}"/>
+                                </div>
+                            </apex:outputPanel>
+                            <apex:outputPanel rendered="{!medicalRecordType}"  style="width:100%;float: left;  margin-bottom: 10px;text-align: center;" layout="block">
+                                <div style="width:30%;text-align:right;float:left;">
+                                    <Apex:outputLabel value="{!$ObjectType.Case.fields.Life_Current_Participation__c.label}"/>
+                                </div>
+                                <div style="width:40%;text-align:left;float: left;margin-left: 20px;">
+                                    <apex:inputField rendered="{!showEditMode}"  style="  " value="{!caseObj.Life_Current_Participation__c}"/>
+                                    <Apex:outputField value="{!caseObj.Life_Current_Participation__c}" rendered="{!!showEditMode}"/>
+                                </div>
+                            </apex:outputPanel>
+                            <apex:outputPanel rendered="{!medicalRecordType}"  style="width:100%;float: left;  margin-bottom: 10px;text-align: center;" layout="block">
+                                <div style="width:30%;text-align:right;float:left;">
+                                    <Apex:outputLabel value="{!$ObjectType.Case.fields.STD_Current_Participation__c.label}"/>
+                                </div>
+                                <div style="width:40%;text-align:left;float: left;margin-left: 20px;">
+                                    <apex:inputField rendered="{!showEditMode}"  style="  " value="{!caseObj.STD_Current_Participation__c}"/>
+                                    <Apex:outputField value="{!caseObj.STD_Current_Participation__c}" rendered="{!!showEditMode}"/>
+                                </div>
+                            </apex:outputPanel>
+                            <apex:outputPanel style="width:100%;float: left;  margin-bottom: 10px;text-align: center;" layout="block">
+                                <div style="width:30%;text-align:right;float:left;">
+                                    <Apex:outputLabel value="{!$ObjectType.Case.fields.Dental_Current_Participation__c.label}"/>
+                                </div>
+                                <div style="width:40%;text-align:left;float: left;margin-left: 20px;">
+                                    <apex:inputField required="{!!medicalRecordType}" rendered="{!showEditMode}"  style="  " value="{!caseObj.Dental_Current_Participation__c}"/>
+                                    <Apex:outputField value="{!caseObj.Dental_Current_Participation__c}" rendered="{!!showEditMode}"/>
+                                </div>
+                            </apex:outputPanel>
+                            <apex:outputPanel rendered="{!!medicalRecordType}"  style="width:100%;float: left;  margin-bottom: 10px;text-align: center;" layout="block">
+                                <div style="width:30%;text-align:right;float:left;">
+                                    <Apex:outputLabel value="{!$ObjectType.Case.fields.DHMO_Current_Participation__c.label}"/>
+                                </div>
+                                <div style="width:40%;text-align:left;float: left;margin-left: 20px;">
+                                    <apex:inputField required="true"  rendered="{!showEditMode}"  style="  " value="{!caseObj.DHMO_Current_Participation__c}"/>
+                                    <Apex:outputField value="{!caseObj.DHMO_Current_Participation__c}" rendered="{!!showEditMode}"/>
+                                </div>
+                            </apex:outputPanel>
+                        </Apex:outputPanel>
+                    
+                </Apex:pageBlockSection>
+                
+                <apex:pageBlockSection id="pbs1Id" columns="1" title="Risk Data" rendered="{!medicalRecordType}" >
+                    
+                        <Apex:outputPanel >
+                            <Apex:outputPanel style="width:100%;float: left;  margin-bottom: 10px;">
+                                <Apex:outputLabel value="For all participants, including Active, COBRA, Retirees, and Dependents"/>
+                            </Apex:outputPanel>
+                            <apex:outputPanel style="width:100%;float: left;  margin-bottom: 10px;" layout="block">
+                                <div style="width:35%;text-align:left;float: left;">
+                                    <Apex:outputLabel value="1. In the past 12 months, has a claim been submitted in excess of $10,000?"/>
+                                </div>
+                                <div style="width:40%;text-align:left;float: left;margin-left: 20px;">
+                                    <apex:inputField id="claimExceededPast" rendered="{!showEditMode}" style="  " value="{!caseObj.Claim_Exceeded_Amt_Past__c}"/>
+                                    
+                                    <Apex:outputField value="{!caseObj.Claim_Exceeded_Amt_Past__c}" rendered="{!!showEditMode}"/>
+                                </div>
+                            </apex:outputPanel>
+                            <apex:outputPanel style="width:100%;float: left;  margin-bottom: 10px;" layout="block">
+                                <div style="width:35%;text-align:left;float: left;">
+                                    <Apex:outputLabel value="2. Is any treatment expected in the next 12 months in excess of $10000 or more?"/>
+                                </div>
+                                <div style="width:40%;text-align:left;float: left;margin-left: 20px;">
+                                    <apex:inputField id="claimExceededFuture" rendered="{!showEditMode}" style=" " value="{!caseObj.Claim_Exceeded_Amt_Future__c}"/>
+                                    <Apex:outputField value="{!caseObj.Claim_Exceeded_Amt_Future__c}" rendered="{!!showEditMode}"/>
+                                </div>
+                            </apex:outputPanel>
+                            <apex:outputPanel style="width:100%;float: left;  margin-bottom: 10px;" layout="block">
+                                <div style="width:35%;text-align:left;float: left;">
+                                    <Apex:outputLabel value="3. Are any participants disabled or not actively at work?"/>
+                                </div>
+                                <div style="width:40%;text-align:left;float: left;margin-left: 20px;">
+                                    <apex:inputField id="participantDisabled" rendered="{!showEditMode}" style="  " value="{!caseObj.Participants_Disabled__c}"/>
+                                    <Apex:outputField value="{!caseObj.Participants_Disabled__c}" rendered="{!!showEditMode}"/>
+                                </div>
+                            </apex:outputPanel>
+                            <apex:outputPanel style="width:100%;float: left;  margin-bottom: 10px;  " layout="block">
+                                <div style="width:35%;text-align:left;float:left;">
+                                    <Apex:outputLabel value="4. Has any participant been diagonosed as having a risk condition?"/>
+                                </div>
+                                <div style="width:40%;text-align:left;float: left;margin-left: 20px;">
+                                    <apex:inputField id="participantsDiagonsed" rendered="{!showEditMode}" style=" " value="{!caseObj.Participants_Diagonsed_Risk_Condition_Hi__c}"/>
+                                    
+                                    <Apex:outputField value="{!caseObj.Participants_Diagonsed_Risk_Condition_Hi__c}" rendered="{!!showEditMode}"/>
+                                </div>
+                            </apex:outputPanel>
+                        </Apex:outputPanel>
+                                    
+                </apex:pageBlockSection>
+            </Apex:pageBlock>
+        </body> 
+    </apex:form>
+</apex:page>

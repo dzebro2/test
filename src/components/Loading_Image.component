@@ -1,0 +1,112 @@
+<apex:component >
+    <apex:attribute name="style" default="classic" type="string" description="the name of the style [classic, processing]"/>
+    <style>
+        <apex:outputPanel layout="none" rendered="{!style == 'processing'}">            
+            #overlay {
+                height:70px;
+                width:200px;
+                visibility:hidden;
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                margin-top: -50px;
+                margin-left: -50px;
+            }
+            .ext-el-mask-msg {
+                background: transparent;
+                border: none;
+            }
+            .ext-el-mask-msg {
+                border-color: #8f8f8f;
+                background-color: #d7d7d7;
+                background-image: url(/EXT/theme/sfdc/images/box/tb-gray.gif);
+            }
+            .ext-el-mask-msg {
+                z-index: 20001;
+                position: absolute;
+                top: 0;
+                left: 0;
+                background: repeat-x 0 -16px;
+                border: 1px solid #79b7e7;  
+                background: #f5f8f9 url(images/ui-bg_inset-hard_100_f5f8f9_1x100.png) 50% 50% repeat-x;
+                border-radius: 5px;
+                -moz-border-radius: 5px;
+                border-bottom-left-radius:5px;
+            }
+            .x-mask-loading div{
+                -moz-border-radius:5px;
+                -webkit-border-radius:5px;
+                border-radius: 5px;
+                border-color:#6f6f6f;
+                padding:0 0 0 30px;
+                background:#fff url(/static/184/img/support/servicedesk/loading.gif) 36px 19px no-repeat;
+                width:170px
+            }
+            .ext-el-mask-msg div{
+                color:#27282e;
+                font-size:1.2em;
+                font-weight:bold;
+                line-height:70px;
+                text-align:center
+            }
+            .loadingMsg{
+                color:#e17009;
+            }
+            .opague{
+                background:#fff;
+                opacity:0.75;
+                -moz-opacity:0.75;
+                filter:alpha(opacity=75);   
+           }    
+        </apex:outputPanel>        
+    </style>
+    <script type="text/javascript">
+        //---------------------------------
+        // Function to display overlay div
+        //---------------------------------
+        function showOverlay() {                  
+            var overlayDiv = document.getElementById('overlay');
+            if(overlayDiv != null)
+            {
+                overlayDiv.style.visibility = 'visible';
+                if (overlayDiv.hasChildNodes()) {
+                    overlayDiv.removeChild(overlayDiv.childNodes[0]);
+                }
+                //create inner inner div
+                var newDiv = document.createElement("div"); 
+                var newContent = document.createTextNode("Loading..."); 
+                newDiv.style.color="#e17009";
+                newDiv.appendChild(newContent); //add the text node to the newly created div
+                
+                overlayDiv.className ='ext-el-mask-msg x-mask-loading';
+                overlayDiv.style.position = "fixed";            
+                overlayDiv.appendChild(newDiv);
+                document.body.className = 'opague';
+                
+                var inputs = document.getElementsByTagName("INPUT");
+                for (var i = 0; i < inputs.length; i++) {
+                    if (inputs[i].type === 'submit') {
+                        inputs[i].disabled = true;
+                    }
+                }
+            }             
+        }
+        //---------------------------------
+        // Function to hide overlay div
+        //---------------------------------
+        function hideOverlay() {
+            var overlayDiv = document.getElementById('overlay');
+            if(overlayDiv != null)
+            {
+                overlayDiv.style.visibility = 'hidden';  
+                document.body.className = '';
+                 var inputs = document.getElementsByTagName("INPUT");
+                for (var i = 0; i < inputs.length; i++) {
+                    if (inputs[i].type === 'submit') {
+                        inputs[i].disabled = false;
+                    }
+                }
+            }     
+        }        
+    </script>
+</apex:component>

@@ -1,0 +1,800 @@
+<apex:page standardController="Account" extensions="BuyerHierarchyOnAccountController" showHeader="true" action="{!fetchBuyerHierarchyData}" title="Buyer Hierarchy: {!account.Name}">
+<html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<head>
+
+<!--<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.2.6/jquery.min.js"></script>-->
+<meta charset="utf-8" />
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+ <apex:includeScript value="{!URLFOR($Resource.AccountMap,'AccountMapFiles/jquery-1.11.1.min.js')}"/>
+ <apex:includeScript value="{!URLFOR($Resource.TodayViewFiles,'js/bootstrap.min.js')}"/>
+<apex:includeScript value="{!URLFOR($Resource.M_Accordion,'M_Horizontal_Accordion_Menu_Radio/jquery.finger.js')}" />
+<apex:includeScript value="{!URLFOR($Resource.BuyerJQueryUI, '/BuyerJQueryUI/jquery.contextMenu.js')}"  />
+
+
+<apex:stylesheet value="{!URLFOR($Resource.BuyerJQueryUI, '/BuyerJQueryUI/jquery.contextMenu.css')}"  />
+
+<!-- <apex:stylesheet value="{!URLFOR($Resource.AdvancedNewsTicker,'jquery-advanced-news-ticker-master/assets/css/bootstrap.css')}" /> -->
+
+<apex:stylesheet value="{!URLFOR($Resource.TodayViewFiles,'css/bootstrap.min.css')}" />
+<apex:stylesheet value="{!URLFOR($Resource.salesforce_lightning,'assets/styles/salesforce-lightning-design-system-vf.min.css')}" />
+
+<!-- <apex:stylesheet value="{!URLFOR($Resource.TodayViewFiles,'css/vscroller.css')}" /> -->
+<apex:stylesheet value="{!URLFOR($Resource.TodayViewFiles,'css/waitMe.min.css')}" />
+
+ <script src="/soap/ajax/33.0/connection.js" type="text/javascript"></script>
+  <script type='text/javascript' src='https://www.google.com/jsapi'></script>
+                
+    <style>
+        .popbox { 
+            display: none; 
+            position: absolute;
+            z-index: 99999;
+            width: 400px;
+            padding: 10px;
+            background: #EEEFEB;
+            color: #000000;
+            border: 1px solid #4D4F53;
+            margin: 0px;
+            -webkit-box-shadow: 0px 0px 5px 0px rgba(164, 164, 164, 1);
+            box-shadow: 0px 0px 5px 0px rgba(164, 164, 164, 1);
+        }
+        .popbox h2
+        {
+            background-color: #4D4F53;
+            color:  #E3E5DD;
+            font-size: 14px;
+            display: block;
+            width: 100%;
+            margin: -10px 0px 8px -10px;
+            padding: 5px 10px;
+        }
+        .blockerImg {
+            /*background-image: url("{!URLFOR($Resource.salesforce_lightning,'/assets/icons/action-sprite/svg/symbols.svg#close')}");*/
+            background-color:#EF5329;
+            /*background-color:#EAA92A;*/
+            background-repeat:no-repeat;
+        }
+        .neutralImg {
+            /*background-image: url("{!URLFOR($Resource.Playbook_Resource, 'assets/css/img/warning45.png')}");*/
+            background-color:#3583C9;
+             /*background-color:#F5F5F5;*/
+            background-repeat:no-repeat;
+        }
+        .promoterImg {
+            /*background-image: url("{!URLFOR($Resource.Playbook_Resource, 'assets/css/img/uparrow7.png')}");*/
+            background-color:#87C93D;
+            /*background-color:#A5D151;*/
+            background-repeat:no-repeat;
+        }
+        .unknownImg {
+            /*background-image: url("{!URLFOR($Resource.Playbook_Resource, 'assets/css/img/questionmark2.png')}");  */
+            background-color:#A3A3A3;
+            /*background-color:#5DB4E4;*/
+            background-repeat:no-repeat;
+        }
+        
+        
+        
+        
+        .google-visualization-orgchart-node {
+            border-radius: 20px;
+            background-color:#fff;
+            background:none;
+            border:none;
+            box-shadow: none;
+            border-radius: 10px;
+        }
+        </style>
+    
+    <style type='text/css'>
+/*This will work for chrome and IE */
+                    .browserWidth
+                    {
+                    }
+/*This will work for firefox*/
+                    @-moz-document url-prefix() {
+                        .browserWidth{
+                        width:140px;
+                    }
+                    }
+                </style>
+                
+                
+
+    <style type="text/css" class="showcase">
+        /* menu header */
+        .css-title:before {
+            content: "Sentiment";
+            display: block;
+            position: absolute;
+            top: 0;
+            right: 0;
+            left: 0;
+            background: #DDD;
+            padding: 2px;
+
+            font-family: Verdana, Arial, Helvetica, sans-serif;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        .css-title :first-child {
+            margin-top: 20px;
+        }
+
+        .context-menu-list{
+            background: #fff;
+            width:111px;
+        }
+        .css-title:before {
+            padding: 10px 5px;
+            color:#1797C0;
+            background:#EEE;
+        }
+        .css-title :first-child{
+            margin-top: 40px;
+        }
+        .context-menu-item{
+            padding: 10px 2px 10px 24px;
+            background-color: #fff;
+            left:0;
+        }
+        .context-menu-item.hover{
+            background-color: #f1f1f1;
+        }
+        ul li, ol li{
+            margin-left:0px;
+            
+        }
+    </style>
+    
+    <style type="text/css">
+
+    .htmltooltip{
+    position: absolute;
+    z-index: 1000;
+    background: #F2EBB5;
+    border: 2px solid black;
+    color: solid black;
+    padding: 3px;
+    width: 150px;
+   /* -webkit-box-shadow: 0px 0px 5px 0px rgba(164, 164, 164, 1);*/
+    box-shadow: 0px 0px 5px 0px rgba(164, 164, 164, 1);
+    }
+    
+    span.underline { 
+    color: white; 
+    text-decoration: underline; 
+    }    
+
+    </style>
+
+    <script>
+    var data = '';
+
+    $(document).ready(function()
+    {
+    //     $(function() {
+    //     var moveLeft = 0;
+    //     var moveDown = 0;
+    //     $('a').hover(function(e) 
+    //     {    
+    //         var target = '#' + ($(this).attr('data-popbox'));
+            
+    //         $(target).show();
+    //         moveLeft = $(this).outerWidth();
+    //         moveDown = ($(target).outerHeight() / 2);
+    //     }, function() {
+    //         var target = '#' + ($(this).attr('data-popbox'));
+    //         $(target).hide();
+    //     });
+
+    //     $('a').mousemove(function(e) {
+    //         var target = '#' + ($(this).attr('data-popbox'));
+            
+    //         leftD = e.pageX + parseInt(moveLeft);
+    //         maxRight = leftD + $(target).outerWidth();
+    //         windowLeft = $(window).width() - 40;
+    //         windowRight = 0;
+    //         maxLeft = e.pageX - (parseInt(moveLeft) + $(target).outerWidth() + 20);
+            
+    //         if(maxRight > windowLeft && maxLeft > windowRight)
+    //         {
+    //             leftD = maxLeft;
+    //         }
+        
+    //         topD = e.pageY - parseInt(moveDown);
+    //         maxBottom = parseInt(e.pageY + parseInt(moveDown) + 20);
+    //         windowBottom = parseInt(parseInt($(document).scrollTop()) + parseInt($(window).height()));
+    //         maxTop = topD;
+    //         windowTop = parseInt($(document).scrollTop());
+    //         if(maxBottom > windowBottom)
+    //         {
+    //             topD = windowBottom - $(target).outerHeight() - 20;
+    //         } else if(maxTop < windowTop){
+    //             topD = windowTop + 20;
+    //         }
+        
+    //         $(target).css('top', topD).css('left', leftD);
+        
+        
+    //     });
+
+    // });
+});
+    </script>
+    
+    <!--new code for mouseover-->
+    <script>
+       (function(){try{var a=navigator.userAgent; 
+                var a = navigator.userAgent;
+                if ((a.indexOf('Salesforce') != -1) && (a.indexOf('iPhone') != -1 || a.indexOf('iPad') != -1) && (a.indexOf('Safari') == -1)) {
+                     var s = document.createElement('style');
+                     if ((a.indexOf('OS/8') != -1 || a.indexOf('OS 8') != -1)) {
+                         s.innerHTML = "html,html body{overflow: auto;-webkit-overflow-scrolling:touch;}body{position:absolute;left:0;right:0;top:0;bottom:0;}";
+                     } else if ((a.indexOf('OS/9') != -1 || a.indexOf('OS 9') != -1)) {
+                         s.innerHTML = "html,html body{overflow: auto;-webkit-overflow-scrolling:auto;}body{position:absolute;left:0;right:0;top:0;bottom:0;}";
+                     }
+                     document.getElementsByTagName('head')[0].appendChild(s);
+                }}catch(e){}})(); 
+
+    function changeDivs(idTohide){
+        
+        if (idTohide == 'secondOption'){
+            $("#secondOption").hide();
+            $("#firstOption").show("slow");
+        }else{
+            $("#firstOption").hide();
+             $("#secondOption").show("slow");
+            
+        }
+    }
+    // function showOptions(select)
+    // {
+    //     var dividValue = select.id;
+    //     var showPopup = document.getElementById('pop'+dividValue);
+    //     showPopup.style.display = 'block';
+    //     showPopup.style.position = 'absolute';
+    //     showPopup.style.left=posx+'px'; 
+    //     showPopup.style.top=posy+'px';
+    // }
+
+    // function hideOptions(select)
+    // {   
+    //     var dividValue = select.id;
+    //     var hidePopup = document.getElementById('pop'+dividValue);
+    //     hidePopup.style.display = 'none';
+    // }
+    </script>
+   
+    <script type='text/javascript'>
+    var strID;
+    var items = {
+                "Advocate": {name: "Advocate"},
+                "Detractor": {name: "Detractor"},
+                "Neutral": {name: "Neutral"},
+                "Unknown": {name: "Unknown"}
+               
+                };
+
+    function sendtoContact(){
+        sforce.one.navigateToSObject(items.fold1.items[strID].id);
+    }
+    function updateID(select)
+    {
+        strID = select.id;
+        //console.log(items.fold1.items[strID].name);
+        $("#myModalLabel").text(items.fold1.items[strID].name);
+        console.log(items.fold1.items[strID].id);
+        var reportsToPeople = items.fold1.items;
+        var numnberOfContacts = objectLength(reportsToPeople);
+        //console.log(reportsToPeople);
+        var JSCall = "'activeMobile'";
+        var value = "''";
+        var rep2Web = null;
+        //console.log(objectLength(reportsToPeople));
+        $("#reportsToWindow").empty();
+    
+        // $("#contactLinktoSF").attr('onclick',sforce.one.navigateToSObject(items.fold1.items[strID].id));
+        
+        for (var prop in reportsToPeople) {
+            if (reportsToPeople.hasOwnProperty(prop)) {
+                if(prop != strID){
+                    rep2Web = "'" + reportsToPeople[prop].id + "'";
+                    $("#reportsToWindow").append('<li class="slds-list__item"> <div class="slds-media slds-tile slds-hint-parent"> <div class="slds-media__figure"> <svg aria-hidden="true" class="slds-icon slds-icon-standard-avatar"> <use xlink:href="{!URLFOR($Resource.salesforce_lightning,'/assets/icons/standard-sprite/svg/symbols.svg#avatar')}"></use> </svg> </div><div class="slds-media__body"> <div class="slds-grid slds-grid--align-spread slds-has-flexi-truncate"> <p class="slds-tile__title slds-truncate"><a href="#" onclick="roleTempFunc('+ value +',strID,'+ JSCall +','+ rep2Web +',false);">'+reportsToPeople[prop].name+'</a> </p></div><div class="slds-tile__detail"> <dl class="dl--horizontal slds-text-body--small"> <dt class="slds-dl--horizontal__label"> <p class="slds-truncate"></p></dt> </dl> </div></div></div></li>');
+          //          console.log(reportsToPeople[prop].name);
+                }
+                //console.log(prop);
+            }
+        }
+        // for (var x=0;x<numnberOfContacts;x++){
+        //     console.log(reportsToPeople[x]);
+        // }
+        $('#reportsTo').modal('show');
+    }
+    function roleSelect(selectedRole)
+    {
+        var JSCall = 'active';
+        var value = selectedRole;
+        roleTempFunc(value,strID,JSCall,'');
+    }
+    function objectLength(obj) {
+          var result = 0;
+          for(var prop in obj) {
+            if (obj.hasOwnProperty(prop)) {
+            // or Object.prototype.hasOwnProperty.call(obj, prop)
+              result++;
+            }
+          }
+          return result;
+        }
+        
+        
+       
+        
+        
+    </script>
+    
+    <script type='text/javascript'>
+    function newRoleSelect(newRole){
+        alert(newRole);
+    }
+    </script>
+  
+    <script type='text/javascript'>
+    function toggleShowHide(select)
+    {
+    var dropdownId = 'dropdown'+select.id;
+    var showStatus = document.getElementById(dropdownId).style.display;
+    if(showStatus == 'none')
+        document.getElementById(dropdownId).style.display = 'block';
+    else
+        document.getElementById(dropdownId).style.display = 'none';
+    }
+    </script>
+    
+    <!--below is the code for right click-->
+    <script type="text/javascript" class="showcase">
+    $(function(){
+
+        // $('.context-menu-one').on('press', function(e) {
+        //     e.preventDefault();
+        //     $('.context-menu-one').trigger("contextmenu");
+        //    // $('.context-menu-one').contextMenu();
+        // // or $('.context-menu-one').trigger("contextmenu");
+        // // or $('.context-menu-one').contextMenu({x: 100, y: 100});
+        // });
+
+        // direct event
+          // $('.context-menu-one').on('press', function() {
+          //   $('.context-menu-one').trigger("contextmenu");
+          //  // console.log('direct');
+          // });
+
+           $('body').on('click', '.context-menu-sub', function(e) {
+                e.preventDefault();
+                //$(this).trigger("contextmenu");
+                console.log(strID);
+                console.log($(this).closest('.context-menu-sub box menu-1').find('.myID').val());
+                //$('.context-menu-one').trigger("contextmenu");
+              });
+            
+        $.contextMenu({
+            selector: '.context-menu-sub', 
+            trigger: 'none',
+            className: 'css-title',
+            build: function($trigger, e) {
+            return {
+                callback: function(key, options) {
+                    var $this = this;
+                    var k = $(this).closest('.context-menu-sub box menu-1').find('.myID').val();   
+                    var m = "clicked: " + key;
+                    roleSelect(key);
+                },
+            items:items
+                };
+            }
+        });
+    });
+    </script>
+    
+   
+        <script type='text/javascript'>
+
+        google.load('visualization', '1', {packages:['orgchart']});
+
+        google.setOnLoadCallback(drawChart);
+        function drawChart() {
+        data = new google.visualization.DataTable();
+        data.addColumn('string', 'Name');
+        data.addColumn('string', 'Manager');
+
+        data.addRows([
+        <apex:repeat value="{!buyerHierarchyWrapperList}" var="conRole">
+
+        
+        [{v:'{!conRole.buyerHierarchyObj.Contact__r.Name}', f:'<div  class="browserWidth {!IF(contains(conRole.buyerHierarchyObj.Role__c,"Advocate"),"promoterImg",IF(contains(conRole.buyerHierarchyObj.Role__c,"Detractor"),"blockerImg",IF(contains(conRole.buyerHierarchyObj.Role__c,"Neutral"),"neutralImg","unknownImg")))}"><div id="{!conRole.buyerHierarchyObj.Contact_Role_Id__c}" onclick="updateID(this);" oncontextmenu="updateID(this);" class="context-menu-sub box menu-1" style="min-height:120px;"><div style="font-weight:bold; width:100%; font-size:12px;"><a href="/{!conRole.buyerHierarchyObj.Contact__c}" target="_top" id="link{!conRole.buyerHierarchyObj.Contact_Role_Id__c}" ><span style="font-weight:bold;"><font color="{!IF(OR(contains(conRole.buyerHierarchyObj.Role__c,"Unknown"),contains(conRole.buyerHierarchyObj.Role__c,"Neutral")), "#FFFFFF", "#FFFFFF")}">{!conRole.buyerHierarchyObj.Contact__r.Name}</font></span></a></div><div align="center"; style=" width:100%; font-weight:normal;" ><table width="100%"><tr><td width="100%" align="center"><font color="{!IF(OR(contains(conRole.buyerHierarchyObj.Role__c,"Unknown"),contains(conRole.buyerHierarchyObj.Role__c,"Neutral")), "#FFFFFF", "#FFFFFF")}"><apex:outputText value="{!conRole.buyerHierarchyObj.Contact__r.Title}"/></font></td></tr><tr><td align="center"><font color="{!IF(OR(contains(conRole.buyerHierarchyObj.Role__c,"Unknown"),contains(conRole.buyerHierarchyObj.Role__c,"Neutral")), "#FFFFFF", "#FFFFFF")}"><apex:outputText value="{!conRole.buyerHierarchyObj.Contact__r.Account.Name}"></apex:outputText></font></td></tr><tr><td align="center" ><font color="{!IF(OR(contains(conRole.buyerHierarchyObj.Role__c,"Unknown"),contains(conRole.buyerHierarchyObj.Role__c,"Neutral")), "#FFFFFF", "#FFFFFF")}">{!conRole.roleName}</font></td></tr></table></div></div></div>'}, '{!IF(contains(contactRoleNames,conRole.buyerHierarchyObj.Contact__r.ReportsTo.Name),conRole.buyerHierarchyObj.Contact__r.ReportsTo.Name,"")}'],
+        </apex:repeat>
+         ['','']
+        ]);
+        var newItems =  { "fold1": {
+                "name": "Reports To",
+                "items":{},
+                }
+                };
+        var objectHelper ={};
+         <apex:repeat value="{!buyerHierarchyWrapperList}" var="conRole">
+            objectHelper['{!conRole.buyerHierarchyObj.Contact_Role_Id__c}']={name:"{!conRole.buyerHierarchyObj.Contact__r.Name}",id:"{!conRole.buyerHierarchyObj.Contact__c}"};
+            $.extend(newItems.fold1.items,objectHelper);
+         </apex:repeat>
+
+        //console.log(newItems);
+        $.extend(items,newItems);
+        //console.log(items);
+        var options = {
+        tooltip: {isHtml: true},
+        allowHtml: true,
+        legend: 'none',
+        allowCollapse:false
+        };
+        //console.log(data);
+        var chart = new google.visualization.OrgChart(document.getElementById('chart_div'));    
+        chart.draw(data,options);
+        }
+
+        </script> 
+
+  <!--   <div id="legendDiv" border="1" style="float:left; width:200px; height:100%;" >
+
+
+    </div> -->
+    <!-- new code for hoverbox **** complete JS -->
+    
+    <script type="text/JavaScript"> 
+    var posx;
+    var posy;
+     
+    function getMouse(e){ 
+        posx = 0;
+        posy = 0; 
+        if (!e) var e = window.event; 
+            if (e.pageX || e.pageY){ 
+                posx = e.pageX;
+                posy = e.pageY; 
+            } 
+        else if (e.clientX || e.clientY){
+            posx = e.clientX;posy = e.clientY; 
+        } 
+    } 
+    </script>
+    </head>
+ <body>
+  <!--   <apex:sectionHeader title="{!account.Name}" subtitle="Buyer Hierarchy" rendered="{!IF($CurrentPage.parameters.fullView == 'true', true, false)}"/> -->
+
+<div class="container">
+<!-- <div class="slds-scrollable--y"> -->
+<apex:outputPanel > 
+    <apex:form >
+        <apex:actionFunction name="roleTempFunc" action="{!fetchBuyerHierarchyData}" oncomplete="console.log('called action function');" rerender="temCallId"> 
+            <apex:param name="value" value="value" assignTo="{!updatedRole}" />   
+            <apex:param name="strID" value="strID" assignTo="{!contactRoleId}" /> 
+            <apex:param name="JSCall" value="JSCall" assignTo="{!checkJSCall}" /> 
+            <apex:param name="rep2Web" value="rep2Web" assignTo="{!reportsToWeb}" /> 
+             <apex:param name="changeSentiment" value="changeSentiment" assignTo="{!changeSentimentApex}" /> 
+
+        </apex:actionFunction>
+    </apex:form>  
+    <apex:form >
+        <apex:pageMessages id="errorMessage"></apex:pageMessages>
+    </apex:form>
+    
+    <!-- below is the code for hoverbox -->
+      </apex:outputPanel>
+    <apex:outputPanel id="temCallId" rendered="{!IF(accountContactRoleSize > 0,true,false)}">  
+    
+  
+</apex:outputPanel>  
+    <!--<a href="#" class="popper" data-popbox="pop1">hello</a> 
+    <a href="{!LEFT($CurrentPage.URL,FIND('/',$CurrentPage.URL,9))}003Z000000JtSwWIAV" target="_top" class="popper" data-popbox="pop1">NewHello</a> -->
+
+
+
+    <apex:repeat value="{!buyerHierarchyWrapperList}" var="conRoleTemp">
+
+    <div id="poplink{!conRoleTemp.buyerHierarchyObj.Contact_Role_Id__c}" class="htmltooltip" style="display: none;">
+    <h2>{!conRoleTemp.buyerHierarchyObj.Contact__r.Name}</h2><hr/>
+    <p>Company: <font color="#990845">{!conRoleTemp.buyerHierarchyObj.Contact__r.Account.Name}</font><br/>Buyer Role: <font color="#990845">{!conRoleTemp.roleName}</font><br/>Sentiment: <font color="#990845">{!conRoleTemp.buyerHierarchyObj.Role__c}</font></p>
+    </div>
+    </apex:repeat>
+    
+        <div id='chart_div' style="font-size:14px; height:100%;" onmousemove="getMouse(event);"></div>
+        <p>&nbsp;</p>
+    
+   <nav class="navbar navbar-default navbar-fixed-bottom">
+<!--     <div class="container"> -->
+   <!--  <div style="width:100%"> -->
+      <!--   <table class="table">
+            <tr>
+                <td>
+                    <b>Sentiment</b>
+                </td>
+                <td>
+                    <span style="height:16px; width:32px;display:inline-block;vertical-align: middle;margin-left:10px" class="promoterImg"></span>
+                    <span style="margin:0px 10px 0px 5px;vertical-align: middle;">Advocate</span>
+                </td>
+                
+                <td>
+                    <span style="height:16px; width:32px;display:inline-block;vertical-align: middle;" class="blockerImg"></span>
+                    <span style="margin:0px 10px 0px 5px;vertical-align: middle;">Detractor</span>
+                </td>
+                
+                <td>
+                    <span style="height:16px; width:32px;display:inline-block;vertical-align: middle;" class="neutralImg"></span>
+                    <span style="margin:0px 10px 0px 5px;vertical-align: middle;">Neutral</span>
+                </td>
+                
+                <td>
+                    <span style="height:16px; width:32px;display:inline-block;vertical-align: middle;" class="unknownImg"></span>
+                    <span style="margin:0px 10px 0px 5px;vertical-align: middle;">Unknown</span>
+                </td>
+            </tr>
+        </table> -->
+          <table class="table">
+            <tr>
+                <td >
+                    Sentiment
+                </td>
+                <td class="promoterImg" style="text-align:center;color:#ffffff">
+                   <!--  <span style="height:16px; width:32px;display:inline-block;vertical-align: middle;margin-left:10px" class="promoterImg"></span> -->
+                   Advocate
+                </td>
+                
+                <td class="blockerImg" style="text-align:center;color:#ffffff">
+                <!--     <span style="height:16px; width:32px;display:inline-block;vertical-align: middle;" class="blockerImg"></span> -->
+                   Detractor
+                </td>
+                
+                <td class="neutralImg" style="text-align: center;color:#ffffff">
+             <!--        <span style="height:16px; width:32px;display:inline-block;vertical-align: middle;" class="neutralImg"></span> -->
+                   Neutral
+                </td>
+                
+                <td class="unknownImg" style="text-align: center;color:#ffffff">
+ <!--                    <span style="height:16px; width:32px;display:inline-block;vertical-align: middle;" class="unknownImg"></span> -->
+                   Unknown
+                </td>
+            </tr>
+        </table>
+  <!--   </div> -->
+  <!--   </div> -->
+    </nav>
+
+<c:LinkOverrideScript />
+<!-- modal beginning -->
+<div class="slds">
+<div class="modal fade" id="reportsTo" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+      <!--   <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button> -->
+      <button class="slds-button slds-button--icon-inverse close"  onclick="changeDivs('secondOption')" data-dismiss="modal" aria-label="Close">
+          <svg aria-hidden="true" class="slds-button__icon slds-button__icon--large">
+            <use xlink:href="{!URLFOR($Resource.salesforce_lightning,'/assets/icons/action-sprite/svg/symbols.svg#close')}"></use>
+          </svg>
+          <span class="slds-assistive-text">Close</span>
+        </button>
+        <h4 class="modal-title" id="myModalLabel"></h4>
+      </div>
+      <div class="modal-body">
+        <div class="container">
+            <div id="firstOption">
+            <ul class="slds-list--vertical slds-has-cards">
+              <li class="slds-list__item">
+                  <div class="slds-media slds-tile slds-hint-parent">
+           <div class="slds-media__figure">
+             <svg aria-hidden="true" class="slds-icon slds-icon-utility-check" style="background-color:#87C93D;">
+               <use xlink:href="{!URLFOR($Resource.salesforce_lightning,'/assets/icons/utility-sprite/svg/symbols.svg#check')}"></use>
+             </svg>
+           </div>
+           <div class="slds-media__body">
+          <div class="slds-grid slds-grid--align-spread slds-has-flexi-truncate">
+            <p class="slds-tile__title slds-truncate"><a href="" onclick="roleTempFunc('Advocate',strID,'activeMobile','',true);" id="keyDatesLink">Advocate</a></p>
+         
+          </div>
+             <div class="slds-tile__detail">
+               <dl class="dl--horizontal slds-text-body--small">
+                 <dt class="slds-dl--horizontal__label">
+                   <p class="slds-truncate"></p>
+                 </dt>
+               
+                  </dl>
+                </div>
+              </div>
+            </div> 
+
+              </li>
+              <li class="slds-list__item">
+                  <div class="slds-media slds-tile slds-hint-parent">
+           <div class="slds-media__figure">
+             <svg aria-hidden="true" class="slds-icon slds-icon-action-close" style="background-color:#EF5329;">
+               <use xlink:href="{!URLFOR($Resource.salesforce_lightning,'/assets/icons/action-sprite/svg/symbols.svg#close')}"></use>
+             </svg>
+           </div>
+           <div class="slds-media__body">
+          <div class="slds-grid slds-grid--align-spread slds-has-flexi-truncate">
+            <p class="slds-tile__title slds-truncate"><a href="" onclick="roleTempFunc('Detractor',strID,'activeMobile','',true);" id="keyDatesLink">Detractor</a></p>
+         
+          </div>
+             <div class="slds-tile__detail">
+               <dl class="dl--horizontal slds-text-body--small">
+                 <dt class="slds-dl--horizontal__label">
+                   <p class="slds-truncate"></p>
+                 </dt>
+               
+                  </dl>
+                </div>
+              </div>
+            </div>
+
+              </li>
+                <li class="slds-list__item">
+                  <div class="slds-media slds-tile slds-hint-parent">
+           <div class="slds-media__figure">
+             <svg aria-hidden="true" class="slds-icon slds-icon-utility-dash" style="background-color:#3583C9;">
+               <use xlink:href="{!URLFOR($Resource.salesforce_lightning,'/assets/icons/utility-sprite/svg/symbols.svg#dash')}"></use>
+             </svg>
+           </div>
+           <div class="slds-media__body">
+          <div class="slds-grid slds-grid--align-spread slds-has-flexi-truncate">
+            <p class="slds-tile__title slds-truncate"><a href="" onclick="roleTempFunc('Neutral',strID,'activeMobile','',true);" id="keyDatesLink">Neutral</a></p>
+         
+          </div>
+             <div class="slds-tile__detail">
+               <dl class="dl--horizontal slds-text-body--small">
+                 <dt class="slds-dl--horizontal__label">
+                   <p class="slds-truncate"></p>
+                 </dt>
+               
+                  </dl>
+                </div>
+              </div>
+            </div>
+
+              </li>
+                 <li class="slds-list__item">
+                  <div class="slds-media slds-tile slds-hint-parent">
+           <div class="slds-media__figure">
+             <svg aria-hidden="true" class="slds-icon slds-icon-action-question_post_action" style="background-color:#A3A3A3;">
+               <use xlink:href="{!URLFOR($Resource.salesforce_lightning,'/assets/icons/action-sprite/svg/symbols.svg#question_post_action')}"></use>
+             </svg>
+           </div>
+           <div class="slds-media__body">
+          <div class="slds-grid slds-grid--align-spread slds-has-flexi-truncate">
+            <p class="slds-tile__title slds-truncate"><a href="" onclick="roleTempFunc('Unknown',strID,'activeMobile','',true);" id="keyDatesLink">Unknown</a></p>
+         
+          </div>
+             <div class="slds-tile__detail">
+               <dl class="dl--horizontal slds-text-body--small">
+                 <dt class="slds-dl--horizontal__label">
+                   <p class="slds-truncate"></p>
+                 </dt>
+               
+                  </dl>
+                </div>
+              </div>
+            </div>
+
+              </li>
+
+                <li class="slds-list__item">
+                  <div class="slds-media slds-tile slds-hint-parent">
+           <div class="slds-media__figure">
+             <svg aria-hidden="true" class="slds-icon slds-icon-standard-contact">
+               <use xlink:href="{!URLFOR($Resource.salesforce_lightning,'/assets/icons/standard-sprite/svg/symbols.svg#contact')}"></use>
+             </svg>
+           </div>
+           <div class="slds-media__body">
+          <div class="slds-grid slds-grid--align-spread slds-has-flexi-truncate">
+            <p class="slds-tile__title slds-truncate"><a href="" onclick="sendtoContact();" id="contactLinktoSF">View Contact</a></p>
+         
+          </div>
+             <div class="slds-tile__detail">
+               <dl class="dl--horizontal slds-text-body--small">
+                 <dt class="slds-dl--horizontal__label">
+                   <p class="slds-truncate"></p>
+                 </dt>
+               
+                  </dl>
+                </div>
+              </div>
+            </div>
+
+              </li>
+              
+              
+              
+              
+                <li class="slds-list__item">
+                  <div class="slds-media slds-tile slds-hint-parent">
+           <!-- <div class="slds-media__figure">
+             <svg aria-hidden="true" class="slds-icon slds-icon-standard-contact">
+               <use xlink:href="{!URLFOR($Resource.salesforce_lightning,'/assets/icons/action-sprite/svg/symbols.svg#question_post_action')}"></use>
+             </svg>
+           </div> -->
+           <div class="slds-media__body">
+          <div class="slds-grid slds-grid--align-spread slds-has-flexi-truncate">
+            <p class="slds-tile__title slds-truncate"><a href="" id="keyDatesLink">Reports To</a></p>
+            <button onclick="changeDivs('firstOption')" class="slds-button slds-button--icon-border-filled slds-button--icon-x-small slds-shrink-none">
+                <svg aria-hidden="true" class="slds-button__icon slds-button__icon--hint slds-button__icon--small">
+                  <use xlink:href="{!URLFOR($Resource.salesforce_lightning,'/assets/icons/utility-sprite/svg/symbols.svg#right')}"></use>
+                </svg>
+                <span class="slds-assistive-text">Show More</span>
+              </button>
+          </div>
+             <div class="slds-tile__detail">
+               <dl class="dl--horizontal slds-text-body--small">
+                 <dt class="slds-dl--horizontal__label">
+                   <p class="slds-truncate"></p>
+                 </dt>
+               
+                  </dl>
+                </div>
+              </div>
+            </div>
+
+              </li>
+            </ul>
+            </div>
+            <div id="secondOption" style="display:none">
+            <ul class="slds-list--vertical slds-has-cards">
+                 <li class="slds-list__item">
+                  <div class="slds-media slds-tile slds-hint-parent">
+               <div class="slds-media__figure" onclick="changeDivs('secondOption')">
+                 <svg aria-hidden="true" class="slds-icon slds-icon-action-back">
+                   <use xlink:href="{!URLFOR($Resource.salesforce_lightning,'/assets/icons/action-sprite/svg/symbols.svg#back')}"></use>
+                 </svg>
+               </div>
+           <div class="slds-media__body">
+          <div class="slds-grid slds-grid--align-spread slds-has-flexi-truncate">
+            <p class="slds-tile__title slds-truncate"><a href="" id="keyDatesLink">Reports To</a></p>
+            <!-- <button class="slds-button slds-button--icon-border-filled slds-button--icon-x-small slds-shrink-none">
+                <svg aria-hidden="true" class="slds-button__icon slds-button__icon--hint slds-button__icon--small">
+                  <use xlink:href="{!URLFOR($Resource.salesforce_lightning,'/assets/icons/utility-sprite/svg/symbols.svg#right')}"></use>
+                </svg>
+                <span class="slds-assistive-text">Show More</span>
+              </button> -->
+          </div>
+             <div class="slds-tile__detail">
+               <dl class="dl--horizontal slds-text-body--small">
+                 <dt class="slds-dl--horizontal__label">
+                   <p class="slds-truncate"></p>
+                 </dt>
+               
+                  </dl>
+                </div>
+              </div>
+            </div>
+
+              </li>
+              <div id="reportsToWindow">
+              </div>
+              </ul>
+            </div>
+        </div>
+    </div>
+    </div>
+    </div>
+</div>
+</div>
+<!-- modal end -->
+
+<!-- </div> -->
+        <!-- <br/>
+        <apex:outputLink styleClass="back-to-previous-link" style="color:#015BA7;" value="/{!acc.Id}" rendered="{!IF(fullView == 'true', true, false)}">
+        &lt; &lt; Back to Previous Page
+    </apex:outputLink>
+    <br/> -->
+
+</div>
+</body>
+</html>
+</apex:page>

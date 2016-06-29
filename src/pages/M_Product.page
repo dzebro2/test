@@ -1,0 +1,497 @@
+<apex:page standardController="Account">
+<html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <head>
+	<apex:stylesheet value="{!URLFOR($Resource.TodayViewFiles,'css/bootstrap.min.css')}" />
+	<apex:stylesheet value="{!URLFOR($Resource.salesforce_lightning,'assets/styles/salesforce-lightning-design-system-vf.min.css')}" />
+	<apex:stylesheet value="{!URLFOR($Resource.TodayViewFiles,'css/jquery-ui.css')}" />
+
+
+
+	<apex:includeScript value="{!URLFOR($Resource.AccountMap,'AccountMapFiles/jquery-1.11.1.min.js')}"/>
+	<apex:includeScript value="{!URLFOR($Resource.TodayViewFiles,'js/bootstrap.min.js')}"/>
+	<apex:includeScript value="{!URLFOR($Resource.TodayViewFiles,'js/jquery-ui.js')}"/>
+ 	<apex:includeScript value="{!URLFOR($Resource.TodayViewFiles,'js/commonDD.js')}"/>
+     <apex:includeScript value="{!URLFOR($Resource.TodayViewFiles,'js/moment.min.js')}"/>
+	<script src="/soap/ajax/33.0/connection.js" type="text/javascript"></script> 
+
+	<script type="text/javascript">
+ 				(function(){try{var a=navigator.userAgent; 
+                var a = navigator.userAgent;
+                if ((a.indexOf('Salesforce') != -1) && (a.indexOf('iPhone') != -1 || a.indexOf('iPad') != -1) && (a.indexOf('Safari') == -1)) {
+                     var s = document.createElement('style');
+                     if ((a.indexOf('OS/8') != -1 || a.indexOf('OS 8') != -1)) {
+                         s.innerHTML = "html,html body{overflow: auto;-webkit-overflow-scrolling:touch;}body{position:absolute;left:0;right:0;top:0;bottom:0;}";
+                     } else if ((a.indexOf('OS/9') != -1 || a.indexOf('OS 9') != -1)) {
+                         s.innerHTML = "html,html body{overflow: auto;-webkit-overflow-scrolling:auto;}body{position:absolute;left:0;right:0;top:0;bottom:0;}";
+                     }
+                     document.getElementsByTagName('head')[0].appendChild(s);
+                }}catch(e){}})(); 
+
+
+
+                 var APRecords;
+			     var CRecords;
+			     var CRecordsProduct;
+			     var currentOrderAP='ASC';
+			     var currentOrderCR='ASC';
+
+			     	 $(document).ready(function(){ 
+			             
+			             run_waitMe('ios');
+			             sforce.connection.sessionId = '{!$Api.Session_ID}'; 
+			            
+			            
+			            var accountId = '{!Account.id}';
+			         
+			            //Query and sort Actively Purchasing Records
+			            var queryAPRecords ="SELECT Id, Name, CloseDate, Account.Name, (SELECT  Id, Name, Product__c, Product__r.Name, Product__r.Product_Category__c, Projected_Members__c, Business_Type__c, Current_Product__c, Benefit_Agreement__c, Benefit_Agreement__r.Product__c, Product__r.Family FROM Opportunity_Products__r ORDER BY Product__r.Name), (SELECT Id FROM Competitor_Relationships__r) FROM Opportunity WHERE IsClosed = false AND AccountId='"+accountId+"' ORDER BY CloseDate DESC LIMIT 200";
+			            var resultAPRecords = sforce.connection.query(queryAPRecords);
+			            APRecords = resultAPRecords.getArray("records");
+
+			           
+			            //Query and sort Current Records
+			            // var queryCRecords = "SELECT Id, Name, Group_Account__r.Id ,Group_Account__r.Name, Effective_Date__c, Product__r.Product_Category__c, Product__c, Product__r.Id,Product__r.Name, Business_Type__c, Renewal_Date__c, Members__c, Product__r.Family, (SELECT Id, Name, Opportunity_Name__c, Opportunity_Name__r.CloseDate,Opportunity_Name__r.Name, Projected_Members__c, Current_Product__c FROM Opportunity_Products__r WHERE Opportunity_Name__r.IsClosed = true ORDER BY CreatedDate DESC) FROM Benefit_Agreement__c WHERE Group_Account__c='"+accountId+"' ORDER BY Product__r.Product_Category__c ASC"; // WHERE Effective_Date__c < TODAY";
+
+			            var queryCRecords = "select  Id, Product__r.Product_Category__c, Product__r.HCSC_State__c,Product__c, Product__r.Name ,Business_Type__c, Renewal_Date__c, Members__c, Product__r.Family,(   select  Id, Name, Opportunity_Name__c, Opportunity_Name__r.Name, Projected_Members__c, Current_Product__c from  Opportunity_Products__r where   Opportunity_Name__r.IsClosed = true order by CreatedDate DESC ) from    Benefit_Agreement__c where   Group_Account__c = '"+accountId+"' and Effective_Date__c < TODAY ORDER BY Product_Category__c ASC";
+
+			            var queryCRrecordsProduct = "select  Id, Product__r.Id, Product__r.Product_Category__c, Product__c, Product__r.Name, Business_Type__c, Renewal_Date__c, Members__c, Carrier__r.Competitor_Account__c, Carrier__r.Competitor_Account__r.Name, Carrier__r.Opportunity__c, Product__r.Family,Product__r.HCSC_State__c from    Competitor_Products__c  where   Carrier__r.Group_Account__c = '"+accountId+"' and Effective_Date__c < TODAY ORDER BY Product_Category__c ASC"
+			            	
+
+			            var resultCRecords = sforce.connection.query(queryCRecords);
+			            CRecords = resultCRecords.getArray("records");
+
+			            var resultCRecordsProduct = sforce.connection.query(queryCRrecordsProduct);
+			            CRecordsProduct = resultCRecordsProduct.getArray("records");
+
+			            $('#container').waitMe('hide');    
+			            fillAPRecords();
+			            fillCRecords();
+			           
+			      
+
+			      });
+
+				function changeSortAP(){
+					console.log(currentOrderAP);
+						//cosole.log(currentOrderAP);
+					 if (currentOrderAP=='ASC'){
+
+					 	currentOrderAP='DESC';
+					 	$("#APRecordList").empty();
+					 		 	fillAPRecords();
+
+					 }else{
+					 	currentOrderAP='ASC';
+					 	$("#APRecordList").empty();
+					 	 	fillAPRecords();
+					 }
+				
+				}
+
+				function changeSortCurrentP(){
+						
+					 if (currentOrderCR=='ASC'){
+					 	currentOrderCR='DESC';
+					 	$("#CRecordList").empty();
+					 		fillCRecords();
+				
+
+					 }else{
+					 	currentOrderCR='ASC';
+					 	$("#CRecordList").empty();
+					 		fillCRecords();
+				
+
+					 }
+					
+
+				}
+				function fillAPRecords(){
+					run_waitMe('ios');	
+					 var recordsToSort = APRecords;
+					 //console.log(recordsToSort);
+	              // console.log(recordsToSort);
+
+	               if (currentOrderAP=='ASC'){
+	               	for (var i=0; i<recordsToSort.length; i++) {
+
+	               		var rec = recordsToSort[i];
+
+                        var OppId = "'"+rec.Id+"'";
+                         var divId = 'div'+rec.Id;
+                        //console.log(sortCondition);                   
+                            if(rec.Opportunity_Products__r != null){
+                                var prodRec = rec.Opportunity_Products__r.records;
+                                
+                              
+                                if(rec.Opportunity_Products__r.size == 1){
+                                	//console.log(rec.Opportunity_Products__r.records.Product__r.Name);
+                                    //console.log('condition 1');
+                                    var prodId = "'"+prodRec.Id+"'";
+                                    var prodIddiv = prodRec.Id;
+                                      var productName = "";
+                                      
+                                        var projectedMembers = "";
+                                        productName= checkForNull(rec.Opportunity_Products__r.records.Product__r.Name);
+                                        //console.log(prodRec.Projected_Members__c);
+                                       	projectedMembers =parseInt(prodRec.Projected_Members__c) || " ";
+                                                                            
+                                 		
+                                      
+                                        $("#APRecordList").append('<div class="slds"> <div class="recs"> <div class="slds-card"> <div class="slds-card__header slds-grid"> <div class="slds-media slds-media--center slds-has-flexi-truncate"> <div class="slds-media__figure"> <svg aria-hidden="true" class="slds-icon slds-icon-standard-contact slds-icon--small"> <use xlink:href="{!URLFOR($Resource.salesforce_lightning,'/assets/icons/standard-sprite/svg/symbols.svg#opportunity')}"></use> </svg> </div><div class="slds-media__body"> <h2 onclick="sforce.one.navigateToSObject('+ OppId + ')" class="slds-text-heading--small slds-truncate">'+ rec.Name + '</h2> </div></div><div class="slds-no-flex"> <div class="slds-button-group"></div></div></div><div class="slds-card__body makeWhite"> <div class="slds-media slds-tile"> <div class="slds-media__figure"> </div><div class="slds-media__body"> <p class="slds-tile__title slds-truncate"><a href="#" onclick="sforce.one.navigateToSObject('+ prodId + ')" class="slds-list__item">Proposed Product: '+ productName + '</a> </p><div class="slds-tile__detail slds-text-body--small"> <p class="slds-truncate">Due Date: '+moment(rec.CloseDate).format('MM/DD/YYYY')  +'</p></div><div class="slds-tile__detail slds-text-body--small"> <p class="slds-truncate">Projected Members: '+checkForNull(projectedMembers) +'</p></div></div></div></div></div></div></div><br/>');
+                                  
+                                     
+                                }else{
+                                    //console.log('condition 2');
+                                    for(var j=0; j<rec.Opportunity_Products__r.size; j++){
+                                    	//console.log(rec);
+                                        var prodRec = rec.Opportunity_Products__r.records[j];
+                                        var prodId = "'" + prodRec.Id + "'";
+                                       
+                                         var productName = "";
+                                        
+                                        var projectedMembers = "";
+                                        //.log(prodRec);
+                                        if (rec.Opportunity_Products__r != null){
+                                           productName= checkForNull (prodRec.Product__r.Name);
+                                           
+                                            projectedMembers = parseInt(prodRec.Projected_Members__c) || " ";
+
+                                        }
+
+                                        if($("#" + divId).length != 0){
+                                        $("#"+ divId).append('<div class="slds-media slds-tile"><div class="slds-media__figure"> </div><div class="slds-media__body"> <p class="slds-tile__title slds-truncate"><a href="#" onclick="sforce.one.navigateToSObject('+ prodId + ')" class="slds-list__item">Proposed Product: '+ productName + '</a> </p><div class="slds-tile__detail slds-text-body--small"> <p class="slds-truncate">Due Date: '+moment(rec.CloseDate).format('MM/DD/YYYY') +'</p></div><div class="slds-tile__detail slds-text-body--small"> <p class="slds-truncate">Projected Members: '+checkForNull(projectedMembers) +'</p></div></div>');
+                                        }else{
+
+                                             $("#APRecordList").append('<div class="slds"> <div class="recs"> <div class="slds-card"> <div class="slds-card__header slds-grid"> <div class="slds-media slds-media--center slds-has-flexi-truncate"> <div class="slds-media__figure"> <svg aria-hidden="true" class="slds-icon slds-icon-standard-contact slds-icon--small"> <use xlink:href="{!URLFOR($Resource.salesforce_lightning,'/assets/icons/standard-sprite/svg/symbols.svg#opportunity')}"></use> </svg> </div><div class="slds-media__body"> <h2 onclick="sforce.one.navigateToSObject('+ OppId + ')" class="slds-text-heading--small slds-truncate">'+ rec.Name + '</h2> </div></div><div class="slds-no-flex"> <div class="slds-button-group"></div></div></div><div id="'+divId+'" class="slds-card__body makeWhite"> <div class="slds-media slds-tile"> <div class="slds-media__figure"> </div><div class="slds-media__body"> <p class="slds-tile__title slds-truncate"><a href="#" onclick="sforce.one.navigateToSObject('+ prodId + ')" class="slds-list__item">Proposed Product: '+ productName + '</a> </p><div class="slds-tile__detail slds-text-body--small"> <p class="slds-truncate">Due Date: '+moment(rec.CloseDate).format('MM/DD/YYYY') +'</p></div><div class="slds-tile__detail slds-text-body--small"> <p class="slds-truncate">Projected Members: '+checkForNull(projectedMembers) +'</p></div></div></div></div></div></div></div><br/>');
+                                        }
+
+
+                                        // $("#APRecordList").append('<div class="recs"><div class="panel panel-default"><div class="panel-heading" onclick="sforce.one.navigateToSObject('+OppId+')">'+rec.Name+'<div class="pull-right">More<span class="glyphicon glyphicon-chevron-right pull-right" aria-hidden="true"></span></div></div><div class="panel-body">'+rec.Account.Name+'<hr>'+rec.CloseDate+'</div></div></div>');
+
+                                        // $("#APRecordList").append('<div class="recs"><div class="panel panel-default"><div class="panel-heading" onclick="sforce.one.navigateToSObject('+OppId+')">'+rec.Name+'<div class="pull-right">More<span class="glyphicon glyphicon-chevron-right pull-right" aria-hidden="true"></span></div></div><div class="panel-body">'+rec.Account.Name+'<hr>'+rec.CloseDate+'</div></div></div>');
+                                     
+
+                                        
+                                    } 
+                           } 
+                          }    
+
+	               		}
+	               	}else{
+	               	   //recordsToSort = APRecords;
+	               	   //console.log(recordsToSort);
+	               		for (var i=APRecords.length-1; i>=0; i--) {
+
+	               				
+	               		//onsole.log(APRecords);
+	               		//console.log(rec);		
+	               		var rec = APRecords[i];
+	               		//console.log(APRecords);
+	               		//console.log(rec);
+                        var OppId = "'"+rec.Id+"'";
+                         var divId = 'div'+rec.Id;
+                        //console.log(sortCondition);                   
+                            if(rec.Opportunity_Products__r != null){
+
+                                var prodRec = rec.Opportunity_Products__r.records;
+                                
+                              
+                                if(rec.Opportunity_Products__r.size == 1){
+                                    //console.log('condition 1');
+                                    var prodId = "'"+prodRec.Id+"'";
+                                    var prodIddiv = prodRec.Id;
+                                      var productName = "";
+                                      
+                                        var projectedMembers = "";
+                                           productName= checkForNull(rec.Opportunity_Products__r.records.Product__r.Name);
+                                        projectedMembers = parseInt(prodRec.Projected_Members__c) || " ";
+                                 		
+                                      
+                                        $("#APRecordList").append('<div class="slds"> <div class="recs"> <div class="slds-card"> <div class="slds-card__header slds-grid"> <div class="slds-media slds-media--center slds-has-flexi-truncate"> <div class="slds-media__figure"> <svg aria-hidden="true" class="slds-icon slds-icon-standard-contact slds-icon--small"> <use xlink:href="{!URLFOR($Resource.salesforce_lightning,'/assets/icons/standard-sprite/svg/symbols.svg#opportunity')}"></use> </svg> </div><div class="slds-media__body"> <h2 onclick="sforce.one.navigateToSObject('+ OppId + ')" class="slds-text-heading--small slds-truncate">'+ rec.Name + '</h2> </div></div><div class="slds-no-flex"> <div class="slds-button-group"></div></div></div><div class="slds-card__body makeWhite"> <div class="slds-media slds-tile"> <div class="slds-media__figure"> </div><div class="slds-media__body"> <p class="slds-tile__title slds-truncate"><a href="#" onclick="sforce.one.navigateToSObject('+ prodId + ')" class="slds-list__item">Proposed Product: '+ productName + '</a> </p><div class="slds-tile__detail slds-text-body--small"> <p class="slds-truncate">Due Date: '+moment(rec.CloseDate).format('MM/DD/YYYY')  +'</p></div><div class="slds-tile__detail slds-text-body--small"> <p class="slds-truncate">Projected Members: '+checkForNull(projectedMembers) +'</p></div></div></div></div></div></div></div><br/>');
+                                  
+                                     
+                                }else{
+                                    //console.log('condition 2');
+                                    for(var j=0; j<rec.Opportunity_Products__r.size; j++){
+                                    	//console.log(rec);
+                                        var prodRec = rec.Opportunity_Products__r.records[j];
+                                        var prodId = "'" + prodRec.Id + "'";
+                                       
+                                         var productName = "";
+                                        
+                                        var projectedMembers = "";
+                                        if (rec.Opportunity_Products__r != null){
+                                         productName= checkForNull (prodRec.Product__r.Name);
+                                           
+                                            projectedMembers = parseInt(prodRec.Projected_Members__c) || " ";
+
+                                        }
+
+                                        if($("#" + divId).length != 0){
+                                        $("#"+ divId).append('<div class="slds-media slds-tile"><div class="slds-media__figure"> </div><div class="slds-media__body"> <p class="slds-tile__title slds-truncate"><a href="#" onclick="sforce.one.navigateToSObject('+ prodId + ')" class="slds-list__item">Proposed Product: '+ productName + '</a> </p><div class="slds-tile__detail slds-text-body--small"> <p class="slds-truncate">Due Date: '+moment(rec.CloseDate).format('MM/DD/YYYY') +'</p></div><div class="slds-tile__detail slds-text-body--small"> <p class="slds-truncate">Projected Members: '+checkForNull(projectedMembers) +'</p></div></div>');
+                                        }else{
+
+                                             $("#APRecordList").append('<div class="slds"> <div class="recs"> <div class="slds-card"> <div class="slds-card__header slds-grid"> <div class="slds-media slds-media--center slds-has-flexi-truncate"> <div class="slds-media__figure"> <svg aria-hidden="true" class="slds-icon slds-icon-standard-contact slds-icon--small"> <use xlink:href="{!URLFOR($Resource.salesforce_lightning,'/assets/icons/standard-sprite/svg/symbols.svg#opportunity')}"></use> </svg> </div><div class="slds-media__body"> <h2 onclick="sforce.one.navigateToSObject('+ OppId + ')" class="slds-text-heading--small slds-truncate">'+ rec.Name + '</h2> </div></div><div class="slds-no-flex"> <div class="slds-button-group"></div></div></div><div id="'+divId+'" class="slds-card__body makeWhite"> <div class="slds-media slds-tile"> <div class="slds-media__figure"> </div><div class="slds-media__body"> <p class="slds-tile__title slds-truncate"><a href="#" onclick="sforce.one.navigateToSObject('+ prodId + ')" class="slds-list__item">Proposed Product: '+ productName + '</a> </p><div class="slds-tile__detail slds-text-body--small"> <p class="slds-truncate">Due Date: '+moment(rec.CloseDate).format('MM/DD/YYYY') +'</p></div><div class="slds-tile__detail slds-text-body--small"> <p class="slds-truncate">Projected Members: '+checkForNull(projectedMembers) +'</p></div></div></div></div></div></div></div><br/>');
+                                        }
+
+
+                                        // $("#APRecordList").append('<div class="recs"><div class="panel panel-default"><div class="panel-heading" onclick="sforce.one.navigateToSObject('+OppId+')">'+rec.Name+'<div class="pull-right">More<span class="glyphicon glyphicon-chevron-right pull-right" aria-hidden="true"></span></div></div><div class="panel-body">'+rec.Account.Name+'<hr>'+rec.CloseDate+'</div></div></div>');
+
+                                        // $("#APRecordList").append('<div class="recs"><div class="panel panel-default"><div class="panel-heading" onclick="sforce.one.navigateToSObject('+OppId+')">'+rec.Name+'<div class="pull-right">More<span class="glyphicon glyphicon-chevron-right pull-right" aria-hidden="true"></span></div></div><div class="panel-body">'+rec.Account.Name+'<hr>'+rec.CloseDate+'</div></div></div>');
+                                     
+
+                                        
+                                    } 
+                           } 
+                          }    
+
+
+	               			}
+
+	               	}
+                		
+                	$('#container').waitMe('hide');           
+                    }
+				
+				
+
+				
+				function fillCRecords()
+				{
+					run_waitMe('ios');
+					 if (currentOrderCR=='ASC'){
+
+					 	 //console.log(CRecordsProduct);
+					 	//data for Comptetitors products
+					 	//if(CRecordsProduct.Product__r !=null){
+					 		//console.log('uf');
+					 	
+					 	//}
+
+					 	//end of competitors products
+					 	 var recordsToSort = CRecords;
+
+		               // console.log(recordsToSort);
+		               
+		                for (var i=0; i<recordsToSort.length; i++) {
+
+                        var rec = recordsToSort[i];
+                       		// console.log(sortCondition);                   
+
+                            // if(rec.Opportunity_Products__r != null){
+                             //  var prodRec = rec.Opportunity_Products__r.records;
+                              // console.log(i);
+                                // console.log('condition 1');
+                                		if (rec.Product__r != null){
+                                        //console.log('sort 1');
+                                          if($("#" + rec.Product__c).length != 0){
+                                           var numberofHA = $("#banumber"+ rec.Product__c).text();
+                                           $("#banumber"+ rec.Product__c).text(parseInt(numberofHA) + 1);
+                                          
+                                            }else{
+
+                                           $("#CRecordList").append('<div class="slds"> <div class="recs"> <div class="slds-card"> <div class="slds-card__header slds-grid"> <div class="slds-media slds-media--center slds-has-flexi-truncate"> <div class="slds-media__figure"> <svg aria-hidden="true" class="slds-icon slds-icon-standard-contact slds-icon--small"> <use xlink:href="{!URLFOR($Resource.salesforce_lightning,'/assets/icons/standard-sprite/svg/symbols.svg#product')}"></use> </svg> </div><div class="slds-media__body"> <h2 class="slds-text-heading--small slds-truncate">'+ rec.Product__r.Name + '</h2> </div></div><div class="slds-no-flex"> <div class="slds-button-group"></div></div></div><div id="'+ rec.Product__c +'" class="slds-card__body makeWhite"> <div class="slds-media slds-tile"> <div class="slds-media__figure"> </div><div class="slds-media__body"> <p class="slds-tile__title slds-truncate">Product Category: '+ rec.Product__r.Product_Category__c + ' </p><div class="slds-tile__detail slds-text-body--small"><p class="slds-truncate">Members: '+ checkForNull(rec.Members__c) +'</p> <p class="slds-truncate">Renewal Date: '+ moment(checkForNull(rec.Renewal_Date__c)).format('MM/DD/YYYY')+'</p><p class="slds-truncate"># of BA: <span id="banumber'+ rec.Product__c +'">1</span></p><p class="slds-truncate"> HCSC State: '+ checkForNull(rec.Product__r.HCSC_State__c) +'</p></div></div></div></div></div></div></div><br/>');
+
+                                       }
+                                   }
+                 			}
+                 				//console.log(CRecordsProduct);
+                 				for(var x=0;x<CRecordsProduct.length;x++){
+
+					 			if(CRecordsProduct[x].Product__r !=null){ 
+					 			 if($("#" + CRecordsProduct[x].Product__r.Id).length != 0){
+                                           	
+                                           	 var numberofHA = $("#banumber"+ rec.Product__c).text();
+                                           $("#banumber"+ rec.Product__c).text(parseInt(numberofHA) + 1);
+
+                                            // $("#"+ CRecordsProduct[x].Product__r.Id).append('<div class="slds-media slds-tile"><div class="slds-media__figure"> </div><div class="slds-media__body"> <p class="slds-tile__title slds-truncate">Product Category: '+  CRecordsProduct[x].Product__r.Product_Category__c + '</a> </p><div class="slds-tile__detail slds-text-body--small"> <p class="slds-truncate">Members: '+ checkForNull(CRecordsProduct[x].Members__c) +'</p><p class="slds-truncate">Renewal Date: '+ moment(checkForNull(CRecordsProduct[x].Renewal_Date__c)).format('MM/DD/YYYY') +'</p><p class="slds-truncate"># of BA: <span id="banumber'+ CRecordsProduct[x].Product__r.Id +'">'+ ( $("#banumber"+ CRecordsProduct[x].Product__r.Id).text() + 1) + '</span></p></div></div>');
+                                            }else{
+
+                                           $("#CRecordList").append('<div class="slds"> <div class="recs"> <div class="slds-card"> <div class="slds-card__header slds-grid"> <div class="slds-media slds-media--center slds-has-flexi-truncate"> <div class="slds-media__figure"> <svg aria-hidden="true" class="slds-icon slds-icon-standard-contact slds-icon--small"> <use xlink:href="{!URLFOR($Resource.salesforce_lightning,'/assets/icons/standard-sprite/svg/symbols.svg#product')}"></use> </svg> </div><div class="slds-media__body"> <h2 class="slds-text-heading--small slds-truncate">'+ CRecordsProduct[x].Product__r.Name + '</h2> </div></div><div class="slds-no-flex"> <div class="slds-button-group"></div></div></div><div id="'+ CRecordsProduct[x].Product__r.Id +'" class="slds-card__body makeWhite"> <div class="slds-media slds-tile"> <div class="slds-media__figure"> </div><div class="slds-media__body"> <p class="slds-tile__title slds-truncate">Product Category: '+ CRecordsProduct[x].Product__r.Product_Category__c + '</a> </p><div class="slds-tile__detail slds-text-body--small"><p class="slds-truncate">Members: '+ checkForNull(CRecordsProduct[x].Members__c) +'</p> <p class="slds-truncate">Renewal Date: '+ moment(checkForNull(CRecordsProduct[x].Renewal_Date__c)).format('MM/DD/YYYY')  +'</p><p class="slds-truncate"># of BA:' + CRecordsProduct[x].Product__r.Id +'</p><p class="slds-truncate">HCSC State: <span id="banumber'+ checkForNull(rec.Product__r.HCSC_State__c) +'">1</span></p></div></div></div></div></div></div></div><br/>');
+                                   }
+					 		}
+					 	}
+
+					 }
+					 else{
+
+
+
+					 	// console.log(CRecordsProduct);
+					 	//data for Comptetitors products
+					 	//if(CRecordsProduct.Product__r !=null){
+					 		//console.log('uf');
+					 		
+
+					 	//}
+
+					 	//end of competitors products
+					 var recordsToSort = CRecords;
+
+		               // console.log(recordsToSort);
+		               
+		                for (var i=recordsToSort.length-1; i>=0; i--) {
+
+                        var rec = recordsToSort[i];
+                       		// console.log(sortCondition);                   
+
+                            // if(rec.Opportunity_Products__r != null){
+                             //  var prodRec = rec.Opportunity_Products__r.records;
+                              // console.log(i);
+                                // console.log('condition 1');
+                                
+                                        //console.log('sort 1');
+                                        if (rec.Product__r != null){
+                                          if($("#" + rec.Product__c).length != 0){
+                                           var numberofHA = $("#banumber"+ rec.Product__c).text();
+                                           $("#banumber"+ rec.Product__c).text(parseInt(numberofHA) + 1);
+                                           // console.log(parseInt(numberofHA) + 1);
+                                        
+                                            // $("#"+ rec.Product__c).append('<div class="slds-media slds-tile"><div class="slds-media__figure"> </div><div class="slds-media__body"> <p class="slds-tile__title slds-truncate">Product Category: '+ rec.Product__r.Product_Category__c + ' </p><div class="slds-tile__detail slds-text-body--small"> <p class="slds-truncate">Members: '+ checkForNull(rec.Members__c) +'</p> <p class="slds-truncate">Renewal Date: '+ moment(checkForNull(rec.Renewal_Date__c)).format('MM/DD/YYYY')+'</p><p class="slds-truncate"># of BA: <span id="banumber'+ rec.Product__c +'">'+( $("#banumber"+ rec.Product__c).text() + 1)+'</span></p></div></div>');
+                                            }else{
+
+                                           $("#CRecordList").append('<div class="slds"> <div class="recs"> <div class="slds-card"> <div class="slds-card__header slds-grid"> <div class="slds-media slds-media--center slds-has-flexi-truncate"> <div class="slds-media__figure"> <svg aria-hidden="true" class="slds-icon slds-icon-standard-contact slds-icon--small"> <use xlink:href="{!URLFOR($Resource.salesforce_lightning,'/assets/icons/standard-sprite/svg/symbols.svg#product')}"></use> </svg> </div><div class="slds-media__body"> <h2 class="slds-text-heading--small slds-truncate">'+ rec.Product__r.Name + '</h2> </div></div><div class="slds-no-flex"> <div class="slds-button-group"></div></div></div><div id="'+ rec.Product__c +'" class="slds-card__body makeWhite"> <div class="slds-media slds-tile"> <div class="slds-media__figure"> </div><div class="slds-media__body"> <p class="slds-tile__title slds-truncate">Product Category: '+ rec.Product__r.Product_Category__c + ' </p><div class="slds-tile__detail slds-text-body--small"><p class="slds-truncate">Members: '+ checkForNull(rec.Members__c) +'</p> <p class="slds-truncate">Renewal Date: '+ moment(checkForNull(rec.Renewal_Date__c)).format('MM/DD/YYYY')+'</p><p class="slds-truncate"># of BA: <span id="banumber'+ rec.Product__c +'">1</span></p><p class="slds-truncate"> HCSC State: '+ checkForNull(rec.Product__r.HCSC_State__c) +'"</p></div></div></div></div></div></div></div><br/>');
+                                       }
+                         
+                          	}
+                              
+                           	 
+                 			}
+                 			for(var x=CRecordsProduct.length-1;x>=0;x--){
+
+					 			if(CRecordsProduct[x].Product__r !=null){ 
+					 			 if($("#" + CRecordsProduct[x].Product__r.Id).length != 0){
+                                           
+                                              var numberofHA = $("#banumber"+ rec.Product__c).text();
+                                           $("#banumber"+ rec.Product__c).text(parseInt(numberofHA) + 1);
+
+                                            // $("#"+ CRecordsProduct[x].Product__r.Id).append('<div class="slds-media slds-tile"><div class="slds-media__figure"> </div><div class="slds-media__body"> <p class="slds-tile__title slds-truncate">Product Category: '+  CRecordsProduct[x].Product__r.Product_Category__c + '</a> </p><div class="slds-tile__detail slds-text-body--small"> <p class="slds-truncate">Members: '+ checkForNull(CRecordsProduct[x].Members__c) +'</p><p class="slds-truncate">Renewal Date: '+ moment(checkForNull(CRecordsProduct[x].Renewal_Date__c)).format('MM/DD/YYYY') +'</p><p class="slds-truncate"># of BA: <span id="banumber'+ CRecordsProduct[x].Product__r.Id +'">'+ ( $("#banumber"+ CRecordsProduct[x].Product__r.Id).text() + 1) + '</span></p></div></div>');
+                                            }else{
+
+                                           $("#CRecordList").append('<div class="slds"> <div class="recs"> <div class="slds-card"> <div class="slds-card__header slds-grid"> <div class="slds-media slds-media--center slds-has-flexi-truncate"> <div class="slds-media__figure"> <svg aria-hidden="true" class="slds-icon slds-icon-standard-contact slds-icon--small"> <use xlink:href="{!URLFOR($Resource.salesforce_lightning,'/assets/icons/standard-sprite/svg/symbols.svg#product')}"></use> </svg> </div><div class="slds-media__body"> <h2 class="slds-text-heading--small slds-truncate">'+ CRecordsProduct[x].Product__r.Name + '</h2> </div></div><div class="slds-no-flex"> <div class="slds-button-group"></div></div></div><div id="'+ CRecordsProduct[x].Product__r.Id +'" class="slds-card__body makeWhite"> <div class="slds-media slds-tile"> <div class="slds-media__figure"> </div><div class="slds-media__body"> <p class="slds-tile__title slds-truncate">Product Category: '+ CRecordsProduct[x].Product__r.Product_Category__c + '</a> </p><div class="slds-tile__detail slds-text-body--small"> <p class="slds-truncate">Members: '+ checkForNull(CRecordsProduct[x].Members__c) +'</p><p class="slds-truncate">Renewal Date: '+ moment(checkForNull(CRecordsProduct[x].Renewal_Date__c)).format('MM/DD/YYYY')  +'</p><p class="slds-truncate"># of BA: <span id="banumber'+ CRecordsProduct[x].Product__r.Id +'">1</span></p><p class="slds-truncate">HCSC State: '+ checkForNull(CRecordsProduct[x].Product__r.HCSC_State__c) +'</p></div></div></div></div></div></div></div><br/>');
+                                   }
+					 		}
+					 	}
+
+					 }
+
+
+
+					$('#container').waitMe('hide'); 
+				}
+
+                 function filterData(){
+                
+                   var val = $("#text2Search").val().toLowerCase();
+                    $(".recs").hide();
+                    $(".recs").each(function(){
+                        var text = $(this).text().toLowerCase();
+                        if(text.indexOf(val) != -1){
+                            $(this).show();
+                        }
+                    });
+            }
+		        function clearSearch(){
+		            $(".recs").show();
+		            $("#text2Search").val('');
+		        }
+
+		          $(function() {
+				   $("li[name=navli]").click(function() {
+
+				      $(".slds-tabs__item").attr("tabindex","-1");
+				      $(".slds-tabs__item").removeClass("slds-active");
+				      // add class to the one we clicked
+				      $(this).addClass("slds-active");
+				       $(this).attr("tabindex","0");
+				       $(".slds-tabs__content").removeClass("slds-show");
+				       $(".slds-tabs__content").addClass("slds-hide");
+				       $("#" + $(this).attr("divid")).removeClass("slds-hide");
+				       $("#" + $(this).attr("divid")).addClass("slds-show");
+				     
+				   });
+				});
+
+				   $(function() {
+				   $(".slds-dropdown__item").click(function(){
+				        $(".svgShowHide").hide();
+				        $( this).find( ".svgShowHide" ).show();
+				        $(".slds-dropdown__item").removeClass('slds-is-selected');
+				        $(this).addClass('slds-is-selected');
+				        console.log(this);
+				   });
+				   });
+
+	 function run_waitMe(effect){
+        $('#container').waitMe({
+            effect: effect,
+            text: 'Please wait...',
+            bg: 'rgba(255,255,255,0.7)',
+            color:'#000',
+            sizeW:'',
+            sizeH:'',
+            source: 'img.svg'
+        });
+    }
+
+
+	</script>
+
+	<style type="text/css">
+ 		.makeWhite {
+     
+          background-color: white;
+          border-top: 1px solid #ffffff;
+          border-color: #ffffff;
+		}
+
+		.slds .slds-card{
+			    border: 1px solid #f4f6f9;
+		}
+	    
+	</style>
+
+</head>
+<body style="background-color:#F4F6F9;">
+<div class="container">
+	<div class="slds">
+		
+            <div class="slds-form-element">
+                    <label class="slds-form-element__label" for="sample1"></label>
+                    <div class="slds-form-element__control">
+                      <input id="text2Search" onkeyup="filterData()" class="slds-input" type="text" placeholder="Filter..." />
+                    </div>
+          </div>
+             <div class="slds-tabs--default">
+                <ul class="slds-tabs--default__nav" role="tablist">
+                  <li name="navli" class="slds-tabs__item slds-text-heading--label slds-active" divid="tab-default-1" title="tab-default-1" role="presentation"><a href="#" role="tab" tabindex="0" aria-selected="true" aria-controls="tab-default-1">Actively Purchasing</a></li>
+                  <li name="navli" class="slds-tabs__item slds-text-heading--label" divid="tab-default-2" title="Item Two" role="presentation"><a href="#" role="tab" tabindex="-1" aria-selected="false"  aria-controls="tab-default-2">Current</a></li>
+                </ul>
+                <div id="tab-default-1" class="slds-tabs__content slds-show" role="tabpanel">
+                	<button id="sortAPbtn" onclick="changeSortAP()" class="slds-button slds-button--icon-bare">
+					  <svg aria-hidden="true" class="slds-button__icon slds-button-space-left slds-button__icon--large">
+					    <use xlink:href="{!URLFOR($Resource.salesforce_lightning,'/assets/icons/action-sprite/svg/symbols.svg#sort')}"></use>
+					  </svg>
+					  <span class="slds-assistive-text">close</span>
+					</button>
+                 	<div id="APRecordList"></div>   
+                 </div>
+                 <div id="tab-default-2" class="slds-tabs__content slds-hide" role="tabpanel">
+                 	<button id="sortCurrentbtn" onclick="changeSortCurrentP()" class="slds-button slds-button--icon-bare">
+					  <svg aria-hidden="true" class="slds-button__icon slds-button-space-left slds-button__icon--large">
+					    <use xlink:href="{!URLFOR($Resource.salesforce_lightning,'/assets/icons/action-sprite/svg/symbols.svg#sort')}"></use>
+					  </svg>
+					  <span class="slds-assistive-text">close</span>
+					</button>
+                     <div class="list-group" id="CRecordList"></div>
+                 </div>
+             </div> 
+ </div>
+ 	</div>
+                  
+</body>
+
+  <apex:includeScript value="{!URLFOR($Resource.TodayViewFiles,'js/waitMe.min.js')}"/>
+  </html>
+</apex:page>

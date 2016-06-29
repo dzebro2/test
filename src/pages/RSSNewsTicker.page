@@ -1,0 +1,247 @@
+<apex:page showHeader="false" sidebar="false" standardController="Account" extensions="RSSNewsTickerController">
+    <apex:includeScript value="https://www.google.com/jsapi" />
+<!--     <apex:styleSheet value="{!$Resource.FeedEkCSS}"/> -->
+    <apex:stylesheet value="{!URLFOR($Resource.AdvancedNewsTicker,'jquery-advanced-news-ticker-master/assets/css/bootstrap.css')}" />
+    <apex:stylesheet value="{!URLFOR($Resource.AdvancedNewsTicker,'jquery-advanced-news-ticker-master/assets/css/main.css')}" />
+    <apex:stylesheet value="{!URLFOR($Resource.AdvancedNewsTicker,'jquery-advanced-news-ticker-master/assets/css/font-awesome.min.css')}" />
+    <apex:stylesheet value="{!URLFOR($Resource.AdvancedNewsTicker,'jquery-advanced-news-ticker-master/assets/css/prism.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.AdvancedNewsTicker,'jquery-advanced-news-ticker-master/assets/css/jquery.mCustomScrollbar.css')}" />
+    <apex:includeScript value="{!URLFOR($Resource.Customer360,'scripts/vendor/jquery-1.8.3.min.js')}" />
+   <!-- <apex:includeScript value="{!$Resource.FeedEkJs}"/> -->
+    
+    <apex:includeScript value="{!URLFOR($Resource.AdvancedNewsTicker,'jquery-advanced-news-ticker-master/assets/js/jquery.newsTicker.js')}"/>
+    
+    
+    <style>
+         body {
+            margin-top:0px !important;
+        }
+        #nt-example1-container i{
+            margin:0px;
+        }
+        #nt-example2-container {
+            margin-top:0px !important;
+            margin-bottom:0px;
+        }
+        #nt-example2-container i{
+            margin:0px;
+        }
+        #nt-example1-container li {
+            background-color : #FAF9F8;
+        }
+        #nt-example2-container li {
+            font-size:14px;
+            font-family:'Arial','Helvetica',sans-serif;
+            background-color : #FAF9F8;
+            padding:5px;
+        }
+        #nt-example2 li{
+            height:auto !important;
+        }
+        #nt-example2-container label {
+            font-size:12px;
+            font-family:'Arial','Helvetica',sans-serif;
+        }
+        label {
+            font-weight: normal;
+        }
+        .internalNewsRadio input {
+            margin-left:10px;
+        }
+        .internalNewsRadio label {
+            margin-left:5px;
+        }
+        .externalNewsRadio input {
+            margin-left:10px;
+        }
+        .externalNewsRadio label {
+            margin-left:5px;
+        }
+        #nt-example1, #nt-example2 {
+            max-width:98% !important;
+        }
+        .itemDate{
+            font-size:10px !important;
+        }
+        .indicator-box{
+            display:inline-block;
+            width:14px;
+            height:14px;
+            vertical-align:middle;
+        }
+        .chkbox{
+            vertical-align:middle;
+            width:16px;
+            height:16px;
+        }
+        ul li, ol li {
+            margin:0px !important;
+        }
+        .filters-panel{
+            display: block;
+            padding-left: 20px;
+        }
+        .itemDate{
+            line-height:15px;
+        }
+        #nt-example2-container{
+            height:380px;
+        }
+       #divRss ul{
+            height:340px !important;
+        }
+    </style>
+    
+
+    <apex:outputPanel id="newsTickerScript">
+        <script type="text/javascript">
+            var accountName = '{!JSENCODE(accountName)}';
+            var industryName = '{!JSENCODE(industry)}';
+            var hcscState = '{!JSENCODE(hcscState)}';
+            
+            $(document).ready(function(){
+                check('{!$Component.formId.accountCheckbox}','{!$Component.formId.industryCheckbox}');
+                
+                
+                
+            });
+            function displayNews(){
+                $('#divRss').find("ul").attr("id","nt-example2");
+                var nt_example1 = $('#nt-example2').newsTicker({
+                    row_height: 70,
+                    max_rows: 3,
+                    duration: 4000,
+                    prevButton: $('#nt-example2-prev'),
+                    nextButton: $('#nt-example2-next')
+                });              
+            }
+            function customFeedGeneration(urlCollection){
+            	var feedURL = '';
+            		console.log('==bottom=='+urlCollection.length);
+	                if(urlCollection.length == 2){
+	                    
+	                    feedURL = urlCollection[0];
+	                    $('.feedEkList').remove();
+	                    $('#divRss').append('<ul class="feedEkList"></ul>');
+	                    Visualforce.remoting.Manager.invokeAction(
+					            '{!$RemoteAction.RSSNewsTickerController.getRSSData}',
+					            feedURL,'false',  
+				            function(result, event){
+				                if (event.status) {
+				                	var s='';
+				                	$('#divRss .feedEkList').append(result);
+				                }},{escape:false});
+		        		
+		        		feedURL = urlCollection[1];
+		        		Visualforce.remoting.Manager.invokeAction(
+				            '{!$RemoteAction.RSSNewsTickerController.getRSSData}',
+				            feedURL,'false', 
+				            function(result, event){
+				                if (event.status) {
+				                	var s='';
+				                	$('#divRss .feedEkList').append(result);
+				                }},{escape:false});
+	                    
+	               		displayNews(); 
+	                }
+	                else if(urlCollection.length == 1){
+	                    feedURL = urlCollection[0];
+	                    $('.feedEkList').remove();
+	                    $('#divRss').append('<ul class="feedEkList"></ul>');
+	                    Visualforce.remoting.Manager.invokeAction(
+				            '{!$RemoteAction.RSSNewsTickerController.getRSSData}',
+				            feedURL,'false',
+				            function(result, event){
+				                if (event.status) {
+				                	var s='';
+								    $('#divRss .feedEkList').append(result);
+				                }},{escape:false});
+	                	displayNews();
+	                }
+	                
+	                else{
+	                    feedURLValue = [];
+	                    document.getElementById('divRss').innerHTML = 'Please select one of the above checkbox to display the news feed';
+	                    hasError = true;
+	                }
+            }
+            function check(account, industry){
+                var feedEkJs = true;
+                (function($){$.fn.FeedEk=function(opt){var def=$.extend({FeedUrl:["http://rss.cnn.com/rss/edition.rss"],MaxCount:5,ShowDesc:true,ShowPubDate:true,CharacterLimit:0,TitleLinkTarget:"_blank",DateFormat:"",DateFormatLang:"en"},opt);var id=$(this).attr("id"),i,s="",dt;$("#"+id).empty().append('Please wait whilst we load the news');
+				$.each(def.FeedUrl, function(key, value){
+				$("#"+id).empty();
+				$("#"+id).append('<ul class="feedEkList"></ul>');
+				$.ajax({url:"https://ajax.googleapis.com/ajax/services/feed/load?v=1.0&num="+def.MaxCount+"&output=json&q="+encodeURIComponent(value)+"&hl=en&callback=?",dataType:"json",
+				success:function(data){if((data.responseData != null)){console.log('here==='),$.each(data.responseData.feed.entries,function(e,item){s+='<li><div class="itemTitle"><a href="'+item.link+'" target="'+def.TitleLinkTarget+'" >'+item.title+"</a></div>";if(def.ShowPubDate){dt=new Date(item.publishedDate);if($.trim(def.DateFormat).length>0){try{moment.lang(def.DateFormatLang);s+='<div class="itemDate">'+moment(dt).format(def.DateFormat)+"</div>"}catch(e){s+='<div class="itemDate">'+dt.toLocaleDateString()+"</div>"}}else{s+='<div class="itemDate">'+dt.toLocaleDateString()+"</div>"}}if(def.ShowDesc){if(def.DescCharacterLimit>0&&item.content.length>def.DescCharacterLimit){s+='<div class="itemContent">'+item.content.substr(0,def.DescCharacterLimit)+"...</div>"}else{s+='<div class="itemContent">'+item.content+"</div>"}}});$("#"+id+" .feedEkList").append(s);s='';if(key == def.FeedUrl.length - 1){displayNews();}}else{customFeedGeneration(def.FeedUrl);}}});
+				
+				});
+				}})(jQuery);
+				if(feedEkJs){
+					
+	                var hasError = false;
+	                if(document.getElementById(account).checked == true && document.getElementById(industry).checked == true){
+	                    feedURLValue = [];
+	                    feedURLValue.push('https://news.google.com/?output=rss&q='+encodeURIComponent(accountName));
+	                    feedURLValue.push('https://news.google.com/?output=rss&q='+encodeURIComponent(industryName));
+	                }
+	                else if(document.getElementById(account).checked == true && document.getElementById(industry).checked == false){
+	                    feedURLValue = [];
+	                    feedURLValue.push('https://news.google.com/?output=rss&q='+encodeURIComponent(accountName));
+	                }
+	                else if(document.getElementById(account).checked == false && document.getElementById(industry).checked == true){
+	                    feedURLValue = [];
+	                    feedURLValue.push('https://news.google.com/?output=rss&q='+encodeURIComponent(industryName));
+	                }
+	                else{
+	                    feedURLValue = [];
+	                    document.getElementById('divRss').innerHTML = 'Please select one of the above checkbox to display the news feed';
+	                    hasError = true;
+	                }
+	                
+	                if(!hasError && {!useFeedAPI}){
+	                    
+	                    $('#divRss').FeedEk({
+	                        FeedUrl: feedURLValue,
+	                        MaxCount: 10,
+	                        ShowDesc: false,
+	                        ShowPubDate: true,
+	                    });
+	                }
+	                else if(!hasError && {!!useFeedAPI}){
+	                	customFeedGeneration(feedURLValue);
+	                }
+			   }           
+               
+            }
+        </script>
+    </apex:outputPanel>
+    
+    <apex:form id="formId">
+        <apex:pageMessages />
+        <div id="outerDiv" style="Width:100%;background-color:#FAF9F8">
+            
+            <div id="innerDiv" style="display:inline-block;width:98%;">
+                <apex:outputPanel id="thePanel" styleClass="filters-panel" rendered="{!IF($CurrentPage.parameters.showFilters == '0', false, true)}">
+                    
+                    <apex:inputCheckbox id="accountCheckbox" style="width: 12px; height: 12px;" styleClass="chkbox" selected="true" value="{!accountName}" onChange="check('{!$Component.formId.accountCheckbox}','{!$Component.formId.industryCheckbox}');return false;"/>
+                    <span style="vertical-align:middle; font-size:12px;">Account</span> 
+                    
+                    <apex:inputCheckbox id="industryCheckbox" style="margin-left:20px; width: 12px; height: 12px;" styleClass="chkbox" value="{!industry}" onChange="check('{!$Component.formId.accountCheckbox}','{!$Component.formId.industryCheckbox}');return false;"/>
+                    <span style="vertical-align:middle; font-size:12px;">Industry</span>
+                       
+                </apex:outputPanel>
+                
+                <div id="nt-example2-container">
+                    <i class="fa fa-arrow-up" id="nt-example2-prev"></i>
+                    <div id="divRss"></div>
+                    <i class="fa fa-arrow-down" id="nt-example2-next"></i>
+                    
+                    
+                    
+                </div>
+            </div>
+        </div>
+   
+    </apex:form>
+    
+</apex:page>

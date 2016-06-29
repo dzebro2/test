@@ -1,0 +1,43 @@
+<apex:page standardController="Contact_Relationship__c" title="Create Contact Relationship" extensions="ContactRelationShipController">
+    <apex:form >
+        <apex:sectionHeader title="Contact Relationship Edit" subtitle="New Contact Relationship"/>
+
+        <apex:pageBlock mode="edit">
+            
+            <apex:pageBlockSection title="Relate Contact" rendered="{!renderRelatedContactSection}">
+                <apex:inputField value="{!contactRelationshipObj.Related_Contact__c}" required="true"/> 
+                <apex:inputField value="{!contactRelationshipObj.Relationship_Info__c}" required="true"/>
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection title="Relate User" rendered="{!renderRelatedUserSection}">
+                <apex:inputField value="{!contactRelationshipObj.Related_User__c}" required="true"/>
+                <apex:inputField value="{!contactRelationshipObj.Relationship_Info__c}" required="true"/>
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection title="Relate Account" rendered="{!renderAccountToAccountSection}">
+                <Apex:repeat value="{!$ObjectType.Contact_Relationship__c.FieldSets.AccountToAccount}" var="f">
+                
+                    <apex:inputField value="{!contactRelationshipObj[f]}" required="{!IF( f == 'Dollars_Invested__c', false, true)}"/>
+                </Apex:repeat>
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection title="Relate Account" rendered="{!renderContactToAccountSection}">
+                <Apex:repeat value="{!$ObjectType.Contact_Relationship__c.FieldSets.ContactToAccount}" var="f">
+                    <apex:inputField value="{!contactRelationshipObj[f]}" required="{!IF( f == 'Dollars_Invested__c', false, true)}"/>
+                </Apex:repeat>
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection title="Relate Contact" rendered="{!renderAccountToContactSection}">
+                <Apex:repeat value="{!$ObjectType.Contact_Relationship__c.FieldSets.AccountToContact}" var="f">
+                    <apex:inputField value="{!contactRelationshipObj[f]}" required="{!IF( f == 'Dollars_Invested__c', false, true)}"    />
+                </Apex:repeat>
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockButtons location="bottom">
+                <apex:commandButton action="{!save}" value="Save"/>
+                <apex:commandButton action="{!saveAndNew}" value="Save & New"/>
+                <apex:commandButton action="{!cancel}" value="Cancel"/>
+            </apex:pageBlockButtons>
+        </apex:pageBlock>
+    </apex:form>
+</apex:page>

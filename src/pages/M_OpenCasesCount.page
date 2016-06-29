@@ -1,0 +1,124 @@
+<apex:page sidebar="false" standardController="Account" docType="html-5.0"> 
+<html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+
+  <apex:stylesheet value="{!URLFOR($Resource.TodayViewFiles,'css/bootstrap.min.css')}" />
+    <apex:stylesheet value="{!URLFOR($Resource.salesforce_lightning,'assets/styles/salesforce-lightning-design-system-vf.min.css')}" />
+     <apex:stylesheet value="{!URLFOR($Resource.TodayViewFiles,'css/waitMe.min.css')}" />
+
+
+    <apex:includeScript value="{!URLFOR($Resource.AccountMap,'AccountMapFiles/jquery-1.11.1.min.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.TodayViewFiles,'js/bootstrap.min.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.TodayViewFiles,'js/jquery-ui.js')}"/>
+     <apex:includeScript value="{!URLFOR($Resource.TodayViewFiles,'js/commonDD.js')}"/>
+
+      <script src="/soap/ajax/33.0/connection.js" type="text/javascript"></script>
+    <script type="text/javascript">
+        (function(){try{var a=navigator.userAgent; 
+                var a = navigator.userAgent;
+                if ((a.indexOf('Salesforce') != -1) && (a.indexOf('iPhone') != -1 || a.indexOf('iPad') != -1) && (a.indexOf('Safari') == -1)) {
+                     var s = document.createElement('style');
+                     if ((a.indexOf('OS/8') != -1 || a.indexOf('OS 8') != -1)) {
+                         s.innerHTML = "html,html body{overflow: auto;-webkit-overflow-scrolling:touch;}body{position:absolute;left:0;right:0;top:0;bottom:0;}";
+                     } else if ((a.indexOf('OS/9') != -1 || a.indexOf('OS 9') != -1)) {
+                         s.innerHTML = "html,html body{overflow: auto;-webkit-overflow-scrolling:auto;}body{position:absolute;left:0;right:0;top:0;bottom:0;}";
+                     }
+                     document.getElementsByTagName('head')[0].appendChild(s);
+                }}catch(e){}})(); 
+
+                $(document).ready(function(){ 
+                  sforce.connection.sessionId = '{!$Api.Session_ID}'; 
+                  loadOpenCases();
+                });
+
+        function loadOpenCases(){
+
+            //Load CAses
+
+                    queryRelatedCases = "Select Id,Account.Id, Subject, RecordType.Name,Contact.Name,CaseNumber from Case  where Account.Id = '{!Account.Id}' AND IsClosed=false"
+                    var resultNumberOfCases = sforce.connection.query(queryRelatedCases);
+                    var recordsNumberOfCases = resultNumberOfCases.getArray("records");
+                    //var accountNumber = "'" + getURLParameter('Id')+ "'";
+                    var relatedListNameCases= "'" + "Cases" + "'";
+                    if (recordsNumberOfCases.length == 0){  
+
+                    }else{
+                        $("#numberofOpenCasesp").text(recordsNumberOfCases.length);
+                         for (var h=0; h< recordsNumberOfCases.length; h++) {
+                            var recordNumberOfCases = recordsNumberOfCases[h];
+                            var recordtoNavigateNumberOfCases ="'" + recordNumberOfCases.Id + "'";
+                            var contactNamevar ='';
+                            if(recordNumberOfCases.Contact!= null){
+                              contactNamevar = recordNumberOfCases.Contact.Name;
+                            }
+                            console.log(recordNumberOfCases);
+                            //var navigateURL ="'/apex/M_Individual_Account?Id="+recordRR.Id +"'";
+                            $("#openCasesul").append('<li class="slds-list__item"> <div class="slds-tile slds-tile--board"> <p class="slds-tile__title slds-truncate"><a onclick="sforce.one.navigateToSObject('+ recordtoNavigateNumberOfCases + ')" href="#">'+recordNumberOfCases. Subject +'</a></p><div class="slds-tile__detail"> <p class="slds-text-heading--medium">'+recordNumberOfCases.CaseNumber +'</p><p class="slds-truncate"><a href="#"></a></p><p class="slds-truncate">'+contactNamevar +'</p></div></div></li>');
+
+                          }
+                    }
+        }
+                    //end of Load Cases
+        
+    </script>
+
+       <style type="text/css">
+        .makeWhite {
+         
+              background-color: white;
+        }
+        .makeWhiteChevron {
+         
+              background-color: white;
+              border-color: white;
+        }
+
+      .slds-list__item,.slds-card__header,.slds-card__body, .slds-no-flex ,.slds-button-group,.slds-card,.slds body{
+          background-color:white
+      }
+   
+
+    </style>
+<head>
+</head>
+<body style="background-color:#F4F6F9">
+<!--   <div class="container" id="container"> -->
+  <!-- <section> -->
+    
+    <div id="companyInformationDiv"  class="slds">
+    <div class="slds-card" style= "">
+    
+    <div class="slds-card__header slds-grid">
+    <div class="slds-media slds-media--center slds-has-flexi-truncate">
+      <div class="slds-media__figure">
+        <svg aria-hidden="true" class="slds-icon slds-icon-standard-case">
+        <use xlink:href="{!URLFOR($Resource.salesforce_lightning,'/assets/icons/standard-sprite/svg/symbols.svg#case')}"></use>
+        </svg>
+      </div>
+      <div class="slds-media__body">
+        <h2 style="font-size: 1.15em;font-weight: normal;" class="slds-truncate">Open Cases (<span id="numberofOpenCasesp">0</span>)</h2>
+      </div>
+    </div>
+    <div class="slds-no-flex">
+     <!--  <div class="slds-button-group">
+        <button class="slds-button slds-button--neutral slds-button--small">Button</button>
+       
+      </div> -->
+    </div>
+  </div>
+  <div class="slds-card__body">
+         <ul id="" class="slds-list--vertical slds-has-cards slds-has-dividers">
+         <div id="openCasesul">
+          </div>
+        </ul>
+  </div>
+   <!--  <div class="slds-card__footer"><a href="#"><span class="slds-assistive-text">entity type</span></a></div> -->
+    </div>
+
+    
+         
+    </div> 
+<!--   </section> -->
+  <!-- </div> -->
+ </body>
+</html>
+</apex:page>

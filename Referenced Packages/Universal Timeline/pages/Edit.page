@@ -1,0 +1,434 @@
+<!-- 
+// Copyright 2013, Daron Kallan - Sales Engineering, Salesforce.com Inc.
+// All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are met:
+//
+// - Redistributions of source code must retain the above copyright notice,
+//   this list of conditions and the following disclaimer.
+// - Redistributions in binary form must reproduce the above copyright notice,
+//   this list of conditions and the following disclaimer in the documentation
+//   and/or other materials provided with the distribution.
+// - Neither the name of the salesforce.com nor the names of its contributors
+//   may be used to endorse or promote products derived from this software
+//   without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+// DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+// SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+// CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+// OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ -->
+
+<apex:page standardController="slt__EIT__c" extensions="slt.Config" standardStylesheets="true">
+
+	<style>	
+		.invsbl
+		{
+			visibility: hidden;
+			width: 32px;
+		}
+		img.middleicon
+		{
+			vertical-align: middle;
+			margin-left: 11px;
+			margin-right: 11px;
+		}
+		img.middleimage
+		{
+			vertical-align: middle;
+			border: none;
+			max-width: 32px;
+		}
+		div.tapeimage
+		{
+			vertical-align: middle;
+			width: 35px;
+			height: 7px;
+			background-repeat: repeat;
+			display: inline-block;
+		}
+	</style>
+
+	<apex:messages styleClass="errorMsg" />
+
+	<apex:form id="eiteditform">
+		<apex:actionFunction name="UpdateAllFields" action="{!UpdateAllFields}" rerender="page" />
+		<apex:actionFunction name="UpdateRecordIDFields" action="{!UpdateRecordIDFields}" rerender="RecordIDFieldChooser,flds" />
+		<apex:actionFunction name="UpdateParentContactIDFields" action="{!UpdateParentContactIDFields}" rerender="ParentContactIDFieldChooser,flds" />
+		<apex:actionFunction name="UpdateParentAccountIDFields" action="{!UpdateParentAccountIDFields}" rerender="ParentAccountIDFieldChooser,flds" />
+		<apex:actionFunction name="UpdateParentIDFields" action="{!UpdateParentIDFields}" rerender="ParentIDFieldChooser,flds" />
+		<apex:actionFunction name="UpdateRecordNameFields" action="{!UpdateRecordNameFields}" rerender="RecordNameFieldChooser" />
+		<apex:actionFunction name="UpdateHoverFields" action="{!UpdateHoverFields}" rerender="HoverFieldChooser" />
+		<apex:actionFunction name="UpdateDescriptionFields" action="{!UpdateDescriptionFields}" rerender="DescriptionFieldChooser" />
+		<apex:actionFunction name="UpdateInclusionFields" action="{!UpdateInclusionFields}" rerender="InclusionFieldChooser" />
+		<apex:actionFunction name="UpdateCustSatFields" action="{!UpdateCustSatFields}" rerender="CustSatFieldChooser,flds" />
+		<apex:actionFunction name="UpdateStartTimeFields" action="{!UpdateStartTimeFields}" rerender="StartTimeValueChooser" />
+		<apex:actionFunction name="UpdateEndTimeFields" action="{!UpdateEndTimeFields}" rerender="EndTimeValueChooser" />
+		<apex:pageBlock title="{!TimelineObjectLabel} {!$ObjectType.slt__EIT__c.Label}" id="page">
+			<apex:pageBlockButtons >
+				<apex:commandButton action="{!save}" value="Save" id="saveButton" />
+				<apex:commandButton action="{!cancel}" value="Cancel" id="cancelButton" />
+			</apex:pageBlockButtons>
+			<apex:pageBlockSection id="ObjectChooser">
+				<apex:pageBlockSectionItem helptext="{!$ObjectType.slt__EIT__c.Fields.slt__ObjectType__c.InlineHelpText}">
+					<apex:outputLabel value="{!$ObjectType.slt__EIT__c.Fields.slt__ObjectType__c.Label}" for="ObjectType" />
+					<apex:outputPanel >
+						<div class="requiredInput">
+							<div class="requiredBlock"></div>
+							<apex:selectList size="1" id="ObjectType" value="{!eit.slt__ObjectType__c}" onchange="UpdateAllFields();">
+								<apex:selectOptions value="{!objs}"/>
+							</apex:selectList>
+						</div>
+					</apex:outputPanel>
+				</apex:pageBlockSectionItem>	
+			</apex:pageBlockSection>
+			<apex:pageBlockSection id="flds" columns="1" showHeader="false" rendered="{!IF(ISBLANK(eit.slt__ObjectType__c), false, true)}">
+				<apex:pageBlockSectionItem helptext="{!$ObjectType.slt__EIT__c.Fields.slt__ExecuteAsSubquery__c.InlineHelpText}">
+					<apex:outputLabel value="{!$ObjectType.slt__EIT__c.Fields.slt__ExecuteAsSubquery__c.Label}" for="ExecuteAsSubquery"/>
+					<apex:outputPanel id="ExecuteAsSubquerySelector">
+						<apex:inputCheckbox id="ExecuteAsSubquery" disabled="{!subqueryRequired}" value="{!eit.slt__ExecuteAsSubquery__c}" onchange="UpdateAllFields();" />
+					</apex:outputPanel>
+				</apex:pageBlockSectionItem>
+				<apex:pageBlockSectionItem helptext="Descriptive name for this {!$ObjectType.slt__EIT__c.Label}">
+					<apex:outputLabel value="{!$ObjectType.slt__EIT__c.Fields.Name.Label}" for="Name"/>
+					<apex:outputPanel >
+						<div class="requiredInput">
+							<div class="requiredBlock"></div>
+							<apex:inputText id="Name" value="{!eit.Name}" size="64" />
+						</div>
+					</apex:outputPanel>
+				</apex:pageBlockSectionItem>
+				<apex:pageBlockSectionItem helptext="{!$ObjectType.slt__EIT__c.Fields.slt__Active__c.InlineHelpText}">
+					<apex:outputLabel value="{!$ObjectType.slt__EIT__c.Fields.slt__Active__c.Label}" for="Active"/>
+					<apex:inputCheckbox id="Active" value="{!eit.slt__Active__c}" />
+				</apex:pageBlockSectionItem>
+				<apex:pageBlockSectionItem helptext="{!$ObjectType.slt__EIT__c.Fields.slt__Description__c.InlineHelpText}">
+					<apex:outputLabel value="{!$ObjectType.slt__EIT__c.Fields.slt__Description__c.Label}" for="Description"/>
+					<apex:inputTextarea id="Description" value="{!eit.slt__Description__c}" cols="80" rows="3" />
+				</apex:pageBlockSectionItem>
+				<apex:pageBlockSectionItem rendered="{!AND(ISBLANK(TimelineObject),NOT(eit.slt__ExecuteAsSubquery__c))}" helptext="{!$ObjectType.slt__EIT__c.Fields.slt__ParentContactIDField__c.InlineHelpText}">
+					<apex:outputLabel value="{!$ObjectType.slt__EIT__c.Fields.slt__ParentContactIDField__c.Label}" for="ParentContactIDField"/>
+					<apex:outputPanel id="ParentContactIDFieldChooser">
+						<div class="requiredInput">
+							<div class="requiredBlock"></div>
+							<apex:selectList id="ParentContactIDField" value="{!eit.slt__ParentContactIDField__c}" size="1" onchange="UpdateParentContactIDFields();">
+								<apex:selectOptions value="{!ParentContactIDFields}"></apex:selectOptions>
+							</apex:selectList>
+						</div>
+					</apex:outputPanel>
+				</apex:pageBlockSectionItem>
+				<apex:pageBlockSectionItem rendered="{!AND(ISBLANK(TimelineObject),NOT(eit.slt__ExecuteAsSubquery__c))}" helptext="{!$ObjectType.slt__EIT__c.Fields.slt__ParentAccountIDField__c.InlineHelpText}">
+					<apex:outputLabel value="{!$ObjectType.slt__EIT__c.Fields.slt__ParentAccountIDField__c.Label}" for="ParentAccountIDField" />
+					<apex:outputPanel id="ParentAccountIDFieldChooser">
+						<div class="requiredInput">
+							<div class="requiredBlock"></div>
+							<apex:selectList id="ParentAccountIDField" value="{!eit.slt__ParentAccountIDField__c}" size="1" onchange="UpdateParentAccountIDFields();">
+								<apex:selectOptions value="{!ParentAccountIDFields}"></apex:selectOptions>
+							</apex:selectList>
+						</div>
+					</apex:outputPanel>
+				</apex:pageBlockSectionItem>
+				<apex:pageBlockSectionItem rendered="{!AND(ISBLANK(TimelineObject),eit.slt__ExecuteAsSubquery__c)}" helptext="Child relationship name for Contact {!eit.Name}">
+					<apex:outputLabel value="Relationship Name on Contact" for="ContactRelationship"/>
+					<apex:outputPanel id="ContactRelationshipChooser">
+						<div class="requiredInput">
+							<div class="requiredBlock"></div>
+							<apex:selectList id="ContactRelationship" value="{!eit.slt__ParentContactIDField__c}" size="1">
+								<apex:selectOptions value="{!ContactRelationships}"></apex:selectOptions>
+							</apex:selectList>
+						</div>
+					</apex:outputPanel>
+				</apex:pageBlockSectionItem>
+				<apex:pageBlockSectionItem rendered="{!AND(ISBLANK(TimelineObject),eit.slt__ExecuteAsSubquery__c)}" helptext="Child relationship name for Account {!eit.Name}">
+					<apex:outputLabel value="Relationship Name on Account" for="AccountRelationship"/>
+					<apex:outputPanel id="AccountRelationshipChooser">
+						<div class="requiredInput">
+							<div class="requiredBlock"></div>
+							<apex:selectList id="AccountRelationship" value="{!eit.slt__ParentAccountIDField__c}" size="1">
+								<apex:selectOptions value="{!AccountRelationships}"></apex:selectOptions>
+							</apex:selectList>
+						</div>
+					</apex:outputPanel>
+				</apex:pageBlockSectionItem>
+				<apex:pageBlockSectionItem id="AccountContactChooser" rendered="{!IF(OR(ISBLANK(eit.slt__ParentContactIDField__c),RIGHT(eit.slt__ParentContactIDField__c,1)=='.',ISBLANK(eit.slt__ParentAccountIDField__c),RIGHT(eit.slt__ParentAccountIDField__c,1)=='.',eit.slt__ParentContactIDField__c==eit.slt__ParentAccountIDField__c), false, true)}" helptext="{!$ObjectType.slt__EIT__c.Fields.slt__AccountContactMatching__c.InlineHelpText}">
+					<apex:outputLabel value="{!$ObjectType.slt__EIT__c.Fields.slt__AccountContactMatching__c.Label}" for="AccountContactMatching"/>
+					<apex:selectList id="AccountContactMatching" value="{!eit.slt__AccountContactMatching__c}" size="1">
+						<apex:selectoption itemValue="CTX" itemLabel="Selected Context (Account or Contact)" />
+						<apex:selectOption itemValue="OR" itemLabel="Either Matches" />
+						<apex:selectOption itemValue="AND" itemLabel="Both Match" />
+						<apex:selectOption itemValue="ORC" itemLabel="Account Must Match, Contact Matches or Is Blank" />
+						<apex:selectOption itemValue="ORA" itemLabel="Contact Must Match, Account Matches or Is Blank" />
+					</apex:selectList>
+				</apex:pageBlockSectionItem>
+				<apex:pageBlockSectionItem rendered="{!AND(NOT(ISBLANK(TimelineObject)),NOT(eit.slt__ExecuteAsSubquery__c))}" helptext="Which lookup field to use for matching to {!TimelineObjectLabel} records">
+					<apex:outputLabel value="Base {!TimelineObjectLabel} ID Field" for="ParentIDField" />
+					<apex:outputPanel id="ParentIDFieldChooser">
+						<div class="requiredInput">
+							<div class="requiredBlock"></div>
+							<apex:selectList id="ParentIDField" value="{!eit.slt__ParentAccountIDField__c}" size="1" onchange="UpdateParentIDFields();">
+								<apex:selectOptions value="{!ParentIDFields}"></apex:selectOptions>
+							</apex:selectList>
+						</div>
+					</apex:outputPanel>
+				</apex:pageBlockSectionItem>
+				<apex:pageBlockSectionItem rendered="{!AND(NOT(ISBLANK(TimelineObject)),eit.slt__ExecuteAsSubquery__c)}" helptext="Child relationship name for {!TimelineObjectLabel} {!eit.Name}">
+					<apex:outputLabel value="Relationship Name on {!TimelineObjectLabel}" for="ParentRelationship"/>
+					<apex:outputPanel id="ParentRelationshipChooser">
+						<div class="requiredInput">
+							<div class="requiredBlock"></div>
+							<apex:selectList id="ParentRelationship" value="{!eit.slt__ParentAccountIDField__c}" size="1">
+								<apex:selectOptions value="{!ParentRelationships}"></apex:selectOptions>
+							</apex:selectList>
+						</div>
+					</apex:outputPanel>
+				</apex:pageBlockSectionItem>
+				<apex:pageBlockSectionItem helptext="{!$ObjectType.slt__EIT__c.Fields.slt__StartTimeValue__c.InlineHelpText}">
+					<apex:outputLabel value="{!$ObjectType.slt__EIT__c.Fields.slt__StartTimeValue__c.Label}" for="StartTimeValue"/>
+					<apex:outputPanel id="StartTimeValueChooser">
+						<div class="requiredInput">
+							<div class="requiredBlock"></div>
+							<apex:selectList id="StartTimeValue" value="{!eit.slt__StartTimeValue__c}" size="1" onchange="UpdateStartTimeFields();">
+								<apex:selectOptions value="{!StartTimeFields}"></apex:selectOptions>
+							</apex:selectList>
+						</div>
+					</apex:outputPanel>
+				</apex:pageBlockSectionItem>
+				<apex:pageBlockSectionItem helptext="{!$ObjectType.slt__EIT__c.Fields.slt__EndTimeValue__c.InlineHelpText}">
+					<apex:outputLabel value="{!$ObjectType.slt__EIT__c.Fields.slt__EndTimeValue__c.Label}" for="EndTimeValue"/>
+					<apex:outputPanel id="EndTimeValueChooser">
+						<apex:selectList id="EndTimeValue" value="{!eit.slt__EndTimeValue__c}" size="1" onchange="UpdateEndTimeFields();">
+							<apex:selectOptions value="{!EndTimeFields}"></apex:selectOptions>
+						</apex:selectList>
+					</apex:outputPanel>
+				</apex:pageBlockSectionItem>
+				<apex:pageBlockSectionItem helptext="{!$ObjectType.slt__EIT__c.Fields.slt__RecordIDField__c.InlineHelpText}">
+					<apex:outputLabel value="{!$ObjectType.slt__EIT__c.Fields.slt__RecordIDField__c.Label}" for="RecordIDField"/>
+					<apex:outputPanel id="RecordIDFieldChooser">
+						<div class="requiredInput">
+							<div class="requiredBlock"></div>
+							<apex:selectList id="RecordIDField" value="{!eit.slt__RecordIDField__c}" size="1" onchange="UpdateRecordIDFields();">
+								<apex:selectOptions value="{!RecordIDFields}"></apex:selectOptions>
+							</apex:selectList>
+						</div>
+					</apex:outputPanel>
+				</apex:pageBlockSectionItem>
+				<apex:pageBlockSectionItem helptext="{!$ObjectType.slt__EIT__c.Fields.slt__RecordNameField__c.InlineHelpText}">
+					<apex:outputLabel value="{!$ObjectType.slt__EIT__c.Fields.slt__RecordNameField__c.Label}" for="RecordNameField"/>
+					<apex:outputPanel id="RecordNameFieldChooser">
+						<div class="requiredInput">
+							<div class="requiredBlock"></div>
+							<apex:selectList id="RecordNameField" value="{!eit.slt__RecordNameField__c}" size="1" onchange="UpdateRecordNameFields();">
+								<apex:selectOptions value="{!RecordNameFields}"></apex:selectOptions>
+							</apex:selectList>
+						</div>
+					</apex:outputPanel>
+				</apex:pageBlockSectionItem>
+				<apex:pageBlockSectionItem helptext="{!$ObjectType.slt__EIT__c.Fields.slt__HoverField__c.InlineHelpText}">
+					<apex:outputLabel value="{!$ObjectType.slt__EIT__c.Fields.slt__HoverField__c.Label}" for="HoverField"/>
+					<apex:outputPanel id="HoverFieldChooser">
+						<apex:selectList id="HoverField" value="{!eit.slt__HoverField__c}" size="1" onchange="UpdateHoverFields();">
+							<apex:selectOptions value="{!HoverFields}"></apex:selectOptions>
+						</apex:selectList>
+					</apex:outputPanel>
+				</apex:pageBlockSectionItem>
+				<apex:pageBlockSectionItem helptext="{!$ObjectType.slt__EIT__c.Fields.slt__DescriptionField__c.InlineHelpText}">
+					<apex:outputLabel value="{!$ObjectType.slt__EIT__c.Fields.slt__DescriptionField__c.Label}" for="DescriptionField"/>
+					<apex:outputPanel id="DescriptionFieldChooser">
+						<apex:selectList id="DescriptionField" value="{!eit.slt__DescriptionField__c}" size="1" onchange="UpdateDescriptionFields();">
+							<apex:selectOptions value="{!DescriptionFields}"></apex:selectOptions>
+						</apex:selectList>
+					</apex:outputPanel>
+				</apex:pageBlockSectionItem>
+				<apex:pageBlockSectionItem rendered="{!RecordTypeOptionsAvailable}" helptext="{!$ObjectType.slt__EIT__c.Fields.slt__RecordTypes2__c.InlineHelpText}">
+					<apex:outputLabel value="{!$ObjectType.slt__EIT__c.Fields.slt__RecordTypes2__c.Label}" for="RecordTypes"/>
+					<apex:outputPanel id="RecordTypesSelector">
+						<apex:selectCheckboxes id="RecordTypes" value="{!RecordTypes}">
+							<apex:selectOptions value="{!RecordTypeOptions}"/>
+						</apex:selectCheckboxes>
+					</apex:outputPanel>
+				</apex:pageBlockSectionItem>
+				<apex:pageBlockSectionItem helptext="{!$ObjectType.slt__EIT__c.Fields.slt__InclusionField__c.InlineHelpText}">
+					<apex:outputLabel value="{!$ObjectType.slt__EIT__c.Fields.slt__InclusionField__c.Label}" for="InclusionField"/>
+					<apex:outputPanel id="InclusionFieldChooser">
+						<apex:selectList id="InclusionField" value="{!eit.slt__InclusionField__c}" size="1" onchange="UpdateInclusionFields();">
+							<apex:selectOptions value="{!InclusionFields}"></apex:selectOptions>
+						</apex:selectList>
+					</apex:outputPanel>
+				</apex:pageBlockSectionItem>
+				<apex:pageBlockSectionItem helptext="{!$ObjectType.slt__EIT__c.Fields.slt__CustSatField__c.InlineHelpText}">
+					<apex:outputLabel value="{!$ObjectType.slt__EIT__c.Fields.slt__CustSatField__c.Label}" for="CustSatField"/>
+					<apex:outputPanel id="CustSatFieldChooser">
+						<apex:selectList id="CustSatField" value="{!eit.slt__CustSatField__c}" size="1" onchange="UpdateCustSatFields();">
+							<apex:selectOptions value="{!CustSatFields}"></apex:selectOptions>
+						</apex:selectList>
+					</apex:outputPanel>
+				</apex:pageBlockSectionItem>
+				<apex:pageBlockSectionItem id="CustSatWorstChooser" rendered="{!IF(OR(ISBLANK(eit.slt__CustSatField__c),RIGHT(eit.slt__CustSatField__c,1)=='.'), false, true)}" helptext="{!$ObjectType.slt__EIT__c.Fields.slt__CustSatWorst__c.InlineHelpText}">
+					<apex:outputLabel value="{!$ObjectType.slt__EIT__c.Fields.slt__CustSatWorst__c.Label}" for="CustSatWorst"/>
+					<apex:inputText id="CustSatWorst" value="{!eit.slt__CustSatWorst__c}" size="5" />
+				</apex:pageBlockSectionItem>
+				<apex:pageBlockSectionItem id="CustSatBestChooser" rendered="{!IF(OR(ISBLANK(eit.slt__CustSatField__c),RIGHT(eit.slt__CustSatField__c,1)=='.'), false, true)}" helptext="{!$ObjectType.slt__EIT__c.Fields.slt__CustSatBest__c.InlineHelpText}">
+					<apex:outputLabel value="{!$ObjectType.slt__EIT__c.Fields.slt__CustSatBest__c.Label}" for="CustSatBest"/>
+					<apex:inputText id="CustSatBest" value="{!eit.slt__CustSatBest__c}" size="5" />
+				</apex:pageBlockSectionItem>
+				<apex:pageBlockSectionItem id="CustSatHalfLifeChooser" rendered="{!IF(OR(ISBLANK(eit.slt__CustSatField__c),RIGHT(eit.slt__CustSatField__c,1)=='.'), false, true)}" helptext="{!$ObjectType.slt__EIT__c.Fields.slt__CustSatHalfLife__c.InlineHelpText}">
+					<apex:outputLabel value="{!$ObjectType.slt__EIT__c.Fields.slt__CustSatHalfLife__c.Label}" for="CustSatHalfLife"/>
+					<apex:inputText id="CustSatHalfLife" value="{!eit.slt__CustSatHalfLife__c}" size="18" />
+				</apex:pageBlockSectionItem>
+				<apex:pageBlockSectionItem id="CustSatWeightingChooser" rendered="{!IF(OR(ISBLANK(eit.slt__CustSatField__c),RIGHT(eit.slt__CustSatField__c,1)=='.'), false, true)}" helptext="{!$ObjectType.slt__EIT__c.Fields.slt__CustSatWeighting__c.InlineHelpText}">
+					<apex:outputLabel value="{!$ObjectType.slt__EIT__c.Fields.slt__CustSatWeighting__c.Label}" for="CustSatWeighting"/>
+					<apex:inputText id="CustSatWeighting" value="{!eit.slt__CustSatWeighting__c}" size="4" />
+				</apex:pageBlockSectionItem>
+				<apex:pageBlockSectionItem id="CustSatEmptyNeutral" rendered="{!IF(OR(ISBLANK(eit.slt__CustSatField__c),RIGHT(eit.slt__CustSatField__c,1)=='.'), false, true)}" helptext="{!$ObjectType.slt__EIT__c.Fields.slt__CustSatEmptyNeutral__c.InlineHelpText}">
+					<apex:outputLabel value="{!$ObjectType.slt__EIT__c.Fields.slt__CustSatEmptyNeutral__c.Label}" for="CustSatEmptyNeutral"/>
+					<apex:inputCheckbox id="CustSatEmptyNeutral" value="{!eit.slt__CustSatEmptyNeutral__c}" />
+				</apex:pageBlockSectionItem>
+				<apex:pageBlockSectionItem id="CustSatOnlyChooser" rendered="{!IF(OR(ISBLANK(eit.slt__CustSatField__c),RIGHT(eit.slt__CustSatField__c,1)=='.'), false, true)}" helptext="{!$ObjectType.slt__EIT__c.Fields.slt__CustSatOnly__c.InlineHelpText}">
+					<apex:outputLabel value="{!$ObjectType.slt__EIT__c.Fields.slt__CustSatOnly__c.Label}" for="CustSatOnly"/>
+					<apex:inputCheckbox id="CustSatOnly" value="{!eit.slt__CustSatOnly__c}" />
+				</apex:pageBlockSectionItem>
+				<apex:pageBlockSectionItem helptext="{!$ObjectType.slt__EIT__c.Fields.slt__Category__c.InlineHelpText}">
+					<apex:outputLabel value="{!$ObjectType.slt__EIT__c.Fields.slt__Category__c.Label}" for="Category"/>
+					<apex:outputPanel id="CategoryChooser">
+						<apex:selectList id="Category" value="{!eit.slt__Category__c}" size="1">
+							<apex:selectOptions value="{!Categories}"></apex:selectOptions>
+						</apex:selectList>
+					</apex:outputPanel>
+				</apex:pageBlockSectionItem>
+				<apex:pageBlockSectionItem helptext="{!$ObjectType.slt__EIT__c.Fields.slt__RecordLimit__c.InlineHelpText}">
+					<apex:outputLabel value="{!$ObjectType.slt__EIT__c.Fields.slt__RecordLimit__c.Label}" for="RecordLimit"/>
+					<apex:inputText id="RecordLimit" value="{!eit.slt__RecordLimit__c}" size="4" />
+				</apex:pageBlockSectionItem>
+				<apex:pageBlockSectionItem helptext="{!$ObjectType.slt__EIT__c.Fields.slt__Color__c.InlineHelpText}">
+					<apex:outputLabel value="{!$ObjectType.slt__EIT__c.Fields.slt__Color__c.Label}" for="Color"/>
+					<apex:inputText id="Color" value="{!eit.slt__Color__c}" />
+				</apex:pageBlockSectionItem>
+				<apex:pageBlockSectionItem helptext="{!$ObjectType.slt__EIT__c.Fields.slt__TextColor__c.InlineHelpText}">
+					<apex:outputLabel value="{!$ObjectType.slt__EIT__c.Fields.slt__TextColor__c.Label}" for="TextColor"/>
+					<apex:inputText id="TextColor" value="{!eit.slt__TextColor__c}" />
+				</apex:pageBlockSectionItem>
+				<apex:pageBlockSectionItem id="IconSectionItem" helptext="{!$ObjectType.slt__EIT__c.Fields.slt__Icon__c.InlineHelpText}">
+					<apex:outputLabel value="{!$ObjectType.slt__EIT__c.Fields.slt__Icon__c.Label}" for="Icon"/>
+					<apex:panelGrid columns="3">
+						<apex:inputText id="Icon" value="{!eit.slt__Icon__c}" size="80" onchange="var i=getElementById('iconpreview');if(this.value.length>3&&this.value.indexOf('__c',this.value.length-3)!==-1)i.src='/resource/slt__Resources/dynamic_icon.gif';else i.src=(this.value==null||this.value=='')?'/resource/slt__Resources/dull_blue_circle.png':this.value;" />
+						<img id="iconpreview" src="{!IF(OR(ISBLANK(eit.Icon__c),eit.Icon__c==''),'/resource/slt__Resources/dull_blue_circle.png',IF(RIGHT(eit.Icon__c,3)='__c','/resource/slt__Resources/dynamic_icon.gif',eit.Icon__c))}" class="middleicon" />
+						<select id="IconSamples" title="Sample Icons" onchange="if(this.value!=' '){document.getElementById('{!$Component.IconSectionItem.Icon}').value=this.value;getElementById('iconpreview').src=this.value;}">
+							<option value=" ">Sample Icons</option>
+							<option value="/resource/slt__Resources/blue_circle.png">Blue Circle</option>
+							<option value="/resource/slt__Resources/dark_blue_circle.png">Dark Blue Circle</option>
+							<option value="/resource/slt__Resources/dark_green_circle.png">Dark Green Circle</option>
+							<option value="/resource/slt__Resources/dark_red_circle.png">Dark Red Circle</option>
+							<option value="/resource/slt__Resources/dull_blue_circle.png">Dull Blue Circle</option>
+							<option value="/resource/slt__Resources/dull_green_circle.png">Dull Green Circle</option>
+							<option value="/resource/slt__Resources/dull_red_circle.png">Dull Red Circle</option>
+							<option value="/resource/slt__Resources/gray_circle.png">Gray Circle</option>
+							<option value="/resource/slt__Resources/green_circle.png">Green Circle</option>
+							<option value="/resource/slt__Resources/red_circle.png">Red Circle</option>
+							<option value="/resource/slt__Resources/greencheck_icon.png">Green Check Mark</option>
+							<option value="/resource/slt__Resources/redx_icon.png">Red X Mark</option>
+							<option value="/resource/slt__Resources/clock_icon.png">Clock</option>
+							<option value="/resource/slt__Resources/money_icon.png">Money</option>
+							<option value="/resource/slt__Resources/phone_icon.png">Phone</option>
+							<option value="/resource/slt__Resources/truck_icon.png">Truck</option>
+							<option value="/resource/slt__Resources/smiley_happy_icon.png">Smiley - Happy</option>
+							<option value="/resource/slt__Resources/smiley_unhappy_icon.png">Smiley - Unhappy</option>
+							<option value="/resource/slt__Resources/facebook_icon.png">Facebook</option>
+							<option value="/resource/slt__Resources/twitter_icon.png">Twitter</option>
+							<option value="/resource/slt__Resources/SFDC_box_icon.png">SFDC Box</option>
+							<option value="/resource/slt__Resources/SFDC_buildingBlock_icon.png">SFDC Building Block</option>
+							<option value="/resource/slt__Resources/SFDC_case_icon.png">SFDC Case</option>
+							<option value="/resource/slt__Resources/SFDC_document_icon.png">SFDC Document</option>
+							<option value="/resource/slt__Resources/SFDC_entitlement_icon.png">SFDC Entitlement</option>
+							<option value="/resource/slt__Resources/SFDC_error_icon.png">SFDC Error</option>
+							<option value="/resource/slt__Resources/SFDC_folder_icon.png">SFDC Folder</option>
+							<option value="/resource/slt__Resources/SFDC_home_icon.png">SFDC Home</option>
+							<option value="/resource/slt__Resources/SFDC_lead_icon.png">SFDC Lead</option>
+							<option value="/resource/slt__Resources/SFDC_lightbulb_icon.png">SFDC Light Bulb</option>
+							<option value="/resource/slt__Resources/SFDC_mail_icon.png">SFDC Mail</option>
+							<option value="/resource/slt__Resources/SFDC_opportunity_icon.png">SFDC Opportunity</option>
+							<option value="/resource/slt__Resources/SFDC_pencil_icon.png">SFDC Pencil</option>
+							<option value="/resource/slt__Resources/SFDC_profile_icon.png">SFDC Profile</option>
+							<option value="/resource/slt__Resources/SFDC_redcross_icon.png">SFDC Red Cross</option>
+							<option value="/resource/slt__Resources/SFDC_star_icon.png">SFDC Star</option>
+							<option value="/resource/slt__Resources/SFDC_warning_icon.png">SFDC Warning</option>
+						</select>
+					</apex:panelGrid>
+				</apex:pageBlockSectionItem>
+				<apex:pageBlockSectionItem id="ImageSectionItem" helptext="{!$ObjectType.slt__EIT__c.Fields.slt__Image__c.InlineHelpText}">
+					<apex:outputLabel value="{!$ObjectType.slt__EIT__c.Fields.slt__Image__c.Label}" for="Image"/>
+					<apex:panelGrid columns="3">
+						<apex:inputText id="Image" value="{!eit.slt__Image__c}" size="80" onchange="var i=getElementById('imagepreview');i.className=(this.value==null||this.value=='')?'invsbl':'middleimage';if(this.value.length>3&&this.value.indexOf('__c',this.value.length-3)!==-1)i.src='/resource/slt__Resources/dynamic_image.gif';else i.src=this.value;"/>
+						<img id="imagepreview" src="{!IF(RIGHT(eit.Image__c,3)='__c','/resource/slt__Resources/dynamic_image.gif',eit.Image__c)}" class="{!IF(OR(ISBLANK(eit.Image__c),eit.Image__c==''),'invsbl','middleimage')}" />
+						<select id="ImageSamples" title="Sample Images" onchange="if(this.value!=' '){document.getElementById('{!$Component.ImageSectionItem.Image}').value=this.value;var i=getElementById('imagepreview');i.className='middleimage';i.src=this.value;}">
+							<option value=" ">Sample Images</option>
+							<option value="/resource/slt__Resources/greencheck_image.png">Green Check Mark</option>
+							<option value="/resource/slt__Resources/redx_image.png">Red X Mark</option>
+							<option value="/resource/slt__Resources/clock_image.png">Clock</option>
+							<option value="/resource/slt__Resources/money_image.png">Money</option>
+							<option value="/resource/slt__Resources/phone_image.png">Phone</option>
+							<option value="/resource/slt__Resources/truck_image.png">Truck</option>
+							<option value="/resource/slt__Resources/smiley_happy_image.png">Smiley - Happy</option>
+							<option value="/resource/slt__Resources/smiley_unhappy_image.png">Smiley - Unhappy</option>
+							<option value="/resource/slt__Resources/facebook_image.png">Facebook</option>
+							<option value="/resource/slt__Resources/twitter_image.png">Twitter</option>
+							<option value="/resource/slt__Resources/SFDC_box_image.png">SFDC Box</option>
+							<option value="/resource/slt__Resources/SFDC_buildingBlock_image.png">SFDC Building Block</option>
+							<option value="/resource/slt__Resources/SFDC_case_image.png">SFDC Case</option>
+							<option value="/resource/slt__Resources/SFDC_document_image.png">SFDC Document</option>
+							<option value="/resource/slt__Resources/SFDC_entitlement_image.png">SFDC Entitlement</option>
+							<option value="/resource/slt__Resources/SFDC_error_image.png">SFDC Error</option>
+							<option value="/resource/slt__Resources/SFDC_folder_image.png">SFDC Folder</option>
+							<option value="/resource/slt__Resources/SFDC_home_image.png">SFDC Home</option>
+							<option value="/resource/slt__Resources/SFDC_lead_image.png">SFDC Lead</option>
+							<option value="/resource/slt__Resources/SFDC_lightbulb_image.png">SFDC Light Bulb</option>
+							<option value="/resource/slt__Resources/SFDC_mail_image.png">SFDC Mail</option>
+							<option value="/resource/slt__Resources/SFDC_opportunity_image.png">SFDC Opportunity</option>
+							<option value="/resource/slt__Resources/SFDC_pencil_image.png">SFDC Pencil</option>
+							<option value="/resource/slt__Resources/SFDC_profile_image.png">SFDC Profile</option>
+							<option value="/resource/slt__Resources/SFDC_redcross_image.png">SFDC Red Cross</option>
+							<option value="/resource/slt__Resources/SFDC_star_image.png">SFDC Star</option>
+							<option value="/resource/slt__Resources/SFDC_warning_image.png">SFDC Warning</option>
+						</select>
+					</apex:panelGrid>
+				</apex:pageBlockSectionItem>
+				<apex:pageBlockSectionItem id="TapeImageSectionItem" helptext="{!$ObjectType.slt__EIT__c.Fields.slt__TapeImage__c.InlineHelpText}">
+					<apex:outputLabel value="{!$ObjectType.slt__EIT__c.Fields.slt__TapeImage__c.Label}" for="TapeImage"/>
+					<apex:panelGrid columns="3">
+						<apex:inputText id="TapeImage" value="{!eit.slt__TapeImage__c}" size="80" onchange="var i=getElementById('tapepreview');i.className=(this.value==null||this.value=='')?'tapeimage invsbl':'tapeimage';if(this.value.length>3&&this.value.indexOf('__c',this.value.length-3)!==-1)i.style.backgroundImage='url(/resource/slt__Resources/dynamic_tape.gif)';else i.style.backgroundImage='url('+this.value+')';" />
+						<div id="tapepreview" style="background-image:url({!IF(RIGHT(eit.TapeImage__c,3)='__c','/resource/slt__Resources/dynamic_tape.gif',eit.TapeImage__c)})" class="tapeimage{!IF(OR(ISBLANK(eit.TapeImage__c),eit.TapeImage__c==''),' invsbl','')}">&nbsp;</div>
+						<select id="TapeSamples" title="Sample Tape Images" onchange="if(this.value!=' '){document.getElementById('{!$Component.TapeImageSectionItem.TapeImage}').value=this.value;var i=getElementById('tapepreview');i.className='tapeimage';i.style.backgroundImage='url('+this.value+')';}">
+							<option value=" ">Sample Tape Images</option>
+							<option value="/resource/slt__Resources/tape_blue_chevrons.png">Blue Chevrons</option>
+							<option value="/resource/slt__Resources/tape_blue_stripes.png">Blue Stripes</option>
+							<option value="/resource/slt__Resources/tape_blue_light_stripes.png">Blue Light Stripes</option>
+							<option value="/resource/slt__Resources/tape_blue_teeth.png">Blue Teeth</option>
+							<option value="/resource/slt__Resources/tape_blue_wave.png">Blue Wave</option>
+							<option value="/resource/slt__Resources/tape_green_chevrons.png">Green Chevrons</option>
+							<option value="/resource/slt__Resources/tape_green_stripes.png">Green Stripes</option>
+							<option value="/resource/slt__Resources/tape_green_light_stripes.png">Green Light Stripes</option>
+							<option value="/resource/slt__Resources/tape_green_teeth.png">Green Teeth</option>
+							<option value="/resource/slt__Resources/tape_green_wave.png">Green Wave</option>
+							<option value="/resource/slt__Resources/tape_orange_chevrons.png">Orange Chevrons</option>
+							<option value="/resource/slt__Resources/tape_orange_stripes.png">Orange Stripes</option>
+							<option value="/resource/slt__Resources/tape_orange_light_stripes.png">Orange Light Stripes</option>
+							<option value="/resource/slt__Resources/tape_orange_teeth.png">Orange Teeth</option>
+							<option value="/resource/slt__Resources/tape_orange_wave.png">Orange Wave</option>
+							<option value="/resource/slt__Resources/tape_red_chevrons.png">Red Chevrons</option>
+							<option value="/resource/slt__Resources/tape_red_stripes.png">Red Stripes</option>
+							<option value="/resource/slt__Resources/tape_red_light_stripes.png">Red Light Stripes</option>
+							<option value="/resource/slt__Resources/tape_red_teeth.png">Red Teeth</option>
+							<option value="/resource/slt__Resources/tape_red_wave.png">Red Wave</option>
+						</select>
+					</apex:panelGrid>
+				</apex:pageBlockSectionItem>
+			</apex:pageBlockSection>
+		</apex:pageblock>
+	</apex:form>
+</apex:page>

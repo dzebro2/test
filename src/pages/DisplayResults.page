@@ -1,0 +1,423 @@
+<apex:page sideBar="false" showHeader="false" controller="DisplayResultsController"  standardStyleSheets="true">
+    
+    <apex:stylesheet value="{!URLFOR($Resource.DataTables_1_10_2, '/css/jquery.dataTables.min.css')}" />
+    
+    <apex:includeScript value="{!$Resource.jquery_1_11_1}" />
+    <apex:includeScript value="{!URLFOR($Resource.DataTables_1_10_2, '/js/jquery.dataTables.min.js')}"/>
+    <apex:includeScript value="/support/console/31.0/integration.js" />
+    <style>
+    
+        .small-text{
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 15px;
+            
+        }
+        
+        .large-text{
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 15px;
+            
+        }
+        tr:hover td {
+            background-color: #F3FAFB !important; 
+            color: #000;
+        }
+        .dataTables_length{
+            margin-bottom : 20px !important;
+        }
+        td{
+            border-bottom : 1px solid #F7F7F7 !important;
+        }
+        .dataTables_length {
+            width:33% !important;
+        }
+        .dataTables_paginate{
+            float: left !important;
+            text-align: center !important;
+            width: 33% !important;
+        }
+        .dataTables_info{
+            clear: none !important;
+            text-align: right !important;
+            width: 33% !important;
+        }
+        .main-container a {
+            text-decoration: underline;
+        }
+    </style>
+    
+    <script>
+        var recordsTable;
+        $j = jQuery.noConflict();
+        
+        jQuery.extend( jQuery.fn.dataTableExt.oSort, {
+            "formatted-num-pre": function ( a ) {
+                a = (a === "-" || a === "") ? 0 : a.replace( /[^\d\-\.]/g, "" );
+                return parseFloat( a );
+            },
+         
+            "formatted-num-asc": function ( a, b ) {
+                return a - b;
+            },
+         
+            "formatted-num-desc": function ( a, b ) {
+                return b - a;
+            }
+        });     
+        
+        jQuery.extend( jQuery.fn.dataTableExt.oSort, {
+            "datetime-us-flex-pre": function ( a ) {
+                // If there's no slash, then it's not an actual date, so return zero for sorting
+                if(a.indexOf('/') === -1) {
+                    return '0';
+                } 
+                else {
+                    // Set optional items to zero
+                    var hour = 0,
+                    min = 0,
+                    ap = 0;
+                    // Execute match. Requires month, day, year. Can be mm/dd or m/d. Can be yy or yyyy
+                    // Time is optional. am/pm is optional
+                    // TODO - remove extra time column from array
+                    console.log($j(a).text());
+                    var b = a.match(/(\d{1,2})\/(\d{1,2})\/(\d{2,4})( (\d{1,2}):(\d{1,2}))? ?(am|pm|AM|PM|Am|Pm)?/),
+                    month = b[1],
+                    day = b[2],
+                    year = b[3];
+                    // If time exists then output hours and minutes
+                    if (b[4] != undefined) {
+                        hour = b[5];
+                        min = b[6];
+                    }
+                    // if using am/pm then change the hour to 24 hour format for sorting
+                    if (b[7] != undefined) {
+                        ap = b[7];
+                        if(hour == '12') 
+                            hour = '0';
+                            if(ap == 'PM') 
+                                hour = parseInt(hour, 10)+12;
+                    }
+     
+                    // for 2 digit years, changes to 20__ if less than 70
+                    if(year.length == 2){
+                        if(parseInt(year, 10) < 70) 
+                            year = '20'+year;
+                        else
+                            year = '19'+year;
+                    }
+                    // Converts single digits
+                    if(month.length == 1)
+                        month = '0'+month;
+                    if(day.length == 1)
+                        day = '0'+day;
+                    if(hour.length == 1)
+                        hour = '0'+hour;
+                    if(min.length == 1)
+                        min = '0'+min;
+                    var tt = year+month+day+hour+min;
+                    return tt;
+                }
+            },
+            "datetime-us-flex-asc": function ( a, b ) {
+            return a - b;
+            },
+            "datetime-us-flex-desc": function ( a, b ) {
+            return b - a;
+            }
+        });        
+        
+        $j(document).ready(function() {
+            
+            //Styling records table.
+            
+            recordsTable = $j('#recordsTable').dataTable( {
+                "destroy": true,
+                "aLengthMenu": [[15, 25, 50, 75, 100, -1], [15, 25, 50, 75, 100, "All"]],
+                "iDisplayLength": 15,
+                "dom": '<<"top" f>rt<lpi>>',
+                "aaSorting": [[0, 'asc']],
+                
+            });            
+            
+        });
+
+
+        
+     
+        
+        
+        function OpenCaseStandardPageByAccountId(PassAccountId, PassAccountType, PassAccountName){
+            var accountId = PassAccountId;
+            var accountType = PassAccountType;
+            var accountName = escape(PassAccountName);
+            var producerAccountLookup = '{!$Label.Producer_Account_Lookup}';
+            var producerAccountLookupName = '{!$Label.Producer_Account_Lookup_Name}';
+            
+            if(accountType == '{!$Label.Group_Account}')
+                primaryTabPage = '/500/e?cas4_lkid='+accountId;
+            if(accountType == '{!$Label.Producer_Account}')
+                primaryTabPage = '/500/e?'+producerAccountLookup+'='+accountId+'&'+producerAccountLookupName+'='+accountName;
+                
+            if(sforce.console.isInConsole()) {
+                if(primaryTabPage != null && primaryTabPage != '') {
+                    sforce.console.openPrimaryTab( null, primaryTabPage, true, 'New Case', null, 'New Case' );
+                }
+            } 
+            else {
+                window.open( primaryTabPage, '_blank' );
+            }
+        }
+        
+        
+        function OpenCaseStandardPageByContactId(PassContactId, PassAccountId, PassContactType, PassAccountName){
+            var contactId = PassContactId;
+            var accountId = PassAccountId;
+            var contactType = PassContactType;
+            var accountName = PassAccountName;
+            var producerAccountLookup = '{!$Label.Producer_Account_Lookup}';
+            var producerAccountLookupName = '{!$Label.Producer_Account_Lookup_Name}';
+            var contactLookup = '{!$Label.Contact_Lookup}';
+            var groupAccountLookup = '{!$Label.Group_Account_Lookup}';
+            
+            if(contactType == '{!$Label.Group_Contact}')
+                primaryTabPage = '/500/e?'+contactLookup+'='+contactId+'&'+groupAccountLookup+'='+accountId;
+            if(contactType == '{!$Label.Producer_Contact}')
+                primaryTabPage = '/500/e?'+contactLookup+'='+contactId+'&'+producerAccountLookup+'='+accountId+'&'+producerAccountLookupName+'='+accountName;
+                
+            if(sforce.console.isInConsole()) {
+                if(primaryTabPage != null && primaryTabPage != '') {
+                    sforce.console.openPrimaryTab( null, primaryTabPage, true, 'New Case', null, 'New Case' );
+                }
+            } 
+            else {
+                window.open( primaryTabPage, '_blank' );
+            }
+        }
+        
+        
+        function storeAccountId (PassAccountId, PassAccountName)
+        {
+            var AccountId = PassAccountId;
+            var AccountName = PassAccountName;
+            openAccountPrimaryTab(AccountId, AccountName);
+        }
+        
+        
+        function openAccountPrimaryTab(AccountId, AccountName)
+        {
+            sforce.console.openPrimaryTab( null, "/" + AccountId, true, AccountName, null, AccountName );
+        }
+        
+        
+        function storeContactId (PassContactId, PassContactName)
+        {
+            var ContactId = PassContactId;
+            var ContactName = PassContactName;
+            openContactPrimaryTab(ContactId, ContactName);
+        }
+        
+        
+        function openContactPrimaryTab(ContactId, ContactName)
+        {
+            sforce.console.openPrimaryTab( null, "/" + ContactId, true, ContactName, null, ContactName );
+        }
+       
+    </script>
+    
+    <apex:form >
+        
+        <div class="main-container">
+            <apex:pageMessage summary="{!NoAccountRecords}" severity="error" strength="3" rendered="{!IF(NoAccountRecords !='', true, false)}"/>
+            <apex:pageMessage summary="{!NoContactRecords}" severity="error" strength="3" rendered="{!IF(NoContactRecords !='', true, false)}"/>
+            <apex:pageMessage summary="{!RefineSearch}" severity="warning" strength="3" rendered="{!IF(RefineSearch !='', true, false)}"/>
+            <apex:outputPanel rendered="{!DisplayAccountInformation}">
+                <table class="auto-renewals-table" id="recordsTable">
+                    <thead>
+                        <apex:outputPanel rendered="{!IF(accountType == $Label.Producer_Account, true, false)}">
+                            <tr bgcolor = "#F7F7F7">
+                                <th ><div class="small-text">{!$Label.DR_Account_Name}</div></th>
+                                <apex:repeat var="f" value="{!$ObjectType.Account.FieldSets.SearchFields}">
+                                        <th>
+                                            <div class="large-text" ><apex:outputText value="{!f.Label}"/></div>
+                                        </th>
+                                </apex:repeat>
+                                <th><span class="small-text">{!$Label.DR_Raise_A_Case}</span></th>                           
+                            </tr>
+                        </apex:outputPanel>
+                        
+                        <apex:outputPanel rendered="{!IF(accountType == $Label.Group_Account, true, false)}">
+                            <tr bgcolor = "#F7F7F7">
+                                <th ><div class="small-text">{!$Label.DR_Account_Name}</div></th>
+                                <apex:repeat var="f" value="{!$ObjectType.Account.FieldSets.SearchFields_GroupAccount}">
+                                        <th>
+                                            <div class="large-text" ><apex:outputText value="{!f.Label}"/></div>
+                                        </th>
+                                </apex:repeat>
+                                <th><span class="small-text">{!$Label.DR_Raise_A_Case}</span></th>                           
+                            </tr>
+                        </apex:outputPanel>
+                    </thead>
+                    
+                    <tbody>
+                        <apex:repeat value="{!filteredAccounts}" var="accountObj" id="theAccountRepeat">
+                            <tr>
+                                <td >
+                                    <span onClick="storeAccountId('{!JSENCODE(accountObj.Id)}','{!JSENCODE(accountObj.Name)}');" class="large-text info-links" style="cursor:pointer;text-decoration:underline">{!accountObj.Name}</span>
+                                </td>
+                                <apex:outputPanel rendered="{!IF(accountType == $Label.Producer_Account, true, false)}">
+                                    <apex:repeat var="f" value="{!$ObjectType.Account.FieldSets.SearchFields}">
+                                        <td style="{!IF(f.type=='boolean', 'text-align:center', '')}">
+                                            
+                                            <apex:outputPanel rendered="{!IF( f.Type != 'email' && f.Type != 'date' && f.Type != 'boolean', true, false )}">
+                                                <div class="large-text" ><apex:outputText value="{!accountObj[f]}"/></div>
+                                            </apex:outputPanel>
+                                            
+                                            <apex:outputPanel rendered="{!IF( f.Type == 'email' , true, false )}">
+                                                <div class="large-text" onClick="window.open('mailto:{!accountObj[f]}','_self')" style="cursor:pointer;text-decoration:underline;"><apex:outputText value="{!accountObj[f]}"/></div>
+                                            </apex:outputPanel>
+                                            
+                                            <apex:outputPanel rendered="{!IF( f.Type == 'date', true, false )}">
+                                                <div class="large-text" ><apex:outputField value="{!accountObj[f]}"/></div>
+                                            </apex:outputPanel>
+                                            
+                                            <apex:outputPanel rendered="{!IF( f.Type == 'boolean', true, false )}">
+                                                <apex:outputText value="{!accountObj[f]}" style="display:none"/>
+                                                <div class="large-text" ><apex:outputField value="{!accountObj[f]}"/></div>
+                                            </apex:outputPanel>
+                                        </td>
+                                    </apex:repeat>
+                                </apex:outputPanel>
+                                
+                                <apex:outputPanel rendered="{!IF(accountType == $Label.Group_Account, true, false)}">
+                                    <apex:repeat var="f" value="{!$ObjectType.Account.FieldSets.SearchFields_GroupAccount}">
+                                        <td style="{!IF(f.type=='boolean', 'text-align:center', '')}">
+                                            <apex:outputPanel rendered="{!IF( f.Type != 'email' && f.Type != 'date' && f.Type != 'boolean', true, false )}">
+                                                <div class="large-text" ><apex:outputText value="{!accountObj[f]}"/></div>
+                                            </apex:outputPanel>
+                                            
+                                            <apex:outputPanel rendered="{!IF( f.Type == 'email' , true, false )}">
+                                                <div class="large-text" onClick="window.open('mailto:{!accountObj[f]}','_self')" style="cursor:pointer;text-decoration:underline;"><apex:outputText value="{!accountObj[f]}"/></div>
+                                            </apex:outputPanel>
+                                            
+                                            <apex:outputPanel rendered="{!IF( f.Type == 'date', true, false )}">
+                                                <div class="large-text" ><apex:outputField value="{!accountObj[f]}"/></div>
+                                            </apex:outputPanel>
+                                            
+                                            <apex:outputPanel rendered="{!IF( f.Type == 'boolean', true, false )}">
+                                                <apex:outputText value="{!accountObj[f]}" style="display:none"/>
+                                                <div class="large-text" ><apex:outputField value="{!accountObj[f]}"/></div>
+                                            </apex:outputPanel>
+                                        </td>
+                                    </apex:repeat>
+                                </apex:outputPanel>
+                                
+                                <td style="text-align:center;">
+                                    <input type="button" value="{!$Label.Create_a_Case}" onClick="OpenCaseStandardPageByAccountId('{!JSENCODE(accountObj.Id)}','{!JSENCODE(accountType)}','{!JSENCODE(accountObj.Name)}');"/>
+                                </td>
+                            </tr>
+                        </apex:repeat>
+                    </tbody>
+                </table>
+            </apex:outputPanel>
+            
+            <apex:outputPanel rendered="{!DisplayContactInformation}">
+                <table class="auto-renewals-table" id="recordsTable">
+                    <thead>
+                        <tr bgcolor = "#F7F7F7">
+                            <apex:outputPanel rendered="{!IF(ContactType == $Label.Producer_Contact, true, false)}">
+                                <th ><div class="small-text">{!$Label.DR_Contact_Name}</div></th>
+                                <th ><div class="small-text">Account Name</div></th>
+                                <apex:repeat var="f" value="{!$ObjectType.Contact.FieldSets.SearchFields}">
+                                        <th>
+                                            <div class="large-text" ><apex:outputText value="{!f.Label}"/></div>
+                                        </th>
+                                </apex:repeat>
+                                <th><span class="small-text">{!$Label.DR_Raise_A_Case}</span></th>
+                            </apex:outputPanel>
+                            
+                            <apex:outputPanel rendered="{!IF(ContactType == $Label.Group_Contact, true, false)}">
+                                <th ><div class="small-text">{!$Label.DR_Contact_Name}</div></th>
+                                <th ><div class="small-text">Account Name</div></th>
+                                
+                                 <apex:repeat var="f" value="{!$ObjectType.Contact.FieldSets.SearchFields_GroupContact}">
+                                        <th>
+                                            <div class="large-text" ><apex:outputText value="{!f.Label}"/></div>
+                                        </th>
+                                </apex:repeat>
+                                <th><span class="small-text">{!$Label.DR_Raise_A_Case}</span></th>
+                            </apex:outputPanel>
+                        </tr>
+                    </thead>
+                    
+                    <tbody>
+                        <apex:repeat value="{!filteredContacts}" var="contactObj" id="theContactRepeat">
+                            
+                            <tr>
+                                
+                                <td>
+                                    <span class="large-text info-links" onClick="storeContactId('{!JSENCODE(contactObj.Id)}','{!JSENCODE(contactObj.Name)}');" style="Cursor:Pointer; text-decoration:underline" >{!contactObj.Name}</span>
+                                </td>
+                                
+                                <td>
+                                    <span class="large-text info-links" onClick="storeAccountId('{!JSENCODE(contactObj.accountId)}','{!JSENCODE(contactObj.Account.Name)}');" style="Cursor:Pointer;text-decoration:underline">{!contactObj.Account.Name}</span>
+                                </td>
+                                
+                                <apex:outputPanel rendered="{!IF(contactType == $Label.Producer_Contact, true, false)}">
+                                    <apex:repeat var="f" value="{!$ObjectType.Contact.FieldSets.SearchFields}">
+                                        <td style="{!IF(f.type=='boolean', 'text-align:center', '')}" >
+                                            <apex:outputPanel rendered="{!IF( f.Type != 'email' && f.Type != 'date' && f.Type != 'boolean', true, false )}">
+                                                <div class="large-text" ><apex:outputText value="{!contactObj[f]}"/></div>
+                                            </apex:outputPanel>
+                                            
+                                            <apex:outputPanel rendered="{!IF( f.Type == 'email' , true, false )}">
+                                                <div class="large-text" onClick="window.open('mailto:{!contactObj[f]}','_self')" style="cursor:pointer;text-decoration:underline;"><apex:outputText value="{!contactObj[f]}"/></div>
+                                            </apex:outputPanel>
+                                            
+                                            <apex:outputPanel rendered="{!IF( f.Type == 'date', true, false )}">
+                                                <div class="large-text" ><apex:outputField value="{!contactObj[f]}"/></div>
+                                            </apex:outputPanel>
+                                            
+                                            <apex:outputPanel rendered="{!IF( f.Type == 'boolean', true, false )}">
+                                                <apex:outputText value="{!contactObj[f]}" style="display:none"/>
+                                                <div class="large-text" ><apex:outputField value="{!contactObj[f]}"/></div>
+                                            </apex:outputPanel>
+                                            
+                                        </td>
+                                    </apex:repeat>
+                                </apex:outputPanel>
+                                
+                                <apex:outputPanel rendered="{!IF(contactType == $Label.Group_Contact, true, false)}">
+                                    <apex:repeat var="f" value="{!$ObjectType.Contact.FieldSets.SearchFields_GroupContact}">
+                                        <td style="{!IF(f.type=='boolean', 'text-align:center', '')}" >
+                                            <apex:outputPanel rendered="{!IF( f.Type != 'email' && f.Type != 'date' && f.Type != 'boolean', true, false )}">
+                                                <div class="large-text" ><apex:outputText value="{!contactObj[f]}"/></div>
+                                            </apex:outputPanel>
+                                            
+                                            <apex:outputPanel rendered="{!IF( f.Type == 'email' , true, false )}">
+                                                <div class="large-text" onClick="window.open('mailto:{!contactObj[f]}','_self')" style="cursor:pointer;text-decoration:underline;"><apex:outputText value="{!contactObj[f]}"/></div>
+                                            </apex:outputPanel>
+                                            
+                                            <apex:outputPanel rendered="{!IF( f.Type == 'date', true, false )}">
+                                                <div class="large-text" ><apex:outputField value="{!contactObj[f]}"/></div>
+                                            </apex:outputPanel>
+                                            
+                                            <apex:outputPanel rendered="{!IF( f.Type == 'boolean', true, false )}">
+                                                <apex:outputText value="{!contactObj[f]}" style="display:none"/>
+                                                <div class="large-text" ><apex:outputField value="{!contactObj[f]}"/></div>
+                                            </apex:outputPanel>
+                                        </td>
+                                    </apex:repeat>
+                                </apex:outputPanel>
+                                
+                                <td style="text-align:center;">
+                                    <input type="button" value= "{!$Label.Create_a_Case}" onClick="OpenCaseStandardPageByContactId('{!JSENCODE(contactObj.Id)}' , '{!JSENCODE(contactObj.accountId)}', '{!JSENCODE(contactType)}', '{!JSENCODE(contactObj.Account.Name)}');"/>
+                                </td>
+                                
+                            </tr>
+                        </apex:repeat>
+                    </tbody>
+                </table>
+            </apex:outputPanel>
+        </div>
+    </apex:form>
+</apex:page>

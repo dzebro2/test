@@ -1,0 +1,68 @@
+<apex:page standardController="Opportunity" extensions="OpportunityTeamImportController">
+<apex:includeScript value="{!URLFOR($Resource.BuyerJQueryUI, '/BuyerJQueryUI/jquery-1.8.2.min.js')}"  />
+<script>
+
+ function getSelectedContact()
+        {
+            var $radio = $('input[name=group1]:checked');
+            var updateDay = $radio.val();
+            var id = $radio.attr('id');
+            Test(id);
+        }  
+</script>        
+<script>    
+  
+
+     
+</script> 
+
+ <style type="text/css">
+         .bPageBlock {
+            border-top: 3px solid #1797C0 !important;
+        }
+         
+         .opportunityTab .tertiaryPalette, .individualPalette .opportunityBlock .tertiaryPalette, .layoutEdit .individualPalette .opportunityBlock .tertiaryPalette {
+            background-color: #1797C0 !important;
+            border-color: #1797C0 !important;
+            height : 16px;
+            padding: 10px 18px !important;
+            font-size: 12px !important;
+            font-weight: bold;
+            }
+
+    </style>
+
+
+
+<apex:form >
+    <apex:actionFunction name="Test" reRender="ComponentSection" >
+    <apex:param value="" name="selected" assignTo="{!SelectedValue}"/>
+    </apex:actionFunction>
+    <apex:pageMessages />
+    <apex:sectionHeader title="{!CurrentOpportunity.Name}" subtitle="Manage Team Members" />
+    <br/>
+    <apex:outputPanel id="SelectImportOption" >
+        <apex:pageBlock >
+            <apex:pageBlockSection id="pgBlkSection" title="Please make your selection: " collapsible="false" columns="1" >
+            <apex:outputPanel >
+                <apex:repeat value="{!SelectImportOptionsMap}" var="Option">
+                        <input type="radio" name="group1" id="{!Option}" onClick="getSelectedContact();"><b>{!SelectImportOptionsMap[Option]}</b></input>
+                </apex:repeat>  
+                <script>
+                     var value = document.getElementById("{!JSENCODE(selectedValue)}");
+                     value.checked = 'checked';
+                </script> 
+            </apex:outputPanel> 
+                <apex:outputPanel id="ComponentSection" >       
+                    <c:ImportAccountRelatedRecords FunctionalityType="{!SelectedValue}" ObjectId="{!RecordId}" ObjectName="{!ObjectAPIName}"/>
+                </apex:outputPanel> 
+                
+            </apex:pageBlockSection><br/>
+          <!--  <div align="center">
+                <apex:commandButton value="Finish" action="{!cancelMethod}"/>
+            </div>  --> 
+        </apex:pageBlock>  
+    </apex:outputPanel>
+
+</apex:form>      
+</apex:page>

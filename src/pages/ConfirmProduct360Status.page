@@ -1,0 +1,74 @@
+<apex:page sidebar="false" showheader="true" action="{!insertExceptionLog}" controller="ConfirmProduct360StatusController">
+    <apex:form >
+    
+        <div style="text-align:center;">
+            <apex:commandbutton value="Save" action="{!save}" />
+            <apex:commandbutton value="Cancel" action="{!cancel}" />
+        </div>
+        <apex:pageblock title="Confirm Progress On Lost Products" rendered="{!IF(opportunityProductCount > 0, true, false)}">
+                             
+            <apex:pageblocktable value="{!opportunityProductWrappers}" id="productsTable" var="wrapper">
+                
+                <apex:column headervalue="Opportunity">
+                    <apex:outputfield value="{!wrapper.opportunityObj.Name}" />
+                </apex:column>
+
+                <apex:column headervalue="Product">
+                    <apex:outputfield value="{!wrapper.opportunityProduct.Product__c}"/>
+                </apex:column>
+
+                <apex:column headervalue="Status">
+                    <apex:outputfield value="{!wrapper.opportunityProduct.Status__c}"/>
+                </apex:column>
+
+                <apex:column headervalue="Type">
+                    <apex:outputfield value="{!wrapper.opportunityProduct.Product_Type__c}"/>
+                </apex:column>
+
+                <apex:column headervalue="Furthest Product Stage Reached">
+                    <apex:inputfield value="{!wrapper.opportunityProduct.Product_Stage__c}" required="true" />
+                </apex:column>
+            </apex:pageblocktable>
+            
+            
+        </apex:pageblock>
+
+        <apex:pageblock title="Confirm Member/Contract Values">
+            <apex:pageblocktable value="{!opportunityWrappers}" var="opp">
+                <apex:column headervalue="Opportunity">
+                    <apex:outputlabel value="{!opp.opportunityObj.Name}" />
+                </apex:column>
+                <apex:column headervalue="Expected Health Members">
+                    <apex:outputlabel value="Sum of Product Health Members: {!opp.projectedHealthMembersRollup}" />
+                    <br />
+                    <apex:outputlabel style="font-weight:bold;" value="Expected Health Members: " />
+                    <apex:inputfield value="{!opp.opportunityObj.Expected_Health_Members__c}" />
+                </apex:column>
+                <apex:column headervalue="Expected Health Contracts">
+                    <apex:outputlabel value="Sum of Product Health Contracts: {!opp.projectedHealthContractsRollup}" />
+                    <br />
+                    <apex:outputlabel style="font-weight:bold;"  value="Expected Health Contracts: " />
+                    <apex:inputfield value="{!opp.opportunityObj.Expected_Health_Contracts__c}" />
+                </apex:column>
+                <apex:column headervalue="Expected Dental Members">
+                    <apex:outputlabel value="Sum of Product Dental Members: {!opp.projectedDentalMembersRollup}" />
+                    <br />
+                    <apex:outputlabel style="font-weight:bold;" value="Expected Dental Members: " />
+                    <apex:inputfield value="{!opp.opportunityObj.Expected_Dental_Members__c}" />
+                </apex:column>
+                <apex:column headervalue="Expected Dental Contracts">                   
+                    <apex:outputlabel value="Sum of Product Dental Contracts: {!opp.projectedDentalContractsRollup}" />
+                    <br />
+                    <apex:outputlabel style="font-weight:bold;"  value="Expected Dental Contracts: " />
+                    <apex:inputfield value="{!opp.opportunityObj.Expected_Dental_Contracts__c}" />                   
+                </apex:column>
+            </apex:pageblocktable>
+            
+        </apex:pageblock>
+        <div style="text-align:center;">
+            <apex:commandbutton value="Save" action="{!save}" />
+            <apex:commandbutton value="Cancel" action="{!cancel}" />
+        </div>
+
+</apex:form>
+</apex:page>

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DashboardFolder xmlns="http://soap.sforce.com/2006/04/metadata">
+    <folderShares>
+        <accessLevel>View</accessLevel>
+        <sharedTo>Executive_Management</sharedTo>
+        <sharedToType>Role</sharedToType>
+    </folderShares>
+    <folderShares>
+        <accessLevel>View</accessLevel>
+        <sharedTo>IL_Management</sharedTo>
+        <sharedToType>Group</sharedToType>
+    </folderShares>
+    <folderShares>
+        <accessLevel>View</accessLevel>
+        <sharedTo>OK_Management</sharedTo>
+        <sharedToType>Group</sharedToType>
+    </folderShares>
+    <folderShares>
+        <accessLevel>View</accessLevel>
+        <sharedTo>TX_Management</sharedTo>
+        <sharedToType>Group</sharedToType>
+    </folderShares>
+    <name>Knowledge Dashboard</name>
+</DashboardFolder>

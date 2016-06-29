@@ -1,0 +1,637 @@
+<apex:page showHeader="false" sidebar="false" standardController="Account" extensions="ProspectAccount360Controller">
+        
+        <apex:stylesheet value="{!URLFOR($Resource.Customer360,'styles/main.css')}" />
+        <apex:includeScript value="{!URLFOR($Resource.Customer360,'scripts/vendor/modernizr.js')}" />
+        <apex:includeScript value="{!URLFOR($Resource.Customer360,'scripts/vendor/jquery-1.8.3.min.js')}" />
+        <apex:stylesheet value="{!URLFOR($Resource.AdvancedNewsTicker,'jquery-advanced-news-ticker-master/assets/css/font-awesome.min.css')}" />
+        <apex:stylesheet value="{!URLFOR($Resource.AdvancedNewsTicker,'jquery-advanced-news-ticker-master/assets/css/bootstrap.css')}" />
+        
+        <style>
+            
+            
+          /*  .link-color{ 
+                color:#5C9AD6 !important;
+                text-decoration:underline !important;
+            }
+            .separator-div{
+                margin-top:35px;
+            }
+            .line-separator-div{
+                padding:10px 0;
+                //border-bottom:1px solid #3C588E;
+                width:100%;
+            }
+            .Containertd{
+                width:25%;
+                background-color:#FAF9F8;
+                border:3px solid #3C588E;
+                padding:5px 20px;
+                vertical-align:top;
+            }
+            .item-container, .item-container-2{
+                margin:10px 0;
+                width:98%
+            }
+            .activity-circle{
+                width:80px;
+                height:80px;
+                border-radius:50%;
+                display: inline-block;
+                color:#fff; 
+                line-height: 80px;
+                text-align: center;
+            }
+            .open-activity-circle{
+                background-color:#2B52A1;
+            }
+            .open-activity-circle:hover{
+                
+                background-color:#2359c4;
+            }
+            
+            .pastdue-activity-circle{
+                background-color:#E75130;
+                //margin-left:12px;
+            }
+            .pastdue-activity-circle:hover{
+                background-color:#ed583b;
+               // margin-left:12px;
+            }
+            
+            .large-text{
+                font-size:24px;
+                border-right:1px solid #fff;
+                padding:5px;
+            }
+            .small-text{
+                font-size:12px;
+            }
+            .headerCell{
+                padding:5px !important;
+                //background-color:#2B52A1;
+                //color:#fff;
+                border:1px solid #d1d1d1;
+                background-color: #8c8c8c !important;
+                color: white !important;
+            }
+            .headerCellHidden{
+                display:none;
+            }
+                 
+            .tableCell{
+                padding:5px !important;
+                border:1px solid #d1d1d1;
+            }
+            .tableCellNoBorder{
+                padding:5px !important;
+                background-color:#FAF9F8;
+            }       
+            .google-visualization-table-table {
+                margin:0 auto !important;
+            }
+            .google-visualization-table-div-page{
+                float:right !important;
+            }
+            .vertical-align-top{
+                
+            }
+            .headerCSS{
+              background-color: #8c8c8c !important;
+              color: white !important;
+              padding: 10px !important;
+            }
+            .top-level{
+                overflow:hidden !important;
+            }
+            .fa-arrows-alt:before {
+              content: "\f0b2";
+            }*/
+             .link-color{
+                color:#005589 !important;
+                /*text-decoration:underline !important;*/
+            }
+            a:visited {
+                color: #005589;
+            }
+            .separator-div{
+                margin-top:35px;
+            }
+            .line-separator-div{
+                padding:10px 0;
+                border-bottom:1px solid #FFFFFF;
+                width:100%;
+            }
+            .Containertd{
+                width:25%;
+                background-color:#F5F5F5;
+                border:3px solid #FFFFFF;
+                padding:5px 20px;
+                vertical-align:top;
+            }
+            .item-container, .item-container-2{
+                margin:10px 0;
+                width:98%
+            }
+            .activity-circle{
+                width:85px;
+                height:85px;
+                border-radius:50%;
+                display: inline-block;
+                color:#fff; 
+                line-height: 100px;
+                text-align: center;
+            }
+            .open-activity-circle{
+                background-color:#A5D151;
+            }
+            .open-activity-circle:hover{
+                
+                background-color:#A5D151;
+            }
+            
+            .pastdue-activity-circle{
+                background-color:#EAA92A;
+                //margin-left:40px;
+            }
+            .pastdue-activity-circle:hover{
+                background-color:#EAA92A;
+                //margin-left:40px;
+            }
+            
+            .large-text{
+                font-size:24px;
+                border-right:1px solid #fff;
+                padding:5px;
+            }
+            .small-text{
+                font-size:12px;
+            }
+            .headerCell{
+                padding:5px !important;
+                background-color:#2B52A1;
+                color:#fff;
+                border:1px solid #d1d1d1;
+            }
+            .headerCellHidden{
+                display:none;
+            }
+                 
+            .tableCell{
+                padding:5px !important;
+                border:1px solid #d1d1d1;
+            }
+            .tableCellNoBorder{
+                padding:5px !important;
+                background-color:#FAF9F8;
+            }       
+            .google-visualization-table-table {
+                margin:0 auto !important;
+            }
+            .google-visualization-table-div-page{
+                float:right !important;
+            }
+            .vertical-align-top{
+                
+            }
+             .headerCSS{
+              /*background-color: #8c8c8c !important;*/
+              color: #005589 !important;
+              padding: 5px !important;
+            }
+               .MiddleContainertd{
+                width:50%;
+                background-color:#F5F5F5;
+                border:3px solid #FFFFFF;
+                padding:0px;
+                vertical-align:top;
+            }
+            
+        </style>
+        <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+        <script type="text/javascript">
+            
+            var thisTab;
+             google.load("visualization", "1", {packages:["table"]});
+            $(document).ready(function(){
+                $('.tab-content').hide();
+                $('.tab-content.active').show();
+                
+                
+                $('.tab').click(function () {
+                    $('.tab').removeClass('active');
+                    $('.tab-content').removeClass('active').hide();
+                    $(this).addClass('active');
+
+                    thisTab = $(this).attr('data-name');
+
+                    $('.tab-content.' + thisTab).show().addClass('active');
+                });
+                var opportunityData = new google.visualization.DataTable();
+                opportunityData.addColumn('string', 'Opportunity');
+                opportunityData.addColumn('string', 'Due Date');
+                
+                opportunityData.addRows([
+                    <apex:repeat value="{!listOfOpenOpportunities}" var="openOpportunity">
+                        ['<a href="/{!openOpportunity.Id}" target="_blank">{!openOpportunity.Name}</a>', '<apex:outputText value="{0,date,MM/dd/YYYY}"><apex:param value="{!openOpportunity.CloseDate}"/></apex:outputText>'],
+                    </apex:repeat>
+                ]);
+
+                var opportunityCssClassNames = {
+                    headerCell: 'headerCell',
+                    tableCell: 'tableCell'
+                };
+                
+                var opportunityOptions = {
+                    'showRowNumber': true,
+                    'cssClassNames': opportunityCssClassNames,
+                    'page':'enable',
+                    'pageSize':5,
+                    'allowHtml':true,
+                    'width':'100%'
+                };
+                  
+                var table = new google.visualization.Table(document.getElementById('opportunity_Table'));
+
+                table.draw(opportunityData, opportunityOptions);
+                
+
+                var keyContactsData = new google.visualization.DataTable();
+                keyContactsData.addColumn('string', '');
+                keyContactsData.addColumn('string', '');
+                
+                
+                
+                <apex:repeat value="{!accountContactRoleList}" var="accountContactRoleObj">
+                    var contactName = "{!accountContactRoleObj.Contact.Name}".replace(/'/g, "");
+                    keyContactsData.addRow(['<img src="{!accountContactRoleObj.Contact.PhotoUrl}" width="50" height="50"/>',
+                        '<div class="h5 item-container"><a href="/{!accountContactRoleObj.ContactId}" target="_blank">'+contactName+'</a></div><div class="item-container h5"><b><apex:outputText value="{!accountContactRoleObj.Role}"/></b></div><div class="item-container h5">Office:<br/><apex:outputText value="{!accountContactRoleObj.Contact.Phone}"/></div><div class="item-container h5"><a href="/_ui/core/email/author/EmailAuthor?p2_lkid={!accountContactRoleObj.Contact.Id}&rtype=003&p3_lkid={!accountContactRoleObj.AccountId}&retURL=/{!accountContactRoleObj.AccountId}" target="_blank"><apex:outputText value="{!accountContactRoleObj.Contact.Email}"/></a></div>']);
+                    
+                </apex:repeat>
+
+                var keyContactsCssClassNames = {
+                    headerCell: 'headerCellHidden',
+                    tableCell: 'tableCellNoBorder'
+                };
+                
+                var keyContactsOptions = {
+                    'showRowNumber': false,
+                    'cssClassNames': keyContactsCssClassNames,
+                    'page':'enable',
+                    'pageSize':2,
+                    'allowHtml':true,
+                    'width':'100%'
+                };
+                  
+                var table = new google.visualization.Table(document.getElementById('keyContacts_Table'));
+
+                table.draw(keyContactsData, keyContactsOptions);
+                
+                
+                var teamMembersData = new google.visualization.DataTable();
+                teamMembersData.addColumn('string', '');
+                
+                
+                teamMembersData.addRows([
+                    <apex:repeat value="{!teamMembersList}" var="accountTeamMemberObj">
+                        ['<div class="h5"><b>{!accountTeamMemberObj.teamRoleName}:</b><br/><a href="/{!accountTeamMemberObj.teamMemberId}" target="_blank">{!accountTeamMemberObj.teamMemberName}</a></div>'],
+                    </apex:repeat>
+                ]);
+
+                var teamMembersCssClassNames = {
+                    headerCell: 'headerCellHidden',
+                    tableCell: 'tableCellNoBorder'
+                };
+                
+                var teamMembersOptions = {
+                    'showRowNumber': false,
+                    'cssClassNames': teamMembersCssClassNames,
+                    'page':'enable',
+                    'pageSize':3,
+                    'allowHtml':true,
+                    'width':'100%'
+                };
+                  
+                var table = new google.visualization.Table(document.getElementById('teamMembers_Table'));
+
+                table.draw(teamMembersData, teamMembersOptions);
+            });
+            
+            function maximizeTHeView(){
+                
+                $('.entity360').hide();
+                $('.maximizedNewsFeed').show();
+            }
+            function minimizeTHeView(){
+                $('.entity360').show();
+                $('.maximizedNewsFeed').hide();
+            }
+            
+        </script>
+        
+        <apex:form id="formId">
+            <div class="entity360 container" style="height:auto;width:100%;">
+                <table class="360Container" style="width:100%">
+                    <tr>
+                        <td class="Containertd">        
+                            <div class="h5 headerCSS" style="font-weight:bold;">
+                            <b>
+                           <!--   <a href="/{!accountObj.Id}" style="color:white !important;"  target="_blank">-->
+                                    <apex:outputField value="{!accountObj.Name}" /> 
+                                    <apex:outputPanel rendered="{!IF(NOT(ISBLANK(accountObj.TickerSymbol)), true, false)}">
+                                        (<apex:outputText style="color:#005589 !important;" value="{!accountObj.TickerSymbol}" />)
+                                    </apex:outputPanel>
+                            <!--  </a>--></b>
+                            </div>
+                            <div class="item-container h5">
+                                <apex:outputText value="{!billingStreet}"/>
+                            </div>
+                            <div class="item-container h5">
+                                <apex:outputText value="{!restBillingAddress}"/>
+                            </div>
+                            <div class="item-container h5">
+                                <apex:outputText value="{!zipCode}"/>
+                            </div>
+                          <div class="item-container h5">
+                              <apex:outputField value="{!accountObj.ParentId}" styleClass="link-color"/>
+                          </div>
+                          
+                          
+                          <div class="separator-div h5">
+                              <b>Status:</b>&nbsp;<apex:outputField value="{!accountObj.Status__c}" />
+                          </div>
+                          <div class="item-container h5">
+                              <b>Industry:</b>&nbsp;<apex:outputField value="{!accountObj.Industry}" />
+                          </div>
+                          <div class="item-container h5">
+                              <b>Market Segment:</b>&nbsp;<apex:outputField value="{!accountObj.Market_Segment__c}" />
+                          </div>
+                          <div class="item-container h5">
+                              <b>Employees:</b>&nbsp;<apex:outputField value="{!accountObj.NumberOfEmployees}" />
+                          </div>
+                          <div class="item-container h5">
+                             <b>Website:</b>&nbsp;<apex:outputField value="{!accountObj.Website}" />
+                          </div>
+                          
+                          
+                          <div class="separator-div h5 headerCSS">
+                                <b>Financial Position:</b>  
+                            </div>
+                          <!-- Changes done by Nitin -->
+                           <!--  <div class="item-container h5">
+                                <b>Total Revenue:</b>&nbsp;
+                                <apex:outputText value="${0,number,###,##0.00}">
+                                    <apex:param value="{!accountObj.AnnualRevenue}"/>
+                                </apex:outputText>
+                            </div> -->
+                            <div class="item-container h5">
+                                <b>Total Revenue:</b>&nbsp;
+                                <Apex:outputPanel rendered="{!AND(NOT(ISNULL(accountObj.AnnualRevenue)),accountObj.AnnualRevenue < 1000000000)}">
+                                    <apex:outputText value="${!IF(accountObj.AnnualRevenue> 1000000,   (accountObj.AnnualRevenue/1000000),accountObj.AnnualRevenue)}">
+                                        
+                                    </apex:outputText> <apex:outputText value="{!IF(accountObj.AnnualRevenue> 1000000,   ' million','')}"> </apex:outputText>
+                                </Apex:outputPanel>
+                                <Apex:outputPanel rendered="{!AND(NOT(ISNULL(accountObj.AnnualRevenue)),accountObj.AnnualRevenue > 1000000000)}">
+                                    <apex:outputText value="${!IF(accountObj.AnnualRevenue> 1000000000,   (accountObj.AnnualRevenue/1000000000),accountObj.AnnualRevenue)}">
+                                        
+                                    </apex:outputText> billion
+                                </Apex:outputPanel>
+                            </div>
+                            
+                           <!--  <div class="item-container h5">
+                                <b>Net Income:</b>&nbsp;
+                                <apex:outputText value="${0,number,###,##0.00}">
+                                    <apex:param value="{!accountObj.AnnualRevenue}"/>
+                                </apex:outputText>
+                            </div> -->
+                            
+                            <div class="item-container h5">
+                                <b>Net Income:</b>&nbsp;
+                                <Apex:outputPanel rendered="{!AND(NOT(ISNULL(accountObj.Net_Income__c)),accountObj.Net_Income__c< 1000000000)}">
+                                    <apex:outputText value="${!IF(accountObj.Net_Income__c> 1000000,   (accountObj.Net_Income__c/1000000),accountObj.Net_Income__c)}">
+                                        
+                                    </apex:outputText> <apex:outputText value="{!IF(accountObj.Net_Income__c> 1000000,   ' million','')}"> </apex:outputText>
+                                </Apex:outputPanel>
+                                <Apex:outputPanel rendered="{!AND(NOT(ISNULL(accountObj.Net_Income__c)),accountObj.Net_Income__c> 1000000000)}">
+                                    <apex:outputText value="${!IF(accountObj.Net_Income__c> 1000000000,   (accountObj.Net_Income__c/1000000000),accountObj.Net_Income__c)}">
+                                        
+                                    </apex:outputText> billion
+                                </Apex:outputPanel>
+                            </div>
+                            
+                            
+                            <div class="item-container h5">
+                                <b>Credit Rating:</b>&nbsp;
+                                <apex:outputText value="{!accountObj.Credit_Rating__c}"/>
+                            </div>
+                            <!-- <div class="item-container h5">
+                                <b>Market Capitalization:</b>&nbsp;
+                                <apex:outputText value="${0,number,###,##0.00}">
+                                    <apex:param value="{!accountObj.AnnualRevenue}"/>
+                                </apex:outputText>
+                            </div>-->
+                            <div class="item-container h5">
+                                <b>Market Capitalization:</b>&nbsp;
+                                 <Apex:outputPanel rendered="{!AND(NOT(ISNULL(accountObj.Market_Capitalization__c)),accountObj.Market_Capitalization__c< 1000000000)}">
+                                    <apex:outputText value="${!IF(accountObj.Market_Capitalization__c> 1000000,   (accountObj.Market_Capitalization__c/1000000),accountObj.Market_Capitalization__c)}">
+                                        
+                                    </apex:outputText> <apex:outputText value="{!IF(accountObj.Market_Capitalization__c> 1000000,   ' million','')}"> </apex:outputText>
+                                </Apex:outputPanel>
+                                <Apex:outputPanel rendered="{!AND(NOT(ISNULL(accountObj.Market_Capitalization__c)),accountObj.Market_Capitalization__c> 1000000000)}">
+                                    <apex:outputText value="${!IF(accountObj.Market_Capitalization__c> 1000000000,   (accountObj.Market_Capitalization__c/1000000000),accountObj.Market_Capitalization__c)}">
+                                        
+                                    </apex:outputText> billion
+                                </Apex:outputPanel>
+                            </div> 
+                          
+                        <!--   <div class="separator-div h5">
+                              <apex:outputField value="{!accountObj.Website}" />
+                          </div>   -->                     
+                       </td>
+                       
+                        <td class="Containertd">
+                    
+                            <div class="line-separator-div">
+                                <table style="width:98%">
+                                    <tr>
+                                        <td style="width:48%;text-align:center">
+                                            <apex:outputPanel rendered="{!IF(ISBLANK(strategyPlanId),false,true)}">
+                                                <a href="/{!strategyPlanId}" class="link-color" target="_blank">
+                                                    <img src="{!URLFOR($Resource.Customer360,'img/StrategicPlan.png')}" style="width:20%;"/>
+                                                    <div class="item-container h5"><b>Strategic Plan</b></div>
+                                                </a>
+                                                
+                                            </apex:outputPanel>
+                                            <apex:outputPanel rendered="{!IF(ISBLANK(strategyPlanId),true,false)}">
+                                                <img src="{!URLFOR($Resource.Customer360,'img/StrategicPlan.png')}" style="width:20%;"/>
+                                                <div class="item-container h5"><b>Strategic Plan</b></div>
+                                            </apex:outputPanel>
+                                        </td>
+                                        <td style="width:48%;text-align:center">
+                                            <a href="/apex/productLandscape?id={!accountObj.Id}" class="link-color" target="_blank">
+                                                <img src="{!URLFOR($Resource.Customer360,'img/products.png')}"  style="width:20%;"/>
+                                                <div class="item-container h5"><b>Products</b></div>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    
+                                </table>
+                            </div>
+                            
+                            <div class="line-separator-div">
+                                <div class="h5 headerCSS">
+                                    <b>Open Opportunities</b>
+                                </div>
+                                <div class="item-container h5">
+                                    <b>Number of Opportunities:</b>&nbsp;
+                                    <apex:outputField value="{!accountObj.Number_Of_Open_Opportunities__c}"/>
+                                </div>
+                                <div class="item-container h5">
+                                    <div id="opportunity_Table" style="width:100%"/>
+                                </div>
+                            
+                            </div>
+
+                            
+                            <div class="h5 item-container headerCSS">
+                                <b>Projected Members</b>
+                            </div>
+                           <!--  <div class="h5 item-container">
+                                <b>Medical:</b>&nbsp;
+                                <apex:outputField value="{!accountObj.Medical_Projected_Members__c}"/>
+                            </div>
+                            <div class="h5 item-container">
+                                <b>Dental:</b>&nbsp;
+                                <apex:outputField value="{!accountObj.Dental_Projected_Members__c}"/>
+                            </div>
+                            <div class="h5 item-container">
+                                <b>Disability:</b>&nbsp;
+                                <apex:outputField value="{!accountObj.Disability_Projected_Members__c}"/>
+                                </div>
+                            <div class="h5 item-container">
+                                <b>Life:</b>&nbsp;
+                                <apex:outputField value="{!accountObj.Life_Projected_Members__c}"/>
+                            </div> -->
+                            <div class="h5 item-container">
+                                <b>Contracts:</b>&nbsp;
+                                <apex:outputField value="{!accountObj.Projected_Health_Contracts__c}"/>
+                            </div>
+                            <div class="h5 item-container">
+                                <b>Health Members:</b>&nbsp;
+                                <apex:outputField value="{!accountObj.Projected_Health_Members__c}"/>
+                            </div>
+                        </td>
+                        
+                        <td class="Containertd">
+                            <div class="line-separator-div">
+                                <div class="h5 headerCSS"><b>Activities</b></div>
+                                <div class="item-container" >
+                                    
+                                    <a href="/{!openActivitiesReportObj.Id}?pv0={!abbrvAccountId}" target="_blank">
+                                        <div  class="activity-circle open-activity-circle" >
+                                            <span class="large-text">{!NoOfOpenItems}</span>
+                                            <span class="small-text">Open</span>
+                                        </div>
+                                    </a>
+                                    <a href="/{!pastDueActivitiesReportObj.Id}?pv0={!abbrvAccountId}" target="_blank">
+                                        <div class="activity-circle pastdue-activity-circle" >
+                                            <span class="large-text">{!NoOfPastDueItems}</span>
+                                            <span class="small-text">Past-Due</span>
+                                        </div>
+                                    </a>
+                                </div>
+                                <!-- <div class="item-container">
+                                    <a style="text-decoration:underline;" href="/{!openActivitiesPrefix}?id={!abbrvAccountId}&rlid=RelatedActivityList&closed=0" target="_blank">
+                                        View All Open Activities
+                                    </a>
+                                </div> -->
+                            </div>
+                            <div class="item-container">
+                                <div class="h5 headerCSS">
+                                    <b>News</b>
+                                    
+                                    <a style="float:right;font-size: 22px;color:#005589;" onclick="maximizeTHeView();" title="Maximize"><i class="fa fa-angle-double-up"  ></i></a>
+                                </div>
+                                
+                                <iframe src="/apex/RSSNewsTicker?id={!accountId}&showInternal=0" frameborder="0" style="height:400px;width:100%" scrolling="no" />
+                            </div>
+                        </td>
+                        
+                        
+                        <td class="Containertd">
+                            <div class="item-container h5 headerCSS">
+                                <b>Key Contacts</b>
+                            </div>
+                            
+                            <div class="item-container h5">
+                                <b>External: </b>
+                            </div>
+                            <div class="item-container h5">
+                                <apex:outputPanel rendered="{!IF(accountContactRoleList.size == 0,true,false)}">
+                                    <table style="width:100%;">
+                                        <tr>
+                                            <td style="width:10%;">
+                                                <apex:image value="{!$Resource.WarningImage}" style="width:16px; height:auto;"/>
+                                            </td>
+                                            <td style="text-align:left;width:90%;">
+                                                <label class="item-container h5">
+                                                    No external contacts available.
+                                                </label>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </apex:outputPanel>
+                            </div>
+                            <apex:outputPanel rendered="{!IF(accountContactRoleList != null,true,false)}">
+                                <div class="item-container h5">
+                                    <div id="keyContacts_Table" style="width:100%"/>
+                                </div>
+                            </apex:outputPanel>
+                            <div class="item-container h5 link-color">
+                                <a href="/apex/BuyerHierarchyOnAccount?id={!accountId}&fullView=true" target="_blank">
+                                    <img src="{!$Resource.Hierarchy}" style="width:24px"/> View Buyer Hierarchy
+                                </a>
+                            </div>
+
+                          
+                            <div class="h5 separator-div">
+                                <b>Internal: </b>
+                            </div>
+
+                            <div class="item-container h5">
+                                <apex:outputPanel rendered="{!IF(AND(teamMembersList.size == 0),true,false)}">
+                                    <table style="width:100%;">
+                                        <tr>
+                                            <td style="width:10%;">
+                                                <apex:image value="{!$Resource.WarningImage}" style="width:16px; height:auto;"/>
+                                            </td>
+                                            <td style="text-align:left;width:90%;">
+                                                <label class="item-container h5">
+                                                    No internal contacts available.
+                                                </label>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </apex:outputPanel>
+                            </div>
+                            
+                            <div class="item-container h5">
+                                <div id="teamMembers_Table" style="width:100%"/>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div class="maximizedNewsFeed" style="display:none;height:500px;width:100%;">
+                <div class="h5 headerCSS">
+                    <b>News</b>
+                    <a style="float:right;font-size: 22px;color:#005589;" onclick="minimizeTHeView();" title="Minimize"><i class="fa fa-angle-double-down" ></i></a>
+                </div>
+                <div>
+                    
+                </div>
+                <iframe src="/apex/RSSNewsTicker?id={!accountId}&showInternal=0" frameborder="0" style="height:500px;width:100%" scrolling="no" />
+            </div>
+        </apex:form>
+<c:LinkOverrideScript />
+
+</apex:page>

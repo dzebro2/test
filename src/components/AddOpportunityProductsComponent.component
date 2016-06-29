@@ -1,0 +1,106 @@
+<apex:component controller="AddOpportunityProductsController" >
+    <apex:attribute name="componentValue" description="Attribute on the component."
+                    type="String" required="required" assignto="{!opportunityId}" />
+    <script>
+        function checkForBenefitAgreementCondition(fieldName,rowNumber,recordId){
+
+            if(fieldName == 'Benefit_Agreement__c'){
+                getTheUpdatedMembersCount(rowNumber,recordId);
+            }
+        }
+
+        function openLookup(baseURL, width, modified, searchParam){
+            var urlArr = baseURL.split("?")[1];
+            var urlParams = urlArr.split('&');
+            //Reset baseURL
+            baseURL = "/apex/SimplifiedProductLookup?"
+            //Extract and transform urlParams
+            for(i = 0; i < urlParams.length; i++){
+                var param = urlParams[i].split('=');
+                baseURL = baseURL + '&' + param[0] + '=' + param[1];
+            }
+            //Add recordType as a param
+            baseURL = baseURL + "&id=" + escapeUTF("{!opportunityId}");
+            //If the user types something in the lookup, modified will be 1
+            //If so, add the entered searchParam to the URL
+            if (modified == '1') {
+                baseURL = baseURL + searchParam;
+            }
+
+            //Open the URL as a lookup-type window
+            openPopup(baseURL, "lookup", 350, 480, "width="+width+",height=480,toolbar=no,status=no,directories=no,menubar=no,resizable=yes,scrollable=yes", true);
+        }
+    </script>
+    <apex:outputpanel id="w">
+        <apex:pagemessage title="Warning" strength="2" severity="warning" rendered="{!IF(opportunityObj.RecordTypeId == newSaleRecordTypeId, true, false)}">{!$Label.AddMultipleMedicalOpportunityProducts} </apex:pagemessage>
+    </apex:outputpanel>
+    <apex:form >
+        <apex:actionfunction name="getTheUpdatedMembersCount" action="{!getTheUpdatedMembersCount}" immediate="true" rerender="thePageBlock,pgMsgId">
+            <apex:param name="rowCount" assignto="{!rowCount}" value="" />
+            <apex:param name="BARecordId" assignto="{!BARecordId}" value="" />
+        </apex:actionfunction>
+        <apex:pagemessages id="pgMsgId" />
+
+        <apex:pageblock rendered="{!hasEditAccess}" id="thePageBlock" title="Add Opportunity Products">
+
+
+            <apex:variable value="{!0}" var="rowNumber" />
+
+            <apex:outputpanel id="panelWithVar">
+                <apex:variable value="{!0}" var="rowNumber" />
+            </apex:outputpanel>
+
+            <apex:pageblocktable id="newOppProductTable" value="{!listOfOpportunityProducts}" var="newOpportunityProductObj">
+
+                <apex:column headervalue="Select" width="3%">
+                    <apex:inputcheckbox value="{!newOpportunityProductObj.isSelected}" />
+                </apex:column>
+
+                <apex:column headervalue="Action" width="3%">
+                    <apex:variable var="rowNumber" value="{!rowNumber + 1}" />
+                    <apex:commandlink action="{!removeRow}" value="Del" style="color: #015BA7;font-weight:bold" rerender="newOppProductTable,panelWithVar,pgMsgId" immediate="true" rendered="{!NOT(newOpportunityProductObj.benefitAgreementCheck)}">
+                        <apex:param name="p1" value="{!rowNumber}" assignto="{!numberOfRowToRemove}" />
+                        <apex:param name="p2" value="{!newOpportunityProductObj.opportunityProductObj.Id}" assignto="{!recordToDelete}" />
+                    </apex:commandlink>
+                </apex:column>
+
+                <apex:repeat value="{!fields}" var="f">
+                    <apex:column headervalue="{!f.label}">
+                        <apex:outputfield value="{!newOpportunityProductObj.opportunityProductObj[f]}" rendered="{!IF(AND(f.Label =='Benefit Agreement',newOpportunityProductObj.benefitAgreementCheck),true,false)}" />
+                        <apex:inputfield onchange="checkForBenefitAgreementCondition('{!f.FieldPath}',{!rowNumber},this.value);" rendered="{!IF(OR(AND(f.Label =='Benefit Agreement',!newOpportunityProductObj.benefitAgreementCheck),f.Label !='Benefit Agreement'),true,false)}" value="{!newOpportunityProductObj.opportunityProductObj[f]}" required="{!f.required}" />
+
+                    </apex:column>
+                </apex:repeat>
+                <apex:column style="display:none">
+
+                </apex:column>
+
+            </apex:pageblocktable>
+
+            <div id="AddNewButton">
+                <apex:commandbutton value="Add New" action="{!AddNewOpportunityProduct}" rerender="newOppProductTable,panelWithVar, pgMsgId" />
+            </div>
+
+            <center>
+                <apex:outputlabel rendered="{!IF(opportunityObj.RecordTypeId == newSaleRecordTypeId, true, false)}" value="Total Expected Health Members: " />
+                <apex:inputtext rendered="{!IF(opportunityObj.RecordTypeId == newSaleRecordTypeId, true, false)}" value="{!expectedMembers}" />
+            </center>
+            <br />
+            <center>
+                <apex:outputlabel rendered="{!IF(opportunityObj.RecordTypeId == newSaleRecordTypeId, true, false)}" value="Total Expected Health Contracts: " />
+                <apex:inputtext rendered="{!IF(opportunityObj.RecordTypeId == newSaleRecordTypeId, true, false)}" value="{!expectedContracts}" />
+            </center>
+            <br />
+            <center>
+                <apex:commandbutton value="Save" action="{!saveOpportunityProducts}" />
+                <apex:commandbutton value="Cancel" action="{!gotoOpportunity}" immediate="true" />
+            </center>
+
+        </apex:pageblock>
+
+        <apex:outputpanel rendered="{!NOT(hasEditAccess)}">
+            <apex:commandlink action="{!gotoOpportunity}" value="<< Back to Opportunity" />
+        </apex:outputpanel>
+        <script type="text/javascript" src="https://code.jquery.com/jquery-2.2.0.min.js"></script>
+    </apex:form>
+</apex:component>

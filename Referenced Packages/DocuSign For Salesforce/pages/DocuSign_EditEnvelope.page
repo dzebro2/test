@@ -1,0 +1,442 @@
+<apex:page Controller="dsfs.EnvelopeController" showHeader="true" sidebar="false" tabStyle="dsfs__DocuSign_Status__c">
+   <apex:stylesheet value="{!$Resource.dsfs__styles}" />
+   <apex:includeScript value="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js" />
+   <apex:includeScript value="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.1/jquery-ui.min.js" />
+   <apex:includeScript value="{!$Resource.dsfs__modernizrjs}" />
+   <apex:includeScript value="{!$Resource.dsfs__html5shivjs}" />   
+   <apex:includeScript value="{!$Resource.dsfs__DocuSignJs}" />
+   
+   <script type="text/javascript">
+      if (!window.console) console = {log: function() {}};
+      Visualforce.remoting.timeout = 120000;
+      dsGlobal = {
+          // Remote Actions
+          deleteEnvelope: '{!$RemoteAction.EnvelopeController.deleteEnvelope}',
+          sendEnvelope: '{!$RemoteAction.EnvelopeController.sendEnvelope}',
+          updateEnvelope: '{!$RemoteAction.EnvelopeController.updateEnvelope}',
+          deleteRecipient: '{!$RemoteAction.EnvelopeController.deleteRecipient}',
+          deleteDocument: '{!$RemoteAction.EnvelopeController.deleteDocument}',
+          getAvailableAttachments: '{!$RemoteAction.EnvelopeController.getAvailableAttachments}',
+          getAvailableFeedItems: '{!$RemoteAction.EnvelopeController.getAvailableFeedItems}',
+          getAvailableDocusignTemplates: '{!$RemoteAction.EnvelopeController.getAvailableDocusignTemplates}', 
+          getAvailableDocumentForFolder: '{!$RemoteAction.EnvelopeController.getAvailableDocumentForFolder}',
+          getAvailableFolders: '{!$RemoteAction.EnvelopeController.getAvailableFolders}',
+          getAvailableContentFolders: '{!$RemoteAction.EnvelopeController.getAvailableContentFolders}',
+          getAvailableContentDocumentForFolder: '{!$RemoteAction.EnvelopeController.getAvailableContentDocumentForFolder}',       
+          addDocuments: '{!$RemoteAction.EnvelopeController.addDocuments}',
+          reorderDocuments: '{!$RemoteAction.EnvelopeController.reorderDocuments}',
+          saveRecipient: '{!$RemoteAction.EnvelopeController.saveRecipient}',
+          reorderRecipients: '{!$RemoteAction.EnvelopeController.reorderRecipients}',
+          searchContacts: '{!$RemoteAction.EnvelopeController.searchContacts}',
+          searchLeads: '{!$RemoteAction.EnvelopeController.searchLeads}',
+          searchUsers: '{!$RemoteAction.EnvelopeController.searchUsers}',
+          getRecipientNames: '{!$RemoteAction.EnvelopeController.getRecipientNames}',
+          saveContact: '{!$RemoteAction.EnvelopeController.saveContact}',
+          // Page Fields
+          pathPrefix: '{!pathPrefix}',
+          sourceId: '{!envelope.sourceId}',
+          envelopeId: '{!envelope.envelopeId}',
+          envelope: JSON.parse('{!JSENCODE(envelopeJson)}'),
+          // Custom Button Parameters
+          showRemindExpireOverride: '{!$CurrentPage.parameters.SRS}',
+          showChatterSettingOverride: '{!$CurrentPage.parameters.SCS}',
+          showSendNowButtonOverride: '{!$CurrentPage.parameters.SSB}',
+          showAddAttachmentWindow: '{!$CurrentPage.parameters.SAA}',
+          showTagButtonOverride: '{!$CurrentPage.parameters.STB}',
+          enableEmailSubjectEditingOverride: '{!$CurrentPage.parameters.SES}',
+          enableEmailMessageEditingOverride: '{!$CurrentPage.parameters.SEM}', 
+          newWindow: '{!$CurrentPage.parameters.NW}',    
+          // Current User Info
+          currentUserName: "{!$User.FirstName} {!$User.LastName}",
+          currentUserEmail: "{!$User.Email}",
+          currentUserId: '{!$User.Id}',
+          // Labels
+          editLabel: '{!$Label.Edit}',
+          editRecipientLabel: '{!$Label.Edit} {!$Label.Recipient}',
+          addRecipientLabel: '{!$Label.Add} {!$Label.Recipient}',
+          addMeLabel: "{!$Label.AddMe}",
+          addContactLabel: '{!$Label.Add} {!$Label.Contact}',
+          addLeadLabel: '{!$Label.Add} {!$Label.Lead}',
+          addUserLabel: '{!$Label.Add} {!$Label.User}',
+          selectContactLabel: '{!$Label.SelectRecipient} {!$Label.Contact}',
+          selectLeadLabel: '{!$Label.SelectRecipient} {!$Label.Lead}',
+          selectUserLabel: '{!$Label.SelectRecipient} {!$Label.User}',
+          searchContactsLabel: '{!$Label.Search} {!$Label.Contacts}',
+          searchLeadsLabel: '{!$Label.Search} {!$Label.Leads}',
+          searchUsersLabel: '{!$Label.Search} {!$Label.Users}',
+          invalidEmailLabel: '{!$Label.m_InvalidEmailError}',
+          fieldRequiredLabel: '{!$Label.FieldRequired}',
+          signerDashSignNowLabel: '{!$Label.SignerDashSignNow}',
+          signInPersonLabel: '{!$Label.SignInPerson}',
+          signerLabel: '{!$Label.Signer}',
+          carbonCopyLabel: '{!$Label.CarbonCopy}',
+          certifiedDeliveryLabel: '{!$Label.certifiedDelivery}',
+          addressRecipientsLabel: '{!$Label.addressRecipients}',
+          manageEnvelopeLabel: "{!$Label.manageEnvelope}",
+          attachmentsLabel : '{!$Label.DocTypeAttachments}',
+          documentsLabel : '{!$Label.DocTypeDocuments}',
+          feeditemsLabel : '{!$Label.DocTypeFeedItems}',
+          libraryLabel : '{!$Label.DocTypeLibraryItems}',
+          templatesLabel : '{!$Label.DocTypeTemplate}',  
+          noMatchFoundLabel : '{!$Label.NoMatchFound}',
+          pleaseEnterSearchKeywordLabel : '{!$Label.PleaseEnterSearchKeyword}',
+          // Images
+          grabberIcon: '{!$Resource.Grabber}',
+          grabberPNG: '{!$Resource.GrabberPNG}',          
+          deleteIcon: '{!$Resource.Delete}',
+          deleteIconPNG: '{!$Resource.DeletePNG}',
+          searchIconPNG: '{!$Resource.SearchIconPNG}',      
+          docusignPNG: '{!$Resource.DocuSignPNG}',
+          RecipientIconPNG: '{!$Resource.RecipientIconPNG}',
+          DocumentIconPNG: '{!$Resource.DocumentIconPNG}',
+          SettingIconPNG: '{!$Resource.SettingIconPNG}',
+          MessageIconPNG: '{!$Resource.MessageIconPNG}',
+          DocuSignLoadingLogoPNG: '{!$Resource.DocuSignLoadingLogoPNG}',
+          isEditing: false,
+          isChangingRecipient: false
+      };
+	</script>
+	
+   <div class="docusign-container">
+   
+	   	<div id="dsAlert" style="display: none">
+			<ul class="alert-messages"></ul>
+			<a href="{!pathPrefix}/{!envelope.sourceId}" id="backButton" class="secondary button" style="display: none">{!$Label.Back}</a>
+		</div>
+	
+      <!-- Edit Envelope Begins -->
+      <div id="ds-edit-envelope">
+         <div class="title">
+            <img class="logo" src="{!$Resource.DocuSign}"></img>
+            <h1 id="envelopeTitle">{!objectType}: {!objectName}</h1>
+         </div>
+         <div class="row">
+            <div id="documents">
+              <section>
+               <div id="dsDocumentsList">
+                  <div class="document-title">
+                     <div class="button has-dropdown" id="ds-add-document-btn">
+                        <a href="#">{!$Label.AddDoc}</a>
+                        <ul class="dropdown ds-add-document-dropdown">
+                           <li><a href="#" id="add-attachment">{!$Label.Attachment}</a></li>
+                           <li><a href="#" id="add-libraries">{!$Label.Libraries}</a></li>
+                           <li><a href="#" id="add-document">{!$Label.Document}</a></li>
+                           <li><a href="#" id="add-docusign-template">{!$Label.DocuSignTemplate}</a></li>
+                           <li><a href="#" id="add-feed-items">{!$Label.FeedAttachments}</a></li>
+                        </ul>
+                     </div>
+                     <h2><img class="icon" id="docIcon" src="{!$Resource.DocumentIcon}"></img> {!$Label.Documents}</h2>
+                  </div>
+                  <div class="categories">
+                     <span>{!$Label.Order}</span>
+                     <span>{!$Label.Name}</span>
+                  </div>
+                  <div id="dsDocumentListContainer">
+                  </div>
+                </div>
+              </section>
+            </div>
+            <div id="recipients">
+               <section id="dsRecipientsList">
+                  <div class="document-title">
+                     <div class="button has-dropdown" id="ds-add-recipient-btn">
+                        <a href="#">{!$Label.AddRecipient}</a>
+                        <ul class="dropdown ds-add-recipient-dropdown">
+                           <li><a id="add-contact" href="#">{!$Label.Contacts}</a></li>
+                           <li><a id="add-lead" href="#">{!$Label.Leads}</a></li>
+                           <li><a id="add-user" href="#">{!$Label.Users}</a></li>
+                           <li><a id="add-me" href="#">{!$Label.AddMe}</a></li>
+                           <li><a id="add-quick" href="#">{!$Label.QuickAdd}</a></li>
+                        </ul>
+                     </div>
+                     <h2><img class="icon" id="recipientIcon" src="{!$Resource.RecipientIcon}"></img> {!$Label.Recipients}</h2>
+                  </div>
+                  <div class="categories">
+                     <span>{!$Label.Order}</span>
+                     <span>{!$Label.Recipient}</span>
+                     <span>{!$Label.Action}</span>
+                     <span class="language-label">{!$Label.Language}</span>
+                     <span>{!$Label.Role}</span>
+                  </div>
+               </section>
+            </div>
+         </div>
+         <div class="row">
+            <div id="message" class="expanded" style="display: none">
+               <section>
+                  <div class="document-title" id="message-document-title">
+                     <h2><img class="icon" id="messageIcon" src="{!$Resource.MessageIcon}"></img> {!$Label.MessagetoAllRecipients}</h2>
+                  </div>
+                  <div class="content">
+                     <div class="form">
+                     	<label>{!$Label.Subject}</label>
+                        <input type="text" maxlength="100" id="emailSubject" value="{!envelope.emailSubject}" placeholder="{!$Label.MessageSubject}" />
+                        <label>{!$Label.Message}</label>
+                        <textarea maxlength="2000" id="emailMessage" placeholder="{!$Label.MessageContent}" >{!envelope.emailMessage}</textarea>
+                     </div>
+                  </div>
+               </section>
+            </div>
+            <div id="settings" class="expanded" style="display: none">
+               <section>
+                  <div class="document-title" id="settings-document-title">
+                     <h2><img class="icon" id="settingIcon" src="{!$Resource.SettingIcon}"></img> {!$Label.Settings}</h2>
+                  </div>
+                  <div class="content">
+                     <div class="option" id="remindSignersFields" style="display: none">
+                        <input type="checkbox" id="remindSigners" value="{!envelope.remindSigners}"/>
+                        <label for="remindSigners">{!$Label.Sendautomaticreminders}</label>
+                        <div id="reminders">
+	                        <p class="sub">{!$Label.RemindSignersviaEmail} <input type="text" maxlength="3" id="sendReminderDays" value="{!envelope.sendReminderDays}"/> {!$Label.DaysAfterReceipt}</p>
+	                        <p class="sub">{!$Label.ContinueToSendRemindersEvery} <input type="text" maxlength="3" id="sendReminderRepeatDays" value="{!envelope.sendReminderRepeatDays}"/> {!$Label.DaysAfterReceipt}</p>
+                        </div>
+                     </div>
+                     <div class="option" id="expireEnvelopeFields" style="display: none">
+                        <input type="checkbox" id="expireEnvelope" value="{!envelope.expireEnvelope}"/>
+                        <label for="expireEnvelope">{!$Label.ExpireEnvelope}</label>
+                        <div id="expirations">
+	                        <p class="sub">{!$Label.ExpireRequestIn} <input type="text" maxlength="3" id="expireEnvelopeDays" value="{!envelope.expireEnvelopeDays}"/> {!$Label.DaysAfterReceipt}</p>
+	                        <p class="sub">{!$Label.WarnSigners} <input type="text" maxlength="3" id="warnExpireDays" value="{!envelope.warnExpireDays}"/> {!$Label.DaysBeforeRequestExpires}</p>
+                        </div>
+                     </div>
+                     <div class="option" id="enableChatterFields" style="display: none">
+                        <input type="checkbox" id="enableChatterUpdates"/>
+                        <label for="enableChatterUpdates">{!$Label.EnableChatterUpdates}</label>
+                     </div>
+                  </div>
+               </section>
+            </div>
+         </div>
+         <div class="inline-button send">
+            <ul>
+               <li><a href="javascript:void(0);" id="nextButton" class="next" style="display: none">{!$Label.Next}</a></li>
+               <li><a href="javascript:void(0);" id="sendNowButton" style="display: none">{!$Label.SendNow}</a></li>
+               <li><a href="javascript:void(0);" id="cancelButton">{!$Label.Cancel}</a></li>
+            </ul>
+         </div>
+      </div>
+      <!-- Edit Envelope Ends -->
+      
+      <!-- Edit Recipient Modal Begins -->
+      <div class="ds-edit-recipient-modal modal-background">
+         <div class="modal" >
+            <div class="ds-edit-recipient-modal-content">
+              <img class="close-modal ds-recipient-close-icon" src="{!$Resource.Delete}"></img>
+              <h2 id="ds-recipient-modal-title"></h2>
+              <div>
+	              <label>{!$Label.RecipientName}</label>
+	              <div class="ten col no-padding" id="ds-recipient-name">
+	              	<p id="ds-recipient-info"></p>
+              	  </div>
+              	  <div class="two col no-padding" id="ds-change-recipient">
+		              <div class="button has-dropdown" id="ds-edit-recipient-btn">
+		                 <a href="#">{!$Label.ChangeRecipient}</a>
+		                 <ul class="dropdown ds-edit-recipient-dropdown">
+		                    <li><a id="edit-contact" href="#">{!$Label.Contacts}</a></li>
+		                    <li><a id="edit-lead" href="#">{!$Label.Leads}</a></li>
+		                    <li><a id="edit-user" href="#">{!$Label.Users}</a></li>
+		                    <li><a id="edit-me" href="#">{!$Label.AddMe}</a></li>
+		                 </ul>
+		              </div>
+		           </div>
+              </div>
+              <div id="ds-quickadd-form">
+                 <label>{!$Label.Name}</label>
+                 <input type="text" placeholder="" maxlength="100" id="quick-add-name" />
+                 <label class="error ds-recipient-name-error-label">{!$Label.FieldRequired}</label>
+                 <label>{!$Label.EmailAddress}</label>
+                 <input type="text" placeholder="" maxlength="100" id="quick-add-email" />
+                 <label class="error ds-recipient-email-error-label"></label>
+              </div>
+              <div id="ds-recipient-signature-dropdown">
+                 <label>{!$Label.Signature}</label>
+                 <select></select>
+              </div>
+              <div id="ds-recipient-signertype-dropdown">
+                 <label>{!$Label.RecipientType}</label>
+                 <select id="ds-recipient-signertype-select">
+                    <option value="Signer">{!$Label.Signer}</option>
+                    <option value="Signer Now" class="self-signer-option" >{!$Label.SignerDashSignNow}</option>
+                    <option value="Carbon Copy">{!$Label.CarbonCopy}</option>
+                    <option value="Certified Delivery">{!$Label.CertifiedDelivery}</option>
+                    <option value="Host in person" class="self-signer-option" >{!$Label.HostInPerson}</option>
+                    <option value="Host in person - sign now" class="self-signer-option" >{!$Label.HostInPersonDashSignNow}</option>
+                    <option value="Address recipients">{!$Label.AddressRecipients}</option>
+                    <option value="Manage envelope">{!$Label.ManageEnvelope}</option>
+                 </select>
+                 <label class="error ds-recipient-signature-dropdown-error-label">{!$Label.DocuSignandSalesforce}</label>
+              </div>
+              <div id="ds-recipient-signer-name-div">
+                 <label>{!$Label.SignerName}</label>
+                 <input type="text" id="ds-recipient-signer-name" placeholder="" maxlength="100" />
+              </div>
+              <div class="grid-row ds-recipient-signer-role-div">
+                <label class="role">{!$Label.SignerRole}</label>
+                <div class="ten col">
+                  <input type="text" id="ds-recipient-signer-role" placeholder="" maxlength="100" />
+                </div>
+                <div class="two col" id="ds-recipient-signer-role-selection">
+                  <div class="button has-dropdown" id="ds-recipient-signer-role-btn">
+                      <a href="#">...</a>
+                      <ul class="dropdown" id="ds-recipient-signer-role-dropdown"></ul>
+                  </div>
+                </div>
+              </div>            
+              <div>
+                 <label>{!$Label.AccessCode}</label>
+                 <input type="text" id="ds-recipient-access-code" placeholder="" maxlength="50" />
+              </div>
+              <div id="ds-recipient-language-setting">
+                 <div>
+                    <label>{!$Label.Language}</label>
+                    <select id="ds-recipient-language-select"></select>
+                 </div>
+                 <label>{!$Label.PersonalMessage}</label>
+                 <div class="message-background">
+                    <div class="form">
+                      <input type="text" id="ds-recipient-message-subject" placeholder="{!$Label.MessageSubject}" maxlength="100" />
+                      <textarea id="ds-recipient-message-body" placeholder="{!$Label.MessageContent}" maxlength="2000" />
+                    </div>
+                 </div>
+              </div>
+              <hr/>
+              <div class="note-background">
+                  <label>{!$Label.NoteForRecipient}</label>
+                  <textarea maxlength="1000" id="ds-recipient-note"></textarea>
+              </div>
+              <div class="inline-button">
+                 <ul>
+                    <li><a href="#" id="ds-recipient-save-btn"class="next">{!$Label.Save} {!$Label.Recipient}</a></li>
+                    <li><a href="#" class="ds-recipient-cancel-btn">{!$Label.Cancel}</a></li>
+                 </ul>
+              </div>
+            </div>
+         </div>
+      </div>
+      <!-- Edit Recipient Modal Ends -->
+
+      <!-- Add Recipient Modal Begins -->
+      <div class="ds-add-recipient-modal modal-background">
+         <div class="modal">
+            <img class="close-modal ds-recipient-close-icon" src="{!$Resource.Delete}"></img>
+            <h2 id='ds-search-recipient-modal-title'></h2>
+             <div class="search">
+                <input type="text" id="ds-recipient-search-text" placeholder="{!$Label.Search}" maxlength="100"/>
+                <button type="button" id="ds-recipient-search-btn">{!$Label.Search}</button>
+                <a href="javascript:void(0);" id="ds-add-new-contact-link" >{!$Label.New} {!$Label.Recipient}</a>
+             </div>
+            <div id="ds-recipient-search-form">
+              <div class="content static" id="ds-recipient-search-result">
+                 <ul id="ds-recipient-search-selection"></ul>
+              </div>
+              <div class="inline-button">
+                 <ul>
+                    <li><a href="#" class="next" id="ds-recipient-next-btn">{!$Label.Next}</a></li>
+                    <li><a href="#" class="ds-recipient-cancel-btn">{!$Label.Cancel}</a></li>
+                 </ul>
+              </div>
+            </div>      
+            <div id="ds-add-new-contact-form">
+              <div class="grid-row">
+                 <div class="six col">
+                    <label>{!$Label.FirstName}</label>
+                    <input type="text" placeholder="" maxlength="40" id="add-new-contact-fname" />
+                 </div>
+                 <div class="six col">
+                    <label>{!$Label.LastName}</label>
+                    <input type="text" placeholder="" maxlength="80" id="add-new-contact-lname" />
+                    <label class="error add-new-contact-lname-error">{!$Label.FieldRequired}</label>
+                 </div>
+              </div>
+              <label>{!$Label.EmailAddress}</label>
+              <input type="text" placeholder="" maxlength="80" id="add-new-contact-email" />
+              <label class="error add-new-contact-email-error"></label>
+              <label>{!$Label.MailingStreet}</label>
+              <input type="text" placeholder="" maxlength="255" id="add-new-contact-street" />
+              <label>{!$Label.MailingCity}</label>
+              <input type="text" placeholder="" maxlength="40" id="add-new-contact-city" />  
+              <div class="grid-row">
+                 <div class="six col">
+                    <label>{!$Label.StateProvince}</label>
+                    <input type="text" placeholder="" maxlength="80" id="add-new-contact-state" />
+                 </div>
+                 <div class="six col">
+                    <label>{!$Label.ZipPostalCode}</label>
+                    <input type="text" placeholder="" maxlength="20" id="add-new-contact-zipcode" />
+                 </div>
+              </div>
+              <label>{!$Label.Country}</label>
+              <input type="text" placeholder="" maxlength="80" id="add-new-contact-country" />
+              <div class="grid-row">
+                 <div class="six col">
+                    <label>{!$Label.Phone}</label>
+                    <input type="text" placeholder="" maxlength="40" id="add-new-contact-phone" />
+                 </div>
+                 <div class="six col">
+                    <label>{!$Label.Fax}</label>
+                    <input type="text" placeholder="" maxlength="40" id="add-new-contact-fax" />
+                 </div>
+              </div>
+              <div class="inline-button">
+                <ul>
+                  <li><a href="#" class="next" id="ds-save-new-contact-btn" >{!$Label.Save}</a></li>
+                  <li><a href="#" id="ds-cancel-new-contact-btn" >{!$Label.Cancel}</a></li>
+                </ul>
+              </div>
+            </div>
+         </div>
+      </div>
+      <!-- Add Recipient Modal Ends -->
+      
+      <!-- Add Document Modal Begins -->
+      <div class="ds-add-document-modal modal-background">
+	     <div class="modal">
+	      	<div class="ds-add-document-modal-content">
+	  	      <img class="close-modal ds-document-close-icon" src="{!$Resource.Delete}"></img>
+	    	  <h2 id="ds_docmodal_header"></h2>
+	    	  <a id="ds_docmodal_add_attachment" href="#" style="margin-bottom:10px;" class="secondary button">{!$label.AddAttachment}</a>
+	      	  <label id="ds_docmodal_folder">
+	              <select id="ds_docmodal_folder_select">
+	                  
+	              </select> 
+	           </label>
+			   <div class="content" style="clear:right;">
+					
+		       </div>
+	           <div class="inline-button">
+	               <ul>
+	                  <li><a href="javascript:void(0);" class="next" id="ds-document-next-btn">{!$Label.Save}</a></li>
+	                  <li><a href="javascript:void(0);" class="ds-document-cancel-btn">{!$Label.Cancel}</a></li>
+	               </ul>
+	           </div> 
+	        </div>
+         </div>
+      </div>
+      <!-- Add Document Model Ends -->
+
+      <!-- Loading for Modal Begins -->
+      <div class="modal-loading">
+         <div id="circleG">
+            <div id="circleG_1" class="circleG"></div>
+            <div id="circleG_2" class="circleG"></div>
+            <div id="circleG_3" class="circleG"></div>
+         </div>
+      </div>
+      <!-- Loading for Modal Ends -->
+   
+    <!-- Full Screen Loading for Modal Begins -->
+	<div class="fullscreenload" style="display: none">
+	  <img class="docusignlogo" src="{!$Resource.DocuSignLoadingLogo}"/>
+	  <div id="circleG">
+	    <div id="circleG_1" class="circleG">
+	    </div>
+	    <div id="circleG_2" class="circleG">
+	    </div>
+	    <div id="circleG_3" class="circleG">
+	    </div>
+	  </div>
+	</div>
+	<!-- Full Screen Loading for Modal Ends -->
+
+   </div>
+</apex:page>

@@ -1,0 +1,184 @@
+<apex:page sideBar="false" showHeader="false" controller="HPS_AMGoalsController"  >
+    <apex:stylesheet value="{!URLFOR($Resource.DataTables_1_10_2, '/css/jquery.dataTables.min.css')}" />
+    <apex:includeScript value="{!$Resource.jquery_1_11_1}" />
+    <apex:includeScript value="{!URLFOR($Resource.DataTables_1_10_2, '/js/jquery.dataTables.min.js')}"/>
+    <style>
+        .accordion div.accordion-label label h4 {
+            white-space: nowrap;
+        }
+        .media-holder {
+            width:100% !important;
+        }
+        body {
+            background:white;
+        }
+        .accordion-title{
+            font-size:16px;
+            font-weight:bold;
+            margin:20px 10px;
+        }
+        .dataTables_length{
+            display:none !important;
+        }
+    
+        .data-table thead th {
+            background-color:#1797C0 !important;
+            color:#fff;
+            font-weight:bold;
+        }
+        
+        .setup-icon {
+            height: 16px;
+            left: 98%;
+            position: absolute;
+            top: 0;
+            width: 16px;
+            z-index: 10000;
+            cursor:pointer;        
+        }
+        .large-text{
+            font-size:40px;
+            text-align:center;
+            white-space:nowrap;
+        }
+        .small-text{
+           font-size:14px;
+           text-align:center;
+           white-space:nowrap;
+        }
+        
+    </style>
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <script type="text/javascript">
+        google.load("visualization", "1", {packages:["corechart"]});
+        google.setOnLoadCallback(drawColumnChart);
+        function drawColumnChart() {
+            var data = google.visualization.arrayToDataTable([
+                ["Priority", "Cases", { role: 'style' } ],
+                {!colChartData}   
+            ]);
+            
+            
+            var view = new google.visualization.DataView(data);
+            view.setColumns([0, 1,
+            { calc: "stringify",
+            sourceColumn: 1,
+            type: "string",
+            role: "annotation" },2
+            ]);
+                              
+            var options = {
+                width: '350',
+                height:150,
+                backgroundColor : '#FFFFFF',
+                hAxis: {
+                    title: 'Priority',
+                    titleTextStyle: {color: '#1797C0'},
+                    textStyle:{color: '#1797C0'}
+                },
+                vAxis: {
+                    title: 'No Of Cases',
+                    minValue: 0,
+                    gridlines: {
+                        color: 'transparent'
+                    },
+                    titleTextStyle: {color: '#1797C0'},
+                    textStyle:{color: '#1797C0'}
+                },
+                legend: { position: "none" }
+            };
+            var chart = new google.visualization.ColumnChart(document.getElementById("columnchart_values"));
+            chart.draw(view, options);
+            
+        }
+        
+
+        google.setOnLoadCallback(drawChart);
+        function drawChart() {
+            var data = google.visualization.arrayToDataTable([
+                ['Customer Satisifcation', 'Survey Data'],
+                ['Excellent', 30],
+                ['Good', 40],
+                ['Fair', 20],
+                ['Poor', 10]
+            ]);
+
+            var options = {
+                is3D : true,
+                pieHole: 0.4,
+                legend:{position:'bottom'},
+                backgroundColor : '#FFFFFF',
+                chartArea:{width:'100%', height:'80%'},
+                width : '350',
+                height:120, 
+                fontSize:8,
+                slices: {
+                    0:{color:'#00008B'},
+                    1:{color:'#66CD00'},
+                    2:{color:'#1797C0'},
+                    3:{color:'#8B0000'}
+                }
+            };
+
+            var chart = new google.visualization.PieChart(document.getElementById('piechart_3d'));
+            chart.draw(data, options);
+        }
+
+    </script>
+    <span class="accordion-title">AM Sales Goals and Metrics </span><br/><br/>
+    <!--<div style="margin-left:450px;font-size:20px;">
+        <a href="/{!salesPipelineReportObj.Id}" target="_blank" style="color:#1797C0;"> Sales Pipeline </a>
+    </div>-->
+    <table style="width:100%;">
+        <tbody>
+            <tr>
+                <td style="width:30%;text-align:center;">
+                    <div style="color:#1797C0;font-size:20px;">
+                        Members Acquired
+                    </div>
+                    <div style="color:#1797C0;">
+                        Goal vs. Actual, YTD
+                    </div>
+                        
+                    <apex:image value="{!$Resource.MembersAcquired}"/>
+                </td>
+                <td style="width:10%;text-align:center;">
+                    <div style="color:#1797C0;">
+                        <div class="large-text">
+                            50%
+                        </div>
+                        <div class="small-text">
+                            Persistency
+                        </div>
+                    </div>
+                    <div style="color:#1797C0;">
+                        <div class="large-text">
+                            {!renewalWinRate}
+                        </div>
+                        <div class="small-text">
+                            Renewal Win Rate, YTD
+                        </div>
+                    </div>
+                </td>
+            
+                <td style="width:30%;text-align:center;">
+                    <div >
+                        <a style="color:#1797C0;font-size:20px" href="/{!openCasesByPriorityReportObj.Id}" target="_blank">
+                            Open Cases
+                        </a>
+                    </div>
+                    
+                    <div id="columnchart_values"/>
+                </td>
+                <td style="width:30%;text-align:center;">
+                    <div style="color:#1797C0;font-size:20px">
+                        Customer Satisifcation
+                    </div>
+                    <div id="piechart_3d"/>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+<c:LinkOverrideScript />
+    
+</apex:page>

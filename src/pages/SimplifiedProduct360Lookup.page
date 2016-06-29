@@ -1,0 +1,93 @@
+<apex:page controller="SimplifiedProduct360Lookup" action="{!insertExceptionLog}" title="Search" showheader="false" sidebar="false" tabstyle="Group" id="pg">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
+    <script type='text/javascript'>
+        function noenter(ev)  {
+            if (window.event && window.event.keyCode == 13 || ev.which == 13) {
+                doSearch();
+                return false;
+            } else {
+                return true;
+            }
+         }
+
+
+        $(document).ready(function(){
+            if (sessionStorage.url == null){
+                sessionStorage.url = window.location.href;
+            }
+        });
+
+        function post_value(product, pid){
+
+            var urlArr = sessionStorage.url.split("?")[1];
+            var urlParams = urlArr.split('&');
+            var inputname;
+            var inputid;
+
+            for (i = 0; i < urlParams.length; i++){
+
+                var param = urlParams[i].split('=');
+                if ( param[0] == 'pname'){
+                    inputname = param[1];
+                }
+                if (param[0] == 'pid'){
+                    inputid = param[1];
+                }
+            }
+
+            opener.$('.'+inputname).val(product);
+            opener.$('.'+inputid).val(pid);
+            self.close();
+        }
+    </script>
+    <apex:form html-name="frm">
+        <apex:pagemessages id="pgMsg" />
+        <apex:pageblock id="productResults" rendered="{!results.size > 0}">
+            <apex:pageblocksection ><h2>Products</h2></apex:pageblocksection>
+            <apex:outputlabel value="Search" for="txtSearch" />
+            <apex:inputtext id="txtSearch" value="{!searchString}" onkeypress="return noenter(event);" />
+            <span style="padding-left:5px">
+                <apex:commandbutton id="btnGo" value="Go" onclick="doSearch(); return false;" rerender="Results"></apex:commandbutton>
+            </span>
+            <apex:actionfunction name="doSearch" action="{!Search}" />
+            <apex:pageblocktable value="{!Results}" var="p" id="Results">
+                <apex:column >
+                    <apex:facet name="header">
+                        <apex:outputpanel > Product </apex:outputpanel>
+                    </apex:facet>
+                    <apex:outputlink onclick="post_value('{!p.Simplified_Product__c}', '{!p.Id}');">{!p.Simplified_Product__c}</apex:outputlink>
+                </apex:column>
+                <apex:column >
+                    <apex:facet name="header">
+                        <apex:outputpanel > State </apex:outputpanel>
+                    </apex:facet>
+                    <apex:outputtext >{!p.HCSC_State__c}</apex:outputtext>
+                </apex:column>
+            </apex:pageblocktable>
+        </apex:pageblock>
+        <apex:pageblock id="productResults2" rendered="{!Results.size <= 0}">
+            <apex:pagemessage summary="Search did not return a valid Product" severity="warning" strength="3" />
+            <apex:pagemessages />
+            <apex:pageblocksection ><h2>Products</h2></apex:pageblocksection>
+            <apex:outputlabel value="Search" for="txtSearch" />
+            <apex:inputtext id="txtSearch" value="{!searchString}" onkeypress="return noenter(event);" />
+            <span style="padding-left:5px">
+                <apex:commandbutton id="btnGo" value="Go" onclick="doSearch(); return false;" rerender="Results"></apex:commandbutton>
+            </span>
+            <apex:actionfunction name="doSearch" action="{!Search}" />
+            <apex:pageblocktable value="{!Results}" var="p" id="Results">
+                <apex:column >
+                    <apex:facet name="header">
+                        <apex:outputpanel > Product </apex:outputpanel>
+                    </apex:facet>
+                </apex:column>
+                <apex:column >
+                    <apex:facet name="header">
+                        <apex:outputpanel > State </apex:outputpanel>
+                    </apex:facet>
+                    <apex:outputtext >{!p.HCSC_State__c}</apex:outputtext>
+                </apex:column>
+            </apex:pageblocktable>
+        </apex:pageblock>
+    </apex:form>
+</apex:page>

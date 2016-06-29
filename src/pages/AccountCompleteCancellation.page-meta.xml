@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ApexPage xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>33.0</apiVersion>
+    <availableInTouch>false</availableInTouch>
+    <confirmationTokenRequired>false</confirmationTokenRequired>
+    <description>Used for Account cancellation functionality. Page shows cancellation fields of account .Also related group section , related benefit agreement which will be cancelled along with account.</description>
+    <label>AccountCompleteCancellation</label>
+</ApexPage>

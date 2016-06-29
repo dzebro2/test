@@ -1,0 +1,194 @@
+<apex:component controller="ImportAccountOpportunityClass" allowDML="true">
+    <apex:attribute name="FunctionalityType" type="String" description="Type of the functionality" assignTo="{!Type}"/>
+    <apex:attribute name="ObjectId" type="Id" description="Object Record Id" assignTo="{!CurrentObjectId}"/> 
+    <apex:attribute name="ObjectName" type="String" description="Object Name" assignTo="{!CurrentObjectName}"/>
+    
+    <apex:stylesheet value="{!URLFOR($Resource.DataTables_1_10_2, '/css/jquery.dataTables.min.css')}" />
+    <apex:includeScript value="{!$Resource.jquery_1_11_1}" />
+    <apex:includeScript value="{!URLFOR($Resource.DataTables_1_10_2, '/js/jquery.dataTables.min.js')}"/>
+    <!--<apex:stylesheet value="{!URLFOR($Resource.Bootstrap, 'bootstrap-3.3.4-dist/css/bootstrap.min.css')}"/> -->
+    
+    <style>   
+            .dataTables_length{
+                display:none !important;
+            }
+        
+            .data-table thead th {
+                background-color:#1797C0 !important;
+                color:#fff;
+                font-weight:bold;
+            } 
+            
+            body .bPageBlock .pbBody .pbSubheader {
+                background-color : #1797c0 !important;
+                font-weight : bold !important;
+                font-size : 14px;
+                
+            }
+            .wrap {
+                width: 100%;
+            }
+            
+            .wrap table {
+                width: 100%;
+                table-layout: fixed;
+            }
+            
+            table tr td {
+                padding: 5px;
+                //border: 1px solid #eee;
+                
+                word-wrap: break-word;
+            }
+            
+            table.head tr td {
+                background: #b2cdff;
+                width:Auto;
+            }
+            
+            .inner_table {
+                height: 100px;
+                overflow-y: auto;
+                width:101%;
+            }
+            
+            .popup
+            {
+            
+                background-color: white;
+                border-width: 2px;
+                border-style: solid;
+                z-index: 9999;
+                left: 60%;
+                padding:10px;
+                position: absolute;
+                width: 500px;
+                margin-left: -250px;
+                top:20%;
+                color : #1797c0 !important;
+                border: 1px solid #1797c0 !important;
+                border-radius: 3px !important;
+                font-size: 14px !important;
+                text-align: center !important;
+                font-weight: bold !important;
+               
+            }
+    
+            .popupBg
+            {
+                background-color:black;
+                opacity: 0.20;
+                filter: alpha(opacity = 70);
+                position: absolute;
+                width: 100%;
+                height: 100%;
+                top: 0;
+                left: 0;
+                z-index: 9998;
+                color : #1797c0 !important;
+                border: 1px solid #1797c0 !important;
+                border-radius: 3px !important;
+            }
+            
+            .callDiv{
+                width: 20px;
+                height: 20px;
+                display: inline-table;
+               
+            }
+            .inboundCall{
+                background-position: -0px -20px;
+            }
+    
+    </style>
+        
+    <script type="text/javascript">
+           $(document).ready(function(){
+                 $('.My-Group-Section').dataTable();
+                 $("#SuccessMessage").hide();
+           });
+    </script>
+    <script type="text/javascript">
+        function showDisplayMessage(){
+               $("#SuccessMessage").show();
+               $('.My-Group-Section').dataTable();
+               setTimeout(function(){ 
+                    $("#SuccessMessage").hide();
+               }, 2000);
+                 
+          }
+      function ChangeAllCheckBoxes(){
+           var parentCheckBox = document.getElementsByClassName("selectAllChk");
+           var childCheckboxList = document.getElementsByClassName("CheckBoxClass");
+           for(var i=0; i < childCheckboxList.length; i++){
+               if(childCheckboxList[i].disabled == false){
+                   childCheckboxList[i].checked = parentCheckBox[0].checked;
+               }
+           }
+       }
+    </script>
+    
+    
+<apex:outputPanel id="pagePanel">   
+    <div id="TableSection"> 
+    <apex:outputPanel id="tablePanel">
+    <div class="table-responsive">
+        <apex:actionStatus id="save-lead-status" onstart="showLoadingDiv();" onstop="hideLoadingDiv();"/>
+        <apex:actionFunction name="resetDisplayMessage" rendered="tablePanel" action="{!resetDisplayMessageFlag}"/>
+        <table class="My-Group-Section data-table">
+            <thead>
+                <tr>
+                    <th><apex:inputCheckbox id="idPLchk" html-selectClass="pliCls" styleClass="selectAllChk" onchange="ChangeAllCheckBoxes();"/> &nbsp; Select</th>
+                    <apex:repeat value="{!AccountObjectFieldLabels}" var="FieldName">
+                        <th>
+                            <apex:outputLabel value="{!FieldName}"/>
+                        </th> 
+                    </apex:repeat>
+                </tr>
+            </thead>
+            <tbody>
+               <apex:repeat value="{!DisplayWrapperList}" var="rec">
+                    <tr>
+                        <td>
+                            &nbsp;<apex:inputCheckbox styleClass="CheckBoxClass" value="{!rec.Selected}" disabled="{!rec.IsDisabled}"/>
+                        </td>
+                        <apex:repeat value="{!AccountDisplayFields}" var="FieldName">
+                            <td>
+                                <script>
+                                </script>
+                                <apex:outputPanel rendered="{!if(InputOutputFieldMap[FieldName],false,true)}">
+                                    <apex:outputField value="{!rec.Record[FieldName]}"/> 
+                                </apex:outputPanel>
+                                <apex:outputPanel rendered="{!if(InputOutputFieldMap[FieldName],true,false)}">
+                                    <apex:inputField value="{!rec.Record[FieldName]}"/> 
+                                </apex:outputPanel> 
+                            </td> 
+                        </apex:repeat>
+                    </tr>
+                </apex:repeat>
+            </tbody>
+        </table>
+        
+        <div align="center">
+            <apex:commandButton value="Save" action="{!ImportRecords}" rerender="pagePanel" status="actStatusId" oncomplete="showDisplayMessage();"/>
+            <apex:commandButton value="Cancel" action="{!cancelMethod}"/>
+            <apex:actionStatus id="actStatusId" >
+                <apex:facet name="start" >
+                  <img src="/img/loading.gif" />                    
+                </apex:facet>
+            </apex:actionStatus>
+        </div>
+    </div>    
+    </apex:outputPanel>
+    </div>    
+    <div id="SuccessMessage">
+    <apex:outputPanel styleClass="popupBg"  layout="block" />
+    <apex:outputPanel styleClass="popup" layout="block">
+        <div>
+            <span> Records were successfully saved. </span>
+        </div>    
+    </apex:outputPanel>
+    <apex:messages />
+    </div>
+</apex:outputPanel>
+</apex:component>

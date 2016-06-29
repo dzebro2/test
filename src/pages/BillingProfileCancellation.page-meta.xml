@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ApexPage xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>33.0</apiVersion>
+    <availableInTouch>false</availableInTouch>
+    <confirmationTokenRequired>false</confirmationTokenRequired>
+    <description>Used for Account cancellation functionality. Page lists down  billing records related to Account which user can select  to cancelled.</description>
+    <label>BillingProfileCancellation</label>
+</ApexPage>

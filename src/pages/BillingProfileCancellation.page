@@ -1,0 +1,372 @@
+<apex:page standardController="Account"  extensions="AccountCancellationClass"  title="{!accountName}-Cancellation" id="thepage" docType="html-5.0">
+<!-- <apex:stylesheet value="{!URLFOR($Resource.Bootstrap, 'bootstrap-3.3.4-dist/css/bootstrap.min.css')}"/> -->
+  
+    <apex:stylesheet value="{!URLFOR($Resource.DataTables_1_10_2, '/css/jquery.dataTables.min.css')}" />
+    <apex:includeScript value="{!$Resource.jquery_1_11_1}" />
+    <apex:includeScript value="{!URLFOR($Resource.DataTables_1_10_2, '/js/jquery.dataTables.min.js')}"/>
+     <style>
+         .accordion div.accordion-label label h4 {
+            white-space: nowrap;
+        }
+        .media-holder {
+            width:100% !important;
+        }     
+        .dataTables_length{
+            display:none !important;
+        }
+    
+        .data-table thead th {
+            background-color:#1797C0 !important;
+            color:#fff;
+            font-weight:bold;
+        } 
+        .accountTab .tertiaryPalette, .individualPalette .accountBlock .tertiaryPalette, .layoutEdit .individualPalette .accountBlock .tertiaryPalette {
+            background-color: #1797C0 !important;
+            border-color: #1797C0 !important;
+        }
+  
+         .status-mark {
+            
+            border-radius: 50%;
+            color: #fff;
+            display: inline-block;
+            height: 20px;
+            text-align: center;
+            width: 20px;
+            font-weight:bold;
+            position:absolute;
+            top:5px;
+            left:30px;
+        }
+        .completed-mark{
+            background-color: #379426 !important;
+        }
+        .pending-mark{
+            background-color:#f7b500 !important;
+        }
+        .notcompleted-mark{
+            background-color:#1797C0 !important;
+        }
+        .popup
+            {
+            
+                background-color: white;
+                border-width: 2px;
+                border-style: solid;
+                z-index: 9999;
+                left: 60%;
+                padding:10px;
+                position: absolute;
+                width: 500px;
+                margin-left: -250px;
+                top:20%;
+                color : #1797c0 !important;
+                border: 1px solid #1797c0 !important;
+                border-radius: 3px !important;
+                font-size: 14px !important;
+                text-align: center !important;
+                font-weight: bold !important;
+               
+            }
+    
+            .popupBg
+            {
+                background-color:black;
+                opacity: 0.20;
+                filter: alpha(opacity = 70);
+                position: absolute;
+                width: 100%;
+                height: 100%;
+                top: 0;
+                left: 0;
+                z-index: 9998;
+                color : #1797c0 !important;
+                border: 1px solid #1797c0 !important;
+                border-radius: 3px !important;
+            }
+            .requiredPanel{
+                width:100%;
+            }
+        
+        
+    </style>
+   <apex:form id="frm" >
+    <script>
+        function selectCurrentRecord(obj){
+            var inputCheckBox = document.getElementsByTagName("input");
+            var parentVar = obj.getAttribute("data-ChildData");
+            for(var i=0; i<inputCheckBox.length; i++){
+                  var show = inputCheckBox[i].getAttribute("data-Child");
+                  if(show != null){
+                      if(parentVar == show){                             
+                         inputCheckBox[i].checked = true; 
+                      }   
+                  }       
+            }
+       }     
+       
+       function ChangeAllCheckBoxes(){
+           var parentCheckBox = document.getElementsByClassName("selectAllChk");
+           var childCheckboxList = document.getElementsByClassName("CheckBoxClass");
+           for(var i=0; i < childCheckboxList.length; i++){
+               childCheckboxList[i].checked = parentCheckBox[0].checked;
+           }
+       } 
+       
+        $(document).ready(function(){
+            $('.openTab').find("a").attr("target","_blank");
+             $('.My-Benefit-agree').dataTable( {
+                "order": [[ 1, "desc" ]],
+                "paging": false
+             } );
+        });     
+        
+    </script> 
+       
+        <div class="container-fluid">
+              <div class="row">
+                  <div class="col-sm-12">
+                      <!--  <br/>
+                      <div align="left">
+                          <div class="headerPhotoContainer">
+                              <img class="socialProfilePhoto" src="/img/social/unknown_company_pic.png" alt="Account Profile Picture"/>
+                              <h3>{!accountName} - Cancellation</h3>
+                          </div>
+                      </div>-->
+                      <br/>
+                      <Apex:sectionHeader title="Billing Profile" subtitle="Cancellation"   /> 
+                <apex:actionFunction name="showselectedBillingProf" action="{!showselectedBillingProf}" reRender="form"/>     
+               <apex:outputPanel rendered="{!!displayBillingsection}">          
+                   <apex:pageBlock >
+                          <apex:pagemessages />
+                       <!--   <apex:pageBlockSection columns="1">
+                          <div id="crumbs">
+                            <table style="margin:0 auto">
+                                <tr>
+                                    
+                                    <td status-style="status-mark " class="completed-mark">
+                                        Select Cancellation
+                                    </td>
+                                    <td status-style="status-mark" class="pending-mark">
+                                        Benefit Agreement
+                                    </td>
+                                    <td status-style="status-mark" class="notcompleted-mark">
+                                        Review Page
+                                    </td>
+                                </tr>
+                            </table>
+                          </div>
+                          <div>        </div>
+                          </apex:pageBlockSection>
+                          -->
+                          <br/>
+                          <h3>Billing Profile</h3><br/><br/> 
+                          <apex:outputPanel id="Massupdatepanel" rendered="{!if(BillingWrapperList.size > 0,true,false)}">
+                              <apex:pageBlockSection collapsible="false" columns="1" title="Mass Update billing cancellation fields">   
+                                  <Apex:outputPanel styleClass="requiredPanel">
+                                        <Apex:outputLabel value="Requested Cancellation Date" style="width:15%;float:left;margin-right: 2%;"/>
+                                        <div class="requiredInput" style="width:80%;float:left;">
+                                           <div class="requiredBlock" ></div>
+                                            <apex:input value="{!StringCancelDate}" style="width:25%; height:80%" size="10" id="cancelledDatePicker" onclick="DatePicker.pickDate(false, this , false);" />
+                                       </div>
+                                  </Apex:outputPanel> 
+                                  <Apex:outputPanel styleClass="requiredPanel"> 
+                                        <Apex:outputLabel value="Cancellation Code" style="width:15%;float:left;margin-right: 2%;"/>
+                                        <div class="requiredInput" style="width:80%;float:left;">
+                                           <div class="requiredBlock" ></div>
+                                           <apex:selectList style="width:25%;" label="Cancellation Code" value="{!CancelCode}" size="1">
+                                                <apex:selectOptions value="{!CancellationCodePicklist}"/>
+                                          </apex:selectList>
+                                       </div>
+                                  </Apex:outputPanel> 
+                                  <Apex:outputPanel styleClass="requiredPanel">
+                                        <Apex:outputLabel value="Cancellation Explanation" style="width:15%;float:left;margin-right: 2%;"/>
+                                        <div class="requiredInput" style="width:80%;float:left;">
+                                           <div class="requiredBlock"></div>
+                                           <apex:inputTextarea style="width:25%;" label="Cancellation Explanation" value="{!CancelExplanation}"/>
+                                       </div>
+                                  </Apex:outputPanel> 
+                                  <Apex:outputPanel styleClass="requiredPanel">
+                                        <Apex:outputLabel value="Cancellation Reason" style="width:15%;float:left;margin-right: 2%;"/>
+                                        <div class="requiredInput" style="width:80%;float:left;">
+                                           <div class="requiredBlock" ></div>
+                                           <apex:selectList style="width:25%;" label="Cancellation Reason" value="{!CancelReason}" size="1">
+                                                <apex:selectOptions value="{!CancellationReasonPicklist}"/>
+                                          </apex:selectList>
+                                       </div>
+                                  </Apex:outputPanel> 
+                                 <!--  <apex:input style="width:15%; height:80%" type="date" label="Requested Cancellation Date" value="{!CancelDate}"/> 
+                                  <apex:selectList style="width:25%;" label="Cancellation Code" value="{!CancelCode}" size="1">
+                                        <apex:selectOptions value="{!CancellationCodePicklist}"/>
+                                  </apex:selectList>
+                                  <apex:inputTextarea style="width:25%;" label="Cancellation Explanation" value="{!CancelExplanation}"/>
+                                  <apex:selectList style="width:25%;" label="Cancellation Reason" value="{!CancelReason}" size="1">
+                                        <apex:selectOptions value="{!CancellationReasonPicklist}"/>
+                                  </apex:selectList>-->
+                              
+                              <!--                               
+                                  <apex:inputField style="width:10%;" value="{!Massbilling.Requested_Cancellation_Date__c}"/>                                  
+                                  <apex:inputField style="width:25%;" value="{!Massbilling.Cancellation_Code__c}"/>                                  
+                                  <apex:inputField style="width:25%;" value="{!Massbilling.Cancellation_Explanation__c}"/>
+                                   <apex:inputField style="width:25%;" value="{!Massbilling.Cancellation_Reason__c}"/>
+                               -->
+                                  <apex:commandButton value="Apply to All selected"  action="{!MassUpdateBilling}" status="Massstatus"/>
+                                  <apex:actionStatus startText="Please Wait...." id="Massstatus" />
+                              </apex:pageBlockSection>  
+                          </apex:outputPanel>                          
+                            <apex:outputPanel id="groupsectionpanel" rendered="{!if(BillingWrapperList.size > 0,true,false)}" style="width:60%">  
+                              <table class="My-Benefit-agree data-table"  style="width:100%">
+                                  <thead>
+                                      <tr>
+                                        <th><apex:inputCheckbox id="idPLchk" html-selectClass="pliCls" styleClass="selectAllChk" onchange="ChangeAllCheckBoxes();" /> </th>
+
+
+
+                                        <th>Name</th>  
+                                        <th>Billing Profile Number</th> 
+                                        <th>Status</th>                    
+                                        <th>Requested Cancellation Date</th>
+                                        <th>Cancellation Code</th>
+                                        <th>Cancellation Explanation</th>
+                                        <th>Cancellation Reason</th>
+                                      </tr>
+                                  </thead>
+                                  <tbody>                                    
+                                      <apex:repeat value="{!BillingWrapperList}" var="grpsec">
+                                         <tr>
+                                              <td>                                  
+                                                  <apex:inputCheckbox value="{!grpsec.entrySelected}"  html-data-Child="{!grpsec.entry.id}" styleClass="CheckBoxClass"/>
+                                              </td> 
+                                              <td>
+                                                  <a href="/{!grpsec.entry.Id}" target="_blank">
+                                                      <apex:outputField value="{!grpsec.entry.Name}" />
+                                                  </a>
+                                              </td>
+                                              <td>
+                                                                          
+                                                   <apex:outputField value="{!grpsec.entry.External_ID__c}" />                           
+                                              </td> 
+                                              <td>
+                                                                          
+                                                   <apex:outputField value="{!grpsec.entry.Status__c}" />                           
+
+                                              </td>   
+                                              <td>
+                                                 
+                                                  <apex:inputField value="{!grpsec.entry.Requested_Cancellation_Date__c}" onChange="selectCurrentRecord(this);" html-data-dateElement="{!Month(grpsec.entry.Requested_Cancellation_Date__c)/DAY(grpsec.entry.Requested_Cancellation_Date__c)/Year(grpsec.entry.Requested_Cancellation_Date__c)}"  html-data-ChildData="{!grpsec.entry.id}"/>
+                                              </td>
+                                              <td >
+                                                 
+                                                  <apex:inputField value="{!grpsec.entry.Cancellation_Code__c}" onChange="selectCurrentRecord(this);"  html-data-ChildData="{!grpsec.entry.id}"/>
+                                              </td>
+                                              <td>
+                                                 
+                                                  <apex:inputField value="{!grpsec.entry.Cancellation_Explanation__c}" onChange="selectCurrentRecord(this);"  html-data-ChildData="{!grpsec.entry.id}"/>
+                                              </td>
+                                              <td>
+                                                 
+                                                  <apex:inputField value="{!grpsec.entry.Cancellation_Reason__c}" onChange="selectCurrentRecord(this);"  html-data-ChildData="{!grpsec.entry.id}"/>
+                                              </td>
+                                              
+                                          </tr>
+                                      </apex:repeat>
+                                  </tbody>
+                              </table>
+                          </apex:outputPanel>                      
+                          <apex:outputPanel rendered="{!if(BillingWrapperList.size>0,false,true)}">
+                              <apex:outputLabel >{!$Label.billingProfileCancellationPageLabel1}</apex:outputLabel>
+                          </apex:outputPanel>   
+                         
+                          <br/>
+                          <apex:pageBlockButtons location="bottom">
+                                       
+                              <apex:commandButton value="Back"  action="{!backToAccountHome}" status="status"/>   
+                              <apex:commandButton value="Next" action="{!showselectedBillingProf}" rendered="{!if(BillingWrapperList.size>0,true,false)}" reRender="frm" status="status" />
+                              <apex:actionStatus startText="Please Wait...." id="status" />
+                          </apex:pageBlockButtons>
+            </apex:pageBlock>
+        </apex:outputPanel>
+        <apex:outputPanel rendered="{!displayBillingsection}">
+        <apex:pageBlock >
+ 
+        <p style="font-size: 18px;"><b><i>Cancellation Review</i></b></p>
+         <br/>
+          <p style="font-size: 14px;"><b><i>{!$Label.billingProfileCancellationPageLabel2}</i></b></p>        
+          <apex:outputPanel id="selectedgrppanel" rendered="{!if(SeelectedBillingWrapperList.size > 0,true,false)}" style="width:60%">              
+          <table class="My-Benefit-agree data-table"  style="width:100%">
+                  <thead>
+                      <tr>
+                        
+
+
+                        <th>Name</th>  
+                        <th>Billing Profile Number</th> 
+                        <th>Status</th>                    
+                        <th>Requested Cancellation Date</th>
+                        <th>Cancellation Code</th>
+                        <th>Cancellation Explanation</th>
+                        <th>Cancellation Reason</th>
+                      </tr>                     
+                  </thead>
+                  <tbody>
+                    
+                      <apex:repeat value="{!SeelectedBillingWrapperList}" var="grpsec">
+                         <tr>                             
+                              <td>
+                                  <a href="/{!grpsec.entry.Id}" target="_blank">
+                                      <apex:outputField value="{!grpsec.entry.Name}" />
+                                  </a>
+                              </td>
+
+
+
+
+                              <td>
+                                                                          
+                                   <apex:outputField value="{!grpsec.entry.External_ID__c}" />                           
+                              </td> 
+                              <td>                                                          
+                                   <apex:outputField value="{!grpsec.entry.Status__c}" />                           
+                              </td>
+                              <td>                                 
+                                  <apex:outputField value="{!grpsec.entry.Requested_Cancellation_Date__c}"/> 
+                              </td>  
+                              
+                              <td >                                 
+                                  <apex:outputField value="{!grpsec.entry.Cancellation_Code__c}" /> 
+                              </td>  
+                              <td>                                 
+                                  <apex:outputField value="{!grpsec.entry.Cancellation_Explanation__c}"/> 
+                              </td>
+                              <td>                                 
+                                  <apex:outputField value="{!grpsec.entry.Cancellation_Reason__c}" /> 
+                              </td>
+                              
+                          </tr>
+                      </apex:repeat>
+                  </tbody>
+              </table>
+          </apex:outputPanel>
+     <br/><br/> 
+     
+          <apex:pageBlockButtons location="bottom">
+             
+              <apex:commandButton value="Back" action="{!backTobillingsection}" />
+              <apex:commandButton value="Finish" action="{!FinishBillingProfileCancel}"/>
+           </apex:pageBlockButtons>
+      </apex:pageBlock>  
+    </apex:outputPanel>              
+    <apex:outputPanel id="MessagePanel" rendered="{!showMessagepanel}">
+        <apex:outputPanel styleClass="popupBg"  layout="block" />
+        <apex:outputPanel styleClass="popup" layout="block">
+            <div align="center">
+                <span> {!DisplayMessage} </span> <br/>
+                <apex:commandButton value=" Confirm " action="{!HideMessagePanelBP}" rerender="frm"/>
+            </div>    
+        </apex:outputPanel>
+    </apex:outputPanel>
+    </div>
+    </div>
+</div>
+</apex:form> 
+</apex:page>

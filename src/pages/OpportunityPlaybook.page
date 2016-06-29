@@ -1,0 +1,621 @@
+<apex:page standardcontroller="Opportunity" extensions="OpportunityPlaybookController" id="page" standardStylesheets="true" sidebar="false" showHeader="false" action="{!initPlaybook}">
+<link rel="stylesheet" href="{!URLFOR($Resource.CommercialLoanResources, 'css/bootstrap.min.css')}"/>
+<style>
+.playbook-container {
+    font-family: 'Arial','Helvetica',sans-serif;
+}
+#crumbs, #tasksPanel {
+    
+} 
+#crumbs td {
+    background: #1797C0;
+    padding: 30px 20px 30px 70px;
+    position: relative;
+    margin: 0 10px 0 0; 
+    font-size: 14px;
+    font-weight:bold;
+    text-decoration: none;
+    color: #fff;
+    cursor:pointer;
+    height:40px;
+}
+#crumbs td:after {
+    content: "";  
+    border-top: 50px solid transparent;
+    border-bottom: 50px solid transparent;
+    border-left: 50px solid #1797C0;
+    position: absolute; 
+    right: -50px; 
+    top: 0;
+    z-index: 1;
+}
+        
+#crumbs td:before {
+    content: "";  
+    border-top: 50px solid transparent;
+    border-bottom: 50px solid transparent;
+    border-left: 52px solid #d4f2ff;
+    position: absolute; 
+    left: 0; 
+    top: 0;
+}
+
+#crumbs td:first-child {
+    border-top-left-radius: 10px; 
+    border-bottom-left-radius: 10px;
+}
+#crumbs td:first-child:before {
+    display: none; 
+}
+
+#crumbs td:last-child {
+    //padding-right: 80px;
+    border-top-right-radius: 10px; 
+    border-bottom-right-radius: 10px;
+}
+#crumbs td:last-child:after {
+    display: none; 
+}       
+.small-text{
+    font-size:10px;
+    font-weight:normal;     
+}
+.tasksList {
+    display:none;
+    font-size:14px;
+    width: 100%;
+    border: 1px solid #d4d4d4;
+    border-radius: 2px;
+    position: relative;
+    -webkit-box-shadow: 0 1px 6px rgba(0, 0, 0, 0.175);
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.175);
+}
+
+.subtaks-chkbox {
+    vertical-align:middle;
+    cursor:pointer;
+    height:16px;
+    width:16px;
+    margin-right:10px;
+}
+.subtask-container{
+    margin:10px 5px 10px 10px;
+    color:#666666;
+}
+.substage-title{
+    font-weight:bold;
+    font-size:16px;
+    color:#1797C0;
+    width:92%;
+    display:inline-block;
+}
+.close-icon {
+    text-align:right;
+    cursor:pointer;
+    display:inline-block;
+    float:right;
+    opacity:0.4;
+    text-decoration:underline;
+}
+.close-icon:hover {
+    text-align:right;
+    cursor:pointer;
+    display:inline-block;
+    float:right;
+    opacity:0.8;
+    text-decoration:underline;
+}
+.subtask-btn{
+    background: #AAAAAA !important;
+    border: none !important;
+    color: #fff !important;
+    padding: 5px 15px !important;
+    border-radius: 5px !important;
+    cursor:pointer !important;
+    font-weight:bold !important;
+}
+.status-mark {
+    
+    border-radius: 50%;
+    color: #fff;
+    display: inline-block;
+    height: 20px;
+    text-align: center;
+    width: 20px;
+    font-weight:bold;
+    position:absolute;
+    top:5px;
+    left:30px;
+}
+.completed-mark{
+    background-color: #379426;
+}
+.pending-mark{
+    background-color:#f7b500;
+    
+}
+.mark-status-button {
+    border:1px solid #666666;
+    background-color:#d1d1d1;
+    padding:2px 5px;
+    border-radius:5px;
+    font-size:10px;
+    color:#000;
+    position:absolute;
+    opacity:0.9;
+    top:5px;
+    left:30px;
+    display:none;
+}
+.subtask-description a{
+    text-decoration:underline;
+}
+.tasks-panel-header{
+    width:100%;
+    padding:20px;
+    background:#f1f1f1;
+}
+
+.substage-title-element{
+    margin-right:20px;
+    font-weight:bold;
+}
+.table-responsive{
+    padding:10px 20px 20px 20px;
+}
+
+    .setup-icon {
+        height: 16px;
+        left: 98%;
+        position: absolute;
+        top: 0;
+        width: 16px;
+        z-index: 10000;
+        cursor:pointer;        
+    }    
+    .custom-msg-panel {
+        font-weight:bold;
+    }
+</style>
+
+
+<apex:includeScript value="{!URLFOR($Resource.Playbook_Resource, 'assets/JS/jquery-1.7.min.js')}"/>
+
+
+
+
+<apex:outputPanel id="playbookContainer" styleClass="playbook-container">
+<apex:pageMessages />
+    <apex:form >
+        <apex:actionStatus id="status" onstart="disableTheButton();"/>
+        
+        <apex:outputPanel rendered="{!IF(opp.Playbook__c == null && showEdit == false, true, false)}">
+            <div class="custom-msg-panel">
+                No playbook selected. You can select one by <apex:commandLink action="{!editPlaybook}" title="Edit Playbook"> clicking here</apex:commandLink>
+             </div>
+        </apex:outputPanel>
+        
+        <apex:outputPanel rendered="{!NOT(showEdit)}">
+            <apex:commandLink action="{!editPlaybook}" title="Edit Playbook"> <img src="{!URLFOR($Resource.Playbook_Resource, 'assets/css/img/edit45.png')}" class="setup-icon" alt="Edit Playbook"/> </apex:commandLink>
+            
+            <div id="crumbs">
+                <table style="margin:0 auto">
+                    <tr>
+                        <apex:repeat value="{!lstPlaybook}" var="s">
+                            <apex:repeat value="{!s.LOBStages}" var="ss" >
+                                <td title="{!ss.subStageMappingRec.SubStage_Name__c}" 
+                                    class="{!ss.subStageMappingRec.Id}"
+                                    status-style="{!IF( ss.subStageMappingRec.Completed__c, 'completed-mark', IF( ss.subStageMappingRec.Started__c && NOT(ss.subStageMappingRec.Completed__c), 'pending-mark', '' ) )}">
+                                    <div class="small-text"><apex:outputText value="{!s.stageMappingRec.Stage_Name__c}"/></div>
+                                    
+                                    <apex:outputPanel rendered="{!ss.subStageMappingRec.Completed__c}" 
+                                        styleClass="status-mark completed-mark " title="Done">
+                                        &#10004;
+                                    </apex:outputPanel>
+                                    <apex:outputPanel rendered="{!IF(ss.subStageMappingRec.Started__c && NOT(ss.subStageMappingRec.Completed__c), true, false)}" 
+                                        styleClass="status-mark pending-mark" title="In Progress">
+                                        !
+                                    </apex:outputPanel>
+                                    
+                                    <apex:outputPanel rendered="{!NOT( closedLostOpp && ss.subStageMappingRec.Substage__r.Closed_Lost_Substage__c == false )}">
+
+                                        <apex:outputPanel rendered="{!IF(ss.subStageMappingRec.Started__c && NOT(ss.subStageMappingRec.Completed__c), true, false)}" 
+                                                    styleClass="mark-status-button" onClick="updateSubStageStatusAF('{!ss.subStageMappingRec.Id}','done')">
+                                            &#10004; Mark Done
+                                        </apex:outputPanel>
+                                        
+                                        <apex:outputPanel rendered="{!IF( (NOT(ss.subStageMappingRec.Started__c) && s.stageMappingRec.Playbook__r.Stage_Progression__c == 'Parallel' ), true, false)}" 
+                                                    styleClass="mark-status-button" onClick="startSubStageAF('{!ss.subStageMappingRec.Id}')">
+                                            &#10148; Start Stage
+                                        </apex:outputPanel>
+
+
+                                        
+                                    </apex:outputPanel>
+                                    
+                                    <apex:outputText value="{!ss.subStageMappingRec.SubStage_Name__c}"/>
+                                    <span class="small-text"><apex:outputText value="({!ss.subStageMappingRec.Completed_Tasks__c} of {!ss.subStageMappingRec.Total_Tasks__c})"/></span>
+                                </td>
+                            </apex:repeat>
+                        </apex:repeat>
+                    </tr>
+                </table>
+            </div>
+            
+            <br/>
+            
+            <span id="tasksPanel">
+                <apex:repeat value="{!lstPlaybook}" var="s">
+                    <apex:repeat value="{!s.LOBStages}" var="ss" >
+                        <div class="{!ss.subStageMappingRec.Id} tasksList">
+                            
+                            <div class="tasks-panel-header">
+                                <span class="substage-title">
+                                    <span class="substage-title-element">
+                                        <apex:outputText value="{!ss.subStageMappingRec.SubStage_Name__c}" />
+                                    </span>
+                                    
+                                    <span class="small-text substage-title-element">
+                                        <apex:outputText value="{!$ObjectType.Substage_Mapping1__c.Fields.Start_DateTime__c.Label}"/>
+                                        :&nbsp;
+                                        <apex:outputField value="{!ss.subStageMappingRec.Start_DateTime__c}"/>
+                                    </span> 
+                                    
+                                    <span class="small-text substage-title-element">
+                                        <apex:outputText value="{!$ObjectType.Substage_Mapping1__c.Fields.Completed_Date_Time__c.Label}"/>
+                                        :&nbsp;
+                                        <apex:outputField value="{!ss.subStageMappingRec.Completed_Date_Time__c}"/>
+                                    </span>
+                                    
+                                 </span>
+                                <span class="close-icon">
+                                    <a id="{!ss.subStageMappingRec.Id}" onClick="closeTasksPanel(this);" title="Close">
+                                        <img src="{!URLFOR($Resource.Playbook_Resource, 'assets/css/img/cross106.png')}" alt="Close"/>
+                                    </a>
+                                </span>
+                            </div>
+                            
+                            <div class="table-responsive">
+                                <table class="table tasks-table">
+                                    <thead>
+                                        <th style="text-align:center;">Resubmit</th>
+                                        <th style="text-align:center;"><apex:outputText value="{!$ObjectType.Task_Mapping__c.Fields.Completed__c.Label}"/></th>
+                                        <th></th>
+                                        <th><apex:outputText value="{!$ObjectType.Task__c.Fields.Name.Label}"/></th>
+                                        <th><apex:outputText value="{!$ObjectType.Task_Mapping__c.Fields.Due_Date__c.Label}"/></th>
+                                        <th><apex:outputText value="{!$ObjectType.Task_Mapping__c.Fields.Date_Time_Completed__c.Label}"/></th>
+                                        <th><apex:outputText value="{!$ObjectType.Task__c.Fields.Owner_Role__c.Label}"/></th>
+                                    </thead>
+                                    <tbody>
+                                        <apex:repeat value="{!ss.Tasks}" var="t">
+                                            <tr class="subtask-container">
+                                                <td style="text-align: center;">
+                                                <apex:outputPanel rendered="{!IF( ( ss.subStageMappingRec.Started__c 
+                                                                                    && NOT( closedLostOpp && ss.subStageMappingRec.Substage__r.Closed_Lost_Substage__c == false) ), true, false)}">
+                                                <apex:commandButton value="Resubmit" />
+                                                </apex:outputPanel>
+                                                </td>
+                                                <td style="text-align:center;">
+
+                                                    <apex:inputCheckbox styleclass="subtaks-chkbox" value="{!t.taskMappingRec.Completed__c}" 
+                                                            disabled="{!IF( ( NOT(ss.subStageMappingRec.Started__c && NOT( closedLostOpp && ss.subStageMappingRec.Substage__r.Closed_Lost_Substage__c == false) ) ), true, false )}"/>
+                                                </td>
+                                                
+                                                <td>
+                                                    <apex:image rendered="{!t.taskMappingRec.Task_Type__c=='Best Practices'}"  url="{!URLFOR($Resource.Playbook_Resource, 'assets/css/img/bestPractice.png')}"
+                                                                           title="{!t.taskMappingRec.Task_Type__c}" />
+                                                    <apex:image rendered="{!t.taskMappingRec.Task_Type__c=='Scripting'}" url="{!URLFOR($Resource.Playbook_Resource, 'assets/css/img/script.png')}"
+                                                                            title="{!t.taskMappingRec.Task_Type__c}"   />
+                                                    <apex:image rendered="{!t.taskMappingRec.Task_Type__c=='Tools, Templates, Forms'}" url="{!URLFOR($Resource.Playbook_Resource, 'assets/css/img/tools.png')}"
+                                                                            title="{!t.taskMappingRec.Task_Type__c}"   />
+                                                    <apex:image rendered="{!t.taskMappingRec.Task_Type__c=='Other Applications'}" url="{!URLFOR($Resource.Playbook_Resource, 'assets/css/img/otherApplication.png')}"
+                                                        title="{!t.taskMappingRec.Task_Type__c}"   />                                               
+                                                </td>
+                                                
+                                                <td>
+                                                    <span class="subtask-description">
+                                                        <!--<apex:outputPanel rendered="{!IF(ISBLANK( t.taskMappingRec.Task_URL__c ), false, true )}">
+                                                            <a href="{!t.taskMappingRec.Task_URL__c}" target="_blank">
+                                                                <apex:outputField value="{!t.taskMappingRec.Task_Name__c}"/> 
+                                                            </a>
+                                                        </apex:outputPanel>
+                                                        
+                                                        <apex:outputPanel rendered="{!IF(NOT(ISBLANK( t.taskMappingRec.Task_URL__c )), false, true )}">
+                                                            <apex:outputField value="{!t.taskMappingRec.Task_Name__c}"/>
+                                                        </apex:outputPanel>--> 
+                                                        <apex:outputField value="{!t.taskMappingRec.Task__r.Action__c}"/>
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <apex:outputField value="{!t.taskMappingRec.Due_Date__c}"/>
+                                                </td>
+                                                <td class="dt">
+                                                    <apex:outputField value="{!t.taskMappingRec.Date_Time_Completed__c}"/>
+                                                    
+                                                    
+                                                </td>
+                                                <td>
+                                                    <apex:outputPanel rendered="{!IF(t.taskOwners.size > 0, true , false)}">
+                                                        <apex:repeat value="{!t.taskOwners}" var="taskOwner">
+                                                            <apex:outputField value="{!taskOwner.UserId}" /><br/>
+                                                        </apex:repeat>
+                                                    </apex:outputPanel>
+                                                    
+                                                    <apex:outputPanel rendered="{!IF(t.taskOwners.size == 0, true , false)}">
+                                                        <apex:outputField value="{!t.taskMappingRec.Task__r.Owner_Role__c}" />
+                                                    </apex:outputPanel>
+                                                </td>
+                                            </tr>
+                                        </apex:repeat>
+                                        <tr class="subtask-container subtask-buttons-panel">
+                                            <td style="text-align:center;padding-top:20px;">
+                                                <apex:outputPanel rendered="{!IF( ( ss.subStageMappingRec.Started__c 
+                                                                                    && NOT( closedLostOpp && ss.subStageMappingRec.Substage__r.Closed_Lost_Substage__c == false) ), true, false)}">
+                                                    <button type="button" class="saveButton" onclick="saveFunction('{!ss.subStageMappingRec.Id}');">Save</button>
+                                                                                                                                                                                                                                                       
+                                                    <apex:outputLink value="{!$Page.ResubmitCasePage}?oid={!opp.Id}" styleClass="btn resubmitButton" target="_top">Resubmit A Case</apex:outputLink>
+                                                </apex:outputPanel>
+                                            </td>
+                                            
+                                            <td colspan="5"></td>
+                                        </tr>                                            
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </apex:repeat>
+                </apex:repeat>
+                     
+            <br/><br/>
+            </span>
+            
+            <apex:actionFunction action="{!updateSubStageStatus}" reRender="playbookContainer" name="updateSubStageStatusAF" onComplete="reloadPage();">
+                <apex:param name="subStageId" value="" />
+                <apex:param name="status" value="" />
+            </apex:actionFunction>
+            
+            <apex:actionFunction action="{!startSubStage}" reRender="playbookContainer" name="startSubStageAF" >
+                <apex:param name="subStageId" value="" />
+            </apex:actionFunction>
+            
+            <apex:actionFunction name="saveFunction" action="{!updateTaskStatus}" status="status" reRender="playbookContainer" onComplete="reloadPage();">
+                <apex:param name="subStageIdForTasks" value="" />                
+            </apex:actionFunction>
+
+            
+
+                       
+            <script>
+                function disableTheButton(){
+                    $('.saveButton').prop('disabled',true);
+                }
+
+                // This function handles clicking on a Playbook Stage chevron
+                // It handles showing the correct set of actions and showing/hiding the resubmit case button
+                $("#crumbs td").click( 
+                    function( event ) {
+                        
+                    var isNetwork = 0;
+                    var isPerformance = 0;
+                    var isProposal = 0;
+                    var isRendered = false;
+                    if( $(event.target).attr('class') != 'mark-status-button' ) {
+                        var className = $( this ).attr( "class" );
+                        $( "#tasksPanel ." + className ).toggle();
+                        $( "#tasksPanel ." + className ).siblings("div").hide();
+                        
+                        // Next section of this function looks at whats currently rendered on the page
+                        // to determine if the Resubmit Case button should be shown or not.
+                        // If there is a Create Performance Guarantee, Network Information, or Proposal case action
+                        // that has already been completed, then render the button. Otherwise hide the button.
+                        
+                                                  
+                        var tasksPanelChildren = $('#tasksPanel').children();
+                        
+                        for(i = 0; i < tasksPanelChildren.length; i++){
+
+                            if($(tasksPanelChildren[i]).css('display') == 'block'){
+                                
+                                var actionNames = ($(tasksPanelChildren[i]).find('.sfdc_richtext'));
+                                var dateTimeCompleted = ($(tasksPanelChildren[i]).find('.dt'));
+
+                                for(j = 0; j < dateTimeCompleted.length; j++){
+                                    
+                                    var datetime = $(dateTimeCompleted[j]).text();
+                                    
+                                    if(datetime.indexOf(":") >= 0){
+                                        
+                                        var curActionName = $(actionNames[j]).text();
+                                        
+                                        if(curActionName.indexOf("Create case for Performance") >= 0 || curActionName.indexOf("Create case for Network") >= 0 || curActionName.indexOf("Create case for Proposal") >= 0 ){
+                                             
+                                             isRendered = true;
+                                             if(curActionName.indexOf("Create case for Performance") >= 0){
+                                                 var _href = $(".resubmitButton").attr("href");
+                                                $(".resubmitButton").attr("href", _href + '&Performance=1');
+                                             }
+                                             if(curActionName.indexOf("Create case for Network") >= 0){
+                                                 var _href = $(".resubmitButton").attr("href");
+                                                $(".resubmitButton").attr("href", _href + '&Network=1');
+                                             }
+                                             if(curActionName.indexOf("Create case for Proposal") >= 0 ){
+                                                 var _href = $(".resubmitButton").attr("href");
+                                                $(".resubmitButton").attr("href", _href + '&Proposal=1');
+                                             }
+                                        }
+                                        
+                                    }
+                                    
+                                }
+                                
+                                
+                            }
+                            
+                        }
+                        
+                        
+                        
+                    }
+                    if (isRendered)
+                        $('.resubmitButton').show();
+                    else
+                        $('.resubmitButton').hide();
+                    } 
+                );
+                
+                $("#crumbs td").hover( 
+                    function() {
+                        $( this ).find( ".mark-status-button" ).show();
+                    },
+                    function() {
+                        $( this ).find( ".mark-status-button" ).hide();
+                    } 
+                );
+                
+                function reloadPage() {
+                    if({!!hasError})
+                        window.top.location = '/{!opp.Id}';
+                }
+                
+                function closeTasksPanel( thisClose ) {
+                    var className = $( thisClose ).attr( "id" );
+                    $( "#tasksPanel ." + className ).hide();
+                    
+                }
+                
+                
+                function adjustChevronCSS() {
+                    var tdHeight = $("#crumbs td:first").height() + 60;
+                    console.log('tdHeight='+$("#crumbs td:first").height());
+                    var beforeCSSClass = '#crumbs td:before { '
+                                            + ' border-top:'+ (tdHeight)/2 + 'px solid transparent !important;'
+                                            + ' border-bottom:'+ (tdHeight)/2 + 'px solid transparent !important;'
+                                        + '}';                  
+                    
+                    var afterCSSClass = '#crumbs td:after{ '
+                                            + ' border-top:'+ (tdHeight)/2 + 'px solid transparent !important;'
+                                            + ' border-bottom:'+ (tdHeight)/2 + 'px solid transparent !important;'
+                                        + '}';
+                    
+                    $('style').append( beforeCSSClass );
+                    $('style').append( afterCSSClass );
+                    
+                }
+                
+                function addBlankTargetToAnchors() {
+                    $(".tasks-table a").each( function( index, domEle ) {
+                        $(domEle).attr("target","_blank");
+                    } );
+                }
+                
+                function addStatusColor() {
+                    $("#crumbs td").each( function( index, domEle ) {
+                        if($(domEle).attr("status-style") == "completed-mark" ) {
+                            $(domEle).css("background-color","#379426");
+                            
+                            var afterCSS = '.' + $(domEle).attr("class") +':after { border-left-color:#379426 !important}';
+                            console.log(afterCSS);
+                            $('style').append( afterCSS );
+                        }
+                        else if($(domEle).attr("status-style") == "pending-mark" ) {
+                            $(domEle).css("background-color","#f7b500");
+                            
+                            var afterCSS = '.' + $(domEle).attr("class") +':after { border-left-color:#f7b500 !important}';
+                            console.log(afterCSS);
+                            $('style').append( afterCSS );
+                        }                       
+                    } );
+                }
+                
+                $(document).ready(
+                    function() {
+                        $('.resubmitButton').hide();
+                        adjustChevronCSS();
+                        addBlankTargetToAnchors();
+                        addStatusColor();
+                    }
+                    
+                );
+                
+                $( window ).resize(
+                    function() {
+                        adjustChevronCSS();
+                    }
+                );
+                
+                function invokeSaveMethod(){
+                
+                }
+                
+            </script>   
+        </apex:outputPanel>
+        
+        
+        <apex:outputPanel rendered="{!showEdit}">
+            
+            <link rel="stylesheet" href="{!URLFOR($Resource.CommercialLoanResources, 'css/bootstrap.min.css')}"/>
+        
+            <style>
+                .chkbox{height:16px; width:16px;}
+            </style>
+            
+            <h4>Edit Playbook</h4>
+            <apex:outputPanel rendered="{!isEditAllowed}">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th style="text-align:center"><apex:outputText value="Select"/></th>
+                                <th><apex:outputText value="{!$ObjectType.Playbook__c.Fields.Name.Label}"/></th>
+                                <th><apex:outputText value="{!$ObjectType.Playbook__c.Fields.Stage_Progression__c.Label}"/></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <apex:repeat value="{!playbooks}" var="plbk">
+                                <tr>
+                                    <td style="text-align:center">
+                                        <apex:outputPanel rendered="{!IF( opp.Playbook__c == plbk.Id, true, false )}">
+                                            <input type="radio" name="playbook" value="{!plbk.Id}" onChange="setSelectedPlaybook(this.value)" class="chkbox" checked="checked"/>
+                                        </apex:outputPanel>
+                                        <apex:outputPanel rendered="{!IF( opp.Playbook__c == plbk.Id, false, true)}">
+                                            <input type="radio" name="playbook" value="{!plbk.Id}" onChange="setSelectedPlaybook(this.value)" class="chkbox"    />
+                                        </apex:outputPanel>
+                                    </td>
+                                    <td><apex:outputField value="{!plbk.Name}" /></td>
+                                    <td><apex:outputField value="{!plbk.Stage_Progression__c}" /></td>
+                                </tr>
+                            </apex:repeat>
+                        </tbody>
+                    </table>
+                </div>
+            
+                
+            </apex:outputPanel>
+            
+            <apex:outputPanel rendered="{!NOT(isEditAllowed)}">
+                <div class="custom-msg-panel">Playbook cannot be changed, since you have already made some progress in the exiting playbook.</div> 
+            </apex:outputPanel>
+            
+            <div style="width:100%; text-align:center;">
+                <apex:outputPanel rendered="{!isEditAllowed}">
+                    <apex:commandButton value="Save Selection" action="{!savePlaybookSelection}" reRender="playbookContainer"/>
+                    &nbsp;&nbsp;
+                </apex:outputPanel>
+                <apex:commandButton value="Cancel" action="{!goToPlaybook}"/>
+                
+            </div>
+            <br/>
+        </apex:outputPanel>
+        
+        <apex:inputHidden value="{!selectedPlaybook}" id="selectedPlaybookIdHolder"/>
+        
+        <script>
+            function setSelectedPlaybook( playbookId ) {
+                $('[id$="selectedPlaybookIdHolder"]').val( playbookId );
+            }
+        </script>
+        
+    </apex:form>
+</apex:outputPanel>
+<c:LinkOverrideScript />    
+</apex:page>

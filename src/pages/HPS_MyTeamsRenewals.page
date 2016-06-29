@@ -1,0 +1,178 @@
+<apex:page sideBar="false" showHeader="false" controller="HPS_MyTeamsRenewalsController"  readonly="true">
+    <apex:stylesheet value="{!URLFOR($Resource.DataTables_1_10_2, '/css/jquery.dataTables.min.css')}" />
+    <apex:includeScript value="{!$Resource.jquery_1_11_1}" />
+    <apex:includeScript value="{!URLFOR($Resource.DataTables_1_10_2, '/js/jquery.dataTables.min.js')}"/>
+    <style>
+        .accordion div.accordion-label label h4 {
+            white-space: nowrap;
+        }
+        .media-holder {
+            width:100% !important;
+        }
+        body {
+            background:white;
+        }
+        .accordion-title{
+            font-size:16px;
+            font-weight:bold;
+            margin:20px 10px;
+        }
+        .dataTables_length{
+            display:none !important;
+        }
+    
+        .data-table thead th {
+            background-color:#1797C0 !important;
+            color:#fff;
+            font-weight:bold;
+        }
+        
+        .setup-icon {
+            height: 16px;
+            left: 98%;
+            position: absolute;
+            top: 0;
+            width: 16px;
+            z-index: 10000;
+            cursor:pointer;        
+        }
+        
+    </style>
+     <script type="text/javascript">
+        
+        $(document).ready(function(){
+            $('.openTab').find("a").attr("target","_blank");
+            
+            jQuery.extend( jQuery.fn.dataTableExt.oSort, {
+                "datetime-us-flex-pre": function ( a ) {
+                    // If there's no slash, then it's not an actual date, so return zero for sorting
+                    if(a.indexOf('/') === -1 || a.indexOf('&nbsp') != -1) {
+                        return '0';
+                    } 
+                    else {
+                        // Set optional items to zero
+                        var hour = 0,
+                        min = 0,
+                        ap = 0;
+                        // Execute match. Requires month, day, year. Can be mm/dd or m/d. Can be yy or yyyy
+                        // Time is optional. am/pm is optional
+                        // TODO - remove extra time column from array
+                        var b = a.match(/(\d{1,2})\/(\d{1,2})\/(\d{2,4})( (\d{1,2}):(\d{1,2}))? ?(am|pm|AM|PM|Am|Pm)?/),
+                        month = b[1],
+                        day = b[2],
+                        year = b[3];
+                        // If time exists then output hours and minutes
+                        if (b[4] != undefined) {
+                            hour = b[5];
+                            min = b[6];
+                        }
+                        // if using am/pm then change the hour to 24 hour format for sorting
+                        if (b[7] != undefined) {
+                            ap = b[7];
+                            if(hour == '12') 
+                                hour = '0';
+                                if(ap == 'PM') 
+                                    hour = parseInt(hour, 10)+12;
+                        }
+         
+                        // for 2 digit years, changes to 20__ if less than 70
+                        if(year.length == 2){
+                            if(parseInt(year, 10) < 70) 
+                                year = '20'+year;
+                            else
+                                year = '19'+year;
+                        }
+                        // Converts single digits
+                        if(month.length == 1)
+                            month = '0'+month;
+                        if(day.length == 1)
+                            day = '0'+day;
+                        if(hour.length == 1)
+                            hour = '0'+hour;
+                        if(min.length == 1)
+                            min = '0'+min;
+                        var tt = year+month+day+hour+min;
+                        return tt;
+                    }
+                },
+                "datetime-us-flex-asc": function ( a, b ) {
+                return a - b;
+                },
+                "datetime-us-flex-desc": function ( a, b ) {
+                return b - a;
+                }
+            });            
+            $('.my-team-renewals-table').DataTable({
+                columnDefs: [
+                    { 
+                        type: 'datetime-us-flex', targets: [3]
+                    }
+                ],
+               "order" :[[3,"asc"]]
+            });
+            
+            
+            
+        });
+    </script>
+    <span class="accordion-title">My Team's Renewals </span><br/><br/>
+    <apex:outputPanel rendered="{!IF(myTeamsRenewalsList.size > 0, true, false)}" style="width:100%">
+        <table class="my-team-renewals-table data-table"  style="width:100%">
+            <thead>
+                <tr>
+                    <th>Renewal Name</th>
+                    <th>Company Name</th>
+                    <th>Lead Account Executive</th>
+                    <th>{!$ObjectType.Opportunity.Fields.CloseDate.Label}</th>
+                    <th>{!$ObjectType.Opportunity.Fields.StageName.Label}</th>
+                    <th>Risk Level</th>
+                    <th>Projected Membership</th>
+                </tr>
+            </thead>
+            <tbody>
+                <apex:repeat value="{!myTeamsRenewalsList}" var="myTeamsRenewalObj">
+                    <tr>
+                        <td>
+                            <a href="/{!myTeamsRenewalObj.opportunityObj.Id}" target="_top">
+                                <apex:outputText value="{!myTeamsRenewalObj.opportunityObj.Name}" />
+                            </a>
+                        </td>
+                        <td>
+                            
+                            <a href="/{!myTeamsRenewalObj.opportunityObj.AccountId}" target="_top">
+                                <apex:outputText value="{!myTeamsRenewalObj.opportunityObj.Account.Name}" />
+                            </a>
+                            <!--
+                            <div class="openTab">    
+                                <apex:outputField value="{!myTeamsRenewalObj.opportunityObj.AccountId}" />
+                            </div>
+                            -->
+                        </td>
+                        <td>
+                            <div class="openTab">
+                                <apex:outputField value="{!myTeamsRenewalObj.opportunityTeamMemberObj.UserId}" />
+                            </div>
+                        </td>
+                        <td>
+                            <apex:outputField value="{!myTeamsRenewalObj.opportunityObj.CloseDate}" />
+                        </td>
+                        <td>
+                            <apex:outputField value="{!myTeamsRenewalObj.opportunityObj.StageName}" />
+                        </td>
+                        <td>
+                            <apex:outputField value="{!myTeamsRenewalObj.opportunityObj.Account.Current_Risk_Level__c}" />
+                        </td>                       
+                        <td>
+                            <apex:outputText value="{!myTeamsRenewalObj.opportunityObj.Expected_Health_Members__c}" />
+                        </td> 
+                    </tr>
+                </apex:repeat>
+            </tbody>
+        </table>
+    </apex:outputPanel>
+    <apex:outputPanel rendered="{!IF(myTeamsRenewalsList.size > 0, false, true)}" style="margin-left:20px">
+        No Team Renewals to show.
+    </apex:outputPanel>
+<c:LinkOverrideScript />
+    
+</apex:page>

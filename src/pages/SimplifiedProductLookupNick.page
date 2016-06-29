@@ -1,0 +1,70 @@
+<apex:page controller="SimplifiedProductLookupControllerNick" title="Search" showheader="false" sidebar="false" tabstyle="Group" id="pg">
+
+    <script type='text/javascript'>
+    function noenter(ev)  {
+        if (window.event && window.event.keyCode == 13 || ev.which == 13) {
+            doSearch();
+            return false;
+         } else {
+              return true;
+         }
+     }
+    </script>
+
+    <apex:form >
+        <apex:pagemessages id="pgMsg" />
+        <apex:pageblock id="productResults" rendered="{!Results.size > 0}">
+
+            <apex:pageblocksection ><h2>Products</h2></apex:pageblocksection>
+            <apex:outputlabel value="Search" for="txtSearch" />
+            <apex:inputtext id="txtSearch" value="{!searchString}" onkeypress="return noenter(event);" />
+            <span style="padding-left:5px">
+                <apex:commandbutton id="btnGo" value="Go" onclick="doSearch(); return false;" rerender="Results"></apex:commandbutton>
+            </span>
+            <apex:actionfunction name="doSearch" action="{!Search}" />
+            <apex:pageblocktable value="{!Results}" var="p" id="Results">
+                <apex:column >
+                    <apex:facet name="header">
+                        <apex:outputpanel > Product </apex:outputpanel>
+                    </apex:facet>
+
+                    <apex:outputlink value="javascript:top.window.opener.lookupPick2('{!FormTag}','{!TextBox}_lkid','{!TextBox}','{!p.Id}','{!p.Simplified_Product__c}', false)" rendered="{!NOT(ISNULL(p.Id))}">{!p.Simplified_Product__c}</apex:outputlink>
+                </apex:column>
+               <!--> <apex:column >
+                    <apex:facet name="header">
+                        <apex:outputpanel > State </apex:outputpanel>
+                    </apex:facet>
+                    <apex:outputtext >{!p.HCSC_State__c}</apex:outputtext>
+                </apex:column><-->
+            </apex:pageblocktable>
+        </apex:pageblock>
+        <apex:pageblock id="productResults2" rendered="{!Results.size <= 0}">
+            <apex:pagemessage summary="Search did not return a valid Product" severity="warning" strength="3" />
+            <apex:pagemessages />
+
+            <apex:pageblocksection ><h2>Products</h2></apex:pageblocksection>
+            <apex:outputlabel value="Search" for="txtSearch" />
+            <apex:inputtext id="txtSearch" value="{!searchString}" onkeypress="return noenter(event);" />
+
+            <span style="padding-left:5px">
+                <apex:commandbutton id="btnGo" value="Go" onclick="doSearch(); return false;" rerender="Results"></apex:commandbutton>
+            </span>
+            <apex:actionfunction name="doSearch" action="{!Search}" />
+            <apex:pageblocktable value="{!Results}" var="p" id="Results">
+                <apex:column >
+                    <apex:facet name="header">
+                        <apex:outputpanel > Product </apex:outputpanel>
+                    </apex:facet>
+
+                    <apex:outputlink value="javascript:top.window.opener.lookupPick2('{!FormTag}','{!TextBox}_lkid','{!TextBox}','{!p.Id}','{!p.Simplified_Product__c}', false)" rendered="{!NOT(ISNULL(p.Id))}">{!p.Simplified_Product__c}</apex:outputlink>
+                </apex:column>
+                <apex:column >
+                    <apex:facet name="header">
+                        <apex:outputpanel > State </apex:outputpanel>
+                    </apex:facet>
+                    <apex:outputtext >{!p.HCSC_State__c}</apex:outputtext>
+                </apex:column>
+            </apex:pageblocktable>
+        </apex:pageblock>
+    </apex:form>
+</apex:page>

@@ -1,0 +1,18 @@
+<apex:page standardController="Case" sidebar="true" action="{!IF($Profile.Name == 'Contract Administration', null, urlFor($Action.Case.Tab, $ObjectType.Case, null, true))}">
+    <!--apex:includeScript value="{!$Resource.jquery_1_11_1}" /-->
+    <style>
+    #list {margin:auto;}
+    .listViewportWrapper .listViewport .topNav h2.title{
+        font-size: 1.5em;
+        font-weight: normal;
+    }
+    </style>
+    
+    <div id="list">   
+        <apex:enhancedlist type="Case" height="300" customizable="false" rowsPerPage="25" Listid="00Bf000000145QW" />    
+    </div>
+    <!--script>
+        var $newSubtitle = $('<h1 class="pageType">Cases</h1>');
+        $(".content").before($newSubtitle);
+    </script-->
+</apex:page>

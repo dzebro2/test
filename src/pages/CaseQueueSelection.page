@@ -1,0 +1,64 @@
+<apex:page standardController="Case" extensions="CaseQueueSelectionController" id="page" tabstyle="Case">
+    <style>
+        /*Increases space between dropdown and field*/
+        .picklistMargin select{
+            margin-right: 5px;
+        }
+        /*Makes the section header more transparent and have black text*/
+        body .apexp .bPageBlock.apexDefaultPageBlock .pbBody .pbSubheader{
+            color: black;
+            background-image: url('/img/alohaSkin/opacity75.png');
+        }
+    </style>
+    <script type="text/javascript">
+        function openLookup(baseURL, width, modified, searchParam){
+            var urlArr = baseURL.split("?")[1];
+            var urlParams = urlArr.split('&');
+            //Reset baseURL
+            baseURL = "/apex/QueueLookupPage?"
+            //Extract and transform urlParams
+            for(i = 0; i < urlParams.length; i++){
+                var param = urlParams[i].split('=');
+                baseURL = baseURL + '&' + param[0] + '=' + param[1];
+            }
+            //Add recordType as a param
+            baseURL = baseURL + "&rctp=" + escapeUTF("{!Case.RecordType.Name}") + "&id=" + escapeUTF("{!Case.Id}");            
+            //If the user types something in the lookup, modified will be 1
+            //If so, add the entered searchParam to the URL
+            if (modified == '1') {
+                baseURL = baseURL + searchParam;
+            }
+
+            //Open the URL as a lookup-type window
+            openPopup(baseURL, "lookup", 350, 480, "width="+width+",height=480,toolbar=no,status=no,directories=no,menubar=no,resizable=yes,scrollable=no", true);
+        }
+    </script>
+    <apex:sectionheader title="Change Case Owner" rendered="{!isOwner}"/>
+    <apex:outputPanel rendered="{!isOwner}">
+        This screen allows you to transfer cases from one user or queue to another. When you transfer ownership, the new owner will own:
+        <ul><li>all open activities (tasks and events) for this case that are assigned to the current owner</li></ul>
+        Note that completed activities will not be transferred. Open activities will not be transferred when assigning this case to a queue.
+    </apex:outputPanel>
+
+    <apex:form id="CaseForm" rendered="{!isOwner}">
+        <apex:pageBlock id="PageBlock">
+            <apex:pageBlockButtons location="bottom">
+                <apex:commandButton action="{!save}" value="Save"/>
+                <apex:commandButton action="{!cancel}" value="Cancel"/>
+            </apex:pageBlockButtons>
+            <apex:pageBlockSection columns="1" title="Select New Owner" collapsible="false" >
+                <apex:pageMessages />
+                <apex:outputField label="Transfer this case" value="{!Case.CaseNumber}"/>
+                <apex:inputField styleClass="picklistMargin" label="Select a Queue" id="queueLookup" value="{!myCase.OwnerId}"/>
+          
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+    </apex:form>
+    <apex:outputPanel rendered="{!NOT(isOwner)}">
+        <apex:pagemessages />
+        <h6>
+            <apex:outputlink value="/{!currentRecordId}">Click here</apex:outputlink> to go back
+        </h6>
+    </apex:outputPanel>
+    <script type="text/javascript" src="https://code.jquery.com/jquery-2.2.0.min.js"></script>
+</apex:page>

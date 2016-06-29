@@ -1,0 +1,300 @@
+<apex:page standardController="Account" extensions="AccountCancellationClass" sidebar="true" showHeader="true"  docType="html-5.0">
+<apex:stylesheet value="{!URLFOR($Resource.DataTables_1_10_2, '/css/jquery.dataTables.min.css')}" />
+    <apex:includeScript value="{!$Resource.jquery_1_11_1}" />
+    <apex:includeScript value="{!URLFOR($Resource.DataTables_1_10_2, '/js/jquery.dataTables.min.js')}"/>
+<!-- <apex:stylesheet value="{!URLFOR($Resource.Bootstrap, 'bootstrap-3.3.4-dist/css/bootstrap.min.css')}"/> -->
+
+<style>
+        .DisplayInfoMessage{
+            border-radius: 10px;
+            background: #FFFF33;
+            padding: 2px 8px; 
+            display: inline-block;
+            height: 16px;  
+            font-size: 12px;
+        }
+        .DisplayCanMessage{
+            font-size: 14px;
+        }
+        .accordion div.accordion-label label h4 {
+            white-space: nowrap;
+        }
+        .media-holder {
+            width:100% !important;
+        }     
+        .dataTables_length{
+            display:none !important;
+        }
+    
+        .data-table thead th {
+            background-color:#1797C0 !important;
+            color:#fff;
+            font-weight:bold;
+        } 
+        
+    .accountTab .tertiaryPalette, .individualPalette .accountBlock .tertiaryPalette, .layoutEdit .individualPalette .accountBlock .tertiaryPalette {
+        background-color: #1797C0 !important;
+        border-color: #1797C0 !important;
+    }
+
+    .popup
+        {
+    
+        background-color: white;
+        border-width: 2px;
+        border-style: solid;
+        z-index: 9999;
+        left: 60%;
+        padding:10px;
+        position: absolute;
+        width: 500px;
+        margin-left: -250px;
+        top:20%;
+        color : #1797c0 !important;
+        border: 1px solid #1797c0 !important;
+        border-radius: 3px !important;
+        font-size: 14px !important;
+        text-align: center !important;
+        font-weight: bold !important;
+       
+    }
+
+    .popupBg
+    {
+        background-color:black;
+        opacity: 0.20;
+        filter: alpha(opacity = 70);
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        z-index: 9998;
+        color : #1797c0 !important;
+        border: 1px solid #1797c0 !important;
+        border-radius: 3px !important;
+    }
+</style>
+
+
+
+<apex:form id="frm">
+    <script type="text/javascript">
+        $(document).ready(function(){
+             $('.openTab').find("a").attr("target","_blank");
+             $('.My-Group-Section').dataTable();
+        });
+    </script>
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-sm-12">
+            <!-- <br/>
+            <div align="left">
+                <div>
+                    <img class="socialProfilePhoto" src="/img/social/unknown_company_pic.png" alt="Account Profile Picture"/>
+                    <h3>{!accountRecord[0].Name} - Cancellation</h3>
+                </div>
+            </div>-->
+            <Apex:sectionHeader title="{!accountRecord[0].Name}" subtitle="Cancellation"   /> 
+            <br/><br/>
+            <apex:actionRegion >
+            <apex:actionFunction name="GoBack" action="{!backToAccountHome}" reRender="IntermediateSection"/>
+            </apex:actionRegion>
+            <apex:pagemessages />
+            <apex:outputPanel id="IntermediateSection" rendered="{!completeCancellationSectionToggle}">
+                <apex:pageBlock >
+                    <apex:pageBlockSection title="Please fill in Account Cancellation details below: " collapsible="false" columns="1">
+                            <apex:pageblockSectionItem >
+                                <apex:outputLabel >Requested Cancellation Date:</apex:outputLabel>
+                                <apex:inputField required="true" value="{!AccountRecord[0].Requested_Cancellation_Date__c}"/>   
+                            </apex:pageblockSectionItem>
+                            <apex:pageblockSectionItem >
+                                <apex:outputLabel >Cancellation Code:</apex:outputLabel>
+                                <apex:inputField required="true" value="{!AccountRecord[0].Cancellation_Code__c}"/>
+                            </apex:pageblockSectionItem>
+                            <apex:pageblockSectionItem >
+                                <apex:outputLabel >Cancellation Explanation:</apex:outputLabel>
+                                <apex:inputField required="true" value="{!AccountRecord[0].Cancellation_Explanation__c}"/>
+                            </apex:pageblockSectionItem>
+                            <apex:pageblockSectionItem >
+                                <apex:outputLabel >Cancellation Reason:</apex:outputLabel>
+                                <apex:inputField required="true" value="{!AccountRecord[0].Cancellation_Reason__c}"/>
+                            </apex:pageblockSectionItem>
+                    </apex:pageBlockSection>
+                    <apex:pageBlockButtons location="bottom">
+                        <apex:commandButton value="Back" onclick="GoBack();"/>
+                        <apex:commandButton value="Next" action="{!moveToAccountCompCancelReviewPg}" rerender="frm"/>
+                    </apex:pageBlockButtons>
+                </apex:pageBlock>
+            </apex:outputPanel>
+            <apex:outputPanel id="ReviewSection" rendered="{!!completeCancellationSectionToggle}">
+                <apex:pageBlock > 
+                     <apex:outputPanel rendered="{!if(GroupSectionList.size > 0,true,false)}" style="width:60%">              
+                         <p ><b>{!$Label.AccountCompleteCancellationPageLabel1}</b></p>
+                         <table class="My-Group-Section data-table"  style="width:100%">
+                             <thead>
+                                  <tr>                       
+                                    <th>Name</th>
+                                    <th>Section Number</th>
+                                    <th>Status</th>                    
+                                    <th>Requested Cancellation Date</th>
+                                    <th>Cancellation Code</th>
+                                    <th>Cancellation Explanation</th>
+                                    <th>Cancellation Reason</th>
+                                  </tr>                      
+                             </thead>
+                             <tbody>
+                                  <apex:repeat value="{!GroupSectionList}" var="bnfsec">
+                                     <tr>                             
+                                          <td>
+                                              <a href="/{!bnfsec.Id}" target="_blank">
+                                                  <apex:outputField value="{!bnfsec.Name__c}" />
+                                              </a>
+                                          </td>
+                                          <td>                            
+                                               <apex:outputField value="{!bnfsec.Section_Number__c}" />
+                                          </td>
+                                          <td>
+                                                                      
+                                               <apex:outputField value="{!bnfsec.Status__c}" />                           
+                                          </td>  
+                                          <td>                                 
+                                              <apex:outputField value="{!bnfsec.Requested_Cancellation_Date__c}" /> 
+                                          </td>
+                                          <td >                                 
+                                              <apex:outputField value="{!bnfsec.Cancellation_Code__c}" /> 
+                                          </td>  
+                                          <td>                                 
+                                              <apex:outputField value="{!bnfsec.Cancellation_Explanation__c}"/> 
+                                          </td>
+                                          <td>                                 
+                                              <apex:outputField value="{!bnfsec.Cancellation_Reason__c}"/> 
+                                          </td>
+                                      </tr>
+                                  </apex:repeat>
+                             </tbody>
+                         </table>
+                   </apex:outputPanel>
+                   <apex:outputPanel rendered="{!if(GroupSectionList.size>0,false,true)}">
+                       <apex:outputLabel >{!$Label.AccountCancellationGroupSectionLabel1}</apex:outputLabel>
+                   </apex:outputPanel> 
+                   <apex:outputPanel rendered="{!if(BenefitAgreementList.size > 0,true,false)}" style="width:60%">   
+                       <p style="font-size: 14px;"><b>{!$Label.AccountCompleteCancellationPageLabel2}</b></p>                                 
+                       <table class="My-Group-Section data-table"  style="width:100%">
+                          <thead>
+                              <tr>                       
+                                <th>Name</th>
+                                <th>Section Number</th>
+                                <th>Status</th>                    
+                                <th>Requested Cancellation Date</th>
+                                <th>Cancellation Code</th>
+                                <th>Cancellation Explanation</th>
+                                <th>Cancellation Reason</th>
+                              </tr>                      
+                          </thead>
+                          <tbody>
+                              <apex:repeat value="{!BenefitAgreementList}" var="bnfsec">
+                                 <tr>                             
+                                      <td>
+                                          <a href="/{!bnfsec.Id}" target="_blank">
+                                              <apex:outputField value="{!bnfsec.Name}" />
+                                          </a>
+                                      </td>
+                                      <td>                            
+                                           <apex:outputField value="{!bnfsec.Benefit_Agreement_Number__c}" />
+                                      </td>
+                                      <td>
+                                                                  
+                                           <apex:outputField value="{!bnfsec.Status__c}" />                           
+                                      </td>  
+                                      <td>                                 
+                                          <apex:outputField value="{!bnfsec.Requested_Cancellation_Date__c}" /> 
+                                      </td>
+                                      <td >                                 
+                                          <apex:outputField value="{!bnfsec.Cancellation_Code__c}" /> 
+                                      </td>  
+                                      <td>                                 
+                                          <apex:outputField value="{!bnfsec.Cancellation_Explanation__c}"/> 
+                                      </td>
+                                      <td>                                 
+                                          <apex:outputField value="{!bnfsec.Cancellation_Reason__c}"/> 
+                                      </td>
+                                  </tr>
+                              </apex:repeat>
+                          </tbody>
+                       </table>
+                   </apex:outputPanel>
+             
+                   <apex:outputPanel rendered="{!if(BenefitAgreementList.size>0,false,true)}">
+                       <apex:outputLabel >{!$Label.AccountCancellationBenefitAgreementPageLabel1}</apex:outputLabel>
+                   </apex:outputPanel> 
+                   <br/>
+                   <apex:outputPanel rendered="{!if(BillingProfileList.size > 0,true,false)}" style="width:60%">   
+                       <p style="font-size: 14px;"><b>{!$Label.AccountCompleteCancellationPageLabel3}</b></p>                                 
+                       <table class="My-Group-Section data-table"  style="width:100%">
+                          <thead>
+                              <tr>                       
+                                <th>Name</th>
+                                <th>Status</th>                    
+                                <th>Requested Cancellation Date</th>
+                                <th>Cancellation Code</th>
+                                <th>Cancellation Explanation</th>
+                                <th>Cancellation Reason</th>
+                              </tr>                      
+                          </thead>
+                          <tbody>
+                              <apex:repeat value="{!BillingProfileList}" var="BillPrf">
+                                 <tr>                             
+                                      <td>
+                                          <a href="/{!BillPrf.Id}" target="_blank">
+                                              <apex:outputField value="{!BillPrf.Name}" />
+                                          </a>
+                                      </td>
+                                      <td>
+                                           <apex:outputField value="{!BillPrf.Status__c}" />                           
+                                      </td>  
+                                      <td>                                 
+                                          <apex:outputField value="{!BillPrf.Requested_Cancellation_Date__c}" /> 
+                                      </td>
+                                      <td >                                 
+                                          <apex:outputField value="{!BillPrf.Cancellation_Code__c}" /> 
+                                      </td>  
+                                      <td>                                 
+                                          <apex:outputField value="{!BillPrf.Cancellation_Explanation__c}"/> 
+                                      </td>
+                                      <td>                                 
+                                          <apex:outputField value="{!BillPrf.Cancellation_Reason__c}"/> 
+                                      </td>
+                                  </tr>
+                              </apex:repeat>
+                          </tbody>
+                       </table>
+                   </apex:outputPanel>
+             
+                   <apex:outputPanel rendered="{!if(BillingProfileList.size>0,false,true)}">
+                       <apex:outputLabel >{!$Label.billingProfileCancellationPageLabel1}</apex:outputLabel>
+                   </apex:outputPanel>
+                   
+                   
+                   <apex:pageBlockButtons location="bottom">
+                       <apex:commandButton value="Back" action="{!moveToAccountCompCancel}" reRender="frm"/>
+                       <apex:commandButton value="Finish" action="{!DiplaycancellationAccountMessage}"/>
+                   </apex:pageBlockButtons>
+                </apex:pageBlock>
+            </apex:outputPanel>
+            <apex:outputPanel id="MessagePanel" rendered="{!showMessagepanel}">
+                <apex:outputPanel styleClass="popupBg"  layout="block" />
+                <apex:outputPanel styleClass="popup" layout="block">
+                    <div align="center">
+                        <span> {!DisplayMessage} </span> <br/>
+                        <apex:commandButton value=" Confirm " action="{!confirmcancellationAccount}" rerender="frm"/>
+                        <apex:commandButton value=" Back " action="{!backcancellationAccount}" rerender="frm"/>
+                    </div>    
+                </apex:outputPanel>
+            </apex:outputPanel>
+            
+        </div>
+      </div>
+    </div>
+</apex:form> 
+</apex:page>

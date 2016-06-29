@@ -1,0 +1,153 @@
+<apex:page sideBar="false" showHeader="false" controller="HPS_MyGoalsController"  >
+    <apex:stylesheet value="{!URLFOR($Resource.DataTables_1_10_2, '/css/jquery.dataTables.min.css')}" />
+    <apex:includeScript value="{!$Resource.jquery_1_11_1}" />
+    <apex:includeScript value="{!URLFOR($Resource.DataTables_1_10_2, '/js/jquery.dataTables.min.js')}"/>
+    <style>
+        .accordion div.accordion-label label h4 {
+            white-space: nowrap;
+        }
+        .media-holder {
+            width:100% !important;
+        }
+        body {
+            background:white;
+        }
+        .accordion-title{
+            font-size:16px;
+            font-weight:bold;
+            margin:20px 10px;
+        }
+        .dataTables_length{
+            display:none !important;
+        }
+    
+        .data-table thead th {
+            background-color:#1797C0 !important;
+            color:#fff;
+            font-weight:bold;
+        }
+        
+        .setup-icon {
+            height: 16px;
+            left: 98%;
+            position: absolute;
+            top: 0;
+            width: 16px;
+            z-index: 10000;
+            cursor:pointer;        
+        }
+        .large-text{
+            font-size:40px;
+            text-align:center;
+            white-space:nowrap;
+        }
+        .small-text{
+           font-size:14px;
+           text-align:center;
+           white-space:nowrap;
+        }
+        
+    </style>
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <script type="text/javascript">
+        google.load("visualization", "1", {packages:["corechart"]});
+        google.setOnLoadCallback(drawColumnChart);
+        function drawColumnChart() {
+            var data = google.visualization.arrayToDataTable([
+                ["Stage", "Opportunities" ],
+                {!colChartData}   
+            ]);
+            
+            
+            var view = new google.visualization.DataView(data);
+            view.setColumns([0, 1,
+            { calc: "stringify",
+            sourceColumn: 1,
+            type: "string",
+            role: "annotation" }
+            ]);
+                              
+            var options = {
+                width: '350',
+                height:150,
+                backgroundColor : '#FFFFFF',
+                hAxis: {
+                    title: 'Stage',
+                    titleTextStyle: {color: '#1797C0'},
+                    textStyle:{color: '#1797C0'}
+                },
+                vAxis: {
+                    title: 'No Of Opportunities',
+                    minValue: 0,
+                    gridlines: {
+                        color: 'transparent'
+                    },
+                    titleTextStyle: {color: '#1797C0'},
+                    textStyle:{color: '#1797C0'}
+                },
+                colors : ['#1797C0'],
+                legend: { position: "none" }
+            };
+            var chart = new google.visualization.ColumnChart(document.getElementById("columnchart_values"));
+            chart.draw(view, options);
+        }
+    </script>
+    <span class="accordion-title">Sales Goals and Metrics </span><br/><br/>
+    <!--<div style="margin-left:450px;font-size:20px;">
+        <a href="/{!salesPipelineReportObj[0].Id}" target="_blank" style="color:#1797C0;"> Sales Pipeline </a>
+    </div>-->
+    <table style="width:100%;">
+        <tbody>
+            <tr>
+                <td style="width:30%;text-align:center;">
+                    <div style="color:#1797C0;font-size:20px;">
+                        Members Acquired
+                    </div>
+                    <div style="color:#1797C0;">
+                        Goal vs. Actual, YTD
+                    </div>
+                        
+                    <apex:image value="{!$Resource.MembersAcquired}"/>
+                </td>
+                <td style="width:20%;text-align:center;">
+                    <div style="color:#1797C0;">
+                        <div class="large-text">
+                            {!opportunityCloseRatio}%
+                        </div>
+                        <div class="small-text">
+                            Opportunity Close Ratio
+                        </div>
+                    </div>
+                    <div style="color:#1797C0;">
+                        <div class="large-text">
+                            {!openOpportunities}
+                        </div>
+                        <div class="small-text">
+                            Open Opportunities
+                        </div>
+                    </div>
+                </td>
+            
+                <td style="width:40%;text-align:center;">
+                    <div >
+                        <a style="color:#1797C0;font-size:20px" href="/{!salesPipelineReportObj[0].Id}" target="_blank">
+                            Sales Pipeline
+                        </a>
+                    </div>
+                    <div style="color:#1797C0;">
+                        by Stage
+                    </div>
+                    <div id="columnchart_values"/>
+                    <div style="color:#1797C0;">
+                        <span style="font-size:20px">
+                            {!potentialMembers}
+                        </span>
+                        Potential Members
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+<c:LinkOverrideScript />
+    
+</apex:page>

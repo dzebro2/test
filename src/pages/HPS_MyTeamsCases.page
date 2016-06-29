@@ -1,0 +1,188 @@
+<apex:page sideBar="false" showHeader="false" controller="HPS_MyTeamsCasesController"  readonly="true">
+    <apex:stylesheet value="{!URLFOR($Resource.DataTables_1_10_2, '/css/jquery.dataTables.min.css')}" />
+    <apex:includeScript value="{!$Resource.jquery_1_11_1}" />
+    <apex:includeScript value="{!URLFOR($Resource.DataTables_1_10_2, '/js/jquery.dataTables.min.js')}"/>
+    <style>
+        .accordion div.accordion-label label h4 {
+            white-space: nowrap;
+        }
+        .media-holder {
+            width:100% !important;
+        }
+        body {
+            background:white;
+        }
+        .accordion-title{
+            font-size:16px;
+            font-weight:bold;
+            margin:20px 10px;
+        }
+        .dataTables_length{
+            display:none !important;
+        }
+    
+        .data-table thead th {
+            background-color:#1797C0 !important;
+            color:#fff;
+            font-weight:bold;
+        }
+        
+        .setup-icon {
+            height: 16px;
+            left: 98%;
+            position: absolute;
+            top: 0;
+            width: 16px;
+            z-index: 10000;
+            cursor:pointer;        
+        }
+        
+    </style>
+     <script type="text/javascript">
+        
+        $(document).ready(function(){
+            $('.openTab').find("a").attr("target","_blank");
+            
+            jQuery.extend( jQuery.fn.dataTableExt.oSort, {
+                "datetime-us-flex-pre": function ( a ) {
+                    // If there's no slash, then it's not an actual date, so return zero for sorting
+                    if(a.indexOf('/') === -1 || a.indexOf('&nbsp') != -1) {
+                        return '0';
+                    } 
+                    else {
+                        // Set optional items to zero
+                        var hour = 0,
+                        min = 0,
+                        ap = 0;
+                        // Execute match. Requires month, day, year. Can be mm/dd or m/d. Can be yy or yyyy
+                        // Time is optional. am/pm is optional
+                        // TODO - remove extra time column from array
+                        var b = a.match(/(\d{1,2})\/(\d{1,2})\/(\d{2,4})( (\d{1,2}):(\d{1,2}))? ?(am|pm|AM|PM|Am|Pm)?/),
+                        month = b[1],
+                        day = b[2],
+                        year = b[3];
+                        // If time exists then output hours and minutes
+                        if (b[4] != undefined) {
+                            hour = b[5];
+                            min = b[6];
+                        }
+                        // if using am/pm then change the hour to 24 hour format for sorting
+                        if (b[7] != undefined) {
+                            ap = b[7];
+                            if(hour == '12') 
+                                hour = '0';
+                                if(ap == 'PM') 
+                                    hour = parseInt(hour, 10)+12;
+                        }
+         
+                        // for 2 digit years, changes to 20__ if less than 70
+                        if(year.length == 2){
+                            if(parseInt(year, 10) < 70) 
+                                year = '20'+year;
+                            else
+                                year = '19'+year;
+                        }
+                        // Converts single digits
+                        if(month.length == 1)
+                            month = '0'+month;
+                        if(day.length == 1)
+                            day = '0'+day;
+                        if(hour.length == 1)
+                            hour = '0'+hour;
+                        if(min.length == 1)
+                            min = '0'+min;
+                        var tt = year+month+day+hour+min;
+                        return tt;
+                    }
+                },
+                "datetime-us-flex-asc": function ( a, b ) {
+                return a - b;
+                },
+                "datetime-us-flex-desc": function ( a, b ) {
+                return b - a;
+                }
+            });
+            $('.my-team-cases-table').dataTable({
+                columnDefs: [
+                    { 
+                        type: 'datetime-us-flex', targets: [6]
+                    }
+                ],
+                "order": [[ 6, 'asc']]
+                
+            });
+            
+            
+                        
+        });
+    </script>
+    <span class="accordion-title">My Team's Cases </span><br/><br/>
+    <apex:outputPanel rendered="{!IF(myTeamsCasesList.size > 0, true, false)}" style="width:100%">
+        <table class="my-team-cases-table data-table"  style="width:100%">
+            <thead>
+                <tr>
+                    <th>Case #</th>
+                    <th>Company</th>
+                    <th>Subject</th>
+                    <th>{!$ObjectType.Case.Fields.Status.Label}</th>
+                    <!--<th>Category</th>-->
+                    <th>Record Type</th>
+                    <th>Owner</th>
+                    <th>Open Date</th>
+                    <th>Days Open</th>
+                    <th>Due Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                <apex:repeat value="{!myTeamsCasesList}" var="myTeamsCaseObj">
+                    <tr>
+                        <td>
+                            <a href="/{!myTeamsCaseObj.Id}" target="_top">
+                                <apex:outputText value="{!myTeamsCaseObj.CaseNumber}" />
+                            </a>
+                        </td>
+                        <td>
+                            <div class="openTab">
+                                <a href="/{!myTeamsCaseObj.Id}" target="_top">
+                                    <apex:outputText value="{!myTeamsCaseObj.Account.Name}" />
+                                </a>
+                            </div>
+                        </td>
+                        <td>
+                            <apex:outputField value="{!myTeamsCaseObj.Subject}" />
+                        </td>
+                        <td>
+                            <apex:outputField value="{!myTeamsCaseObj.Status}" />
+                        </td>
+                        <td>
+                            <apex:outputField value="{!myTeamsCaseObj.RecordTypeid}" />
+                        </td>
+                        <td>
+                            <apex:outputField value="{!myTeamsCaseObj.OwnerId}" />
+                        </td>
+                        <td>
+                            <apex:outputField value="{!myTeamsCaseObj.CreatedDate}" />
+                        </td>                       
+                        <td>
+                            <apex:outputField value="{!myTeamsCaseObj.Days_Open__c}" />
+                        </td>
+                        <td >
+                            <apex:outputPanel rendered="{!IF(myTeamsCaseObj.RecordTypeId == medicalUWRecordTypeId || myTeamsCaseObj.RecordTypeId == dentalUWRecordTypeId, false, true)}">
+                                <apex:outputField value="{!myTeamsCaseObj.Mail_Date_Due_Date__c}"  />
+                            </apex:outputPanel>
+                            <apex:outputPanel rendered="{!IF(myTeamsCaseObj.RecordTypeId == medicalUWRecordTypeId || myTeamsCaseObj.RecordTypeId == dentalUWRecordTypeId, true, false)}">
+                                <apex:outputField value="{!myTeamsCaseObj.Underwriting_Due_Date__c}"  />
+                            </apex:outputPanel>
+                            
+                        </td>
+                    </tr>
+                </apex:repeat>
+            </tbody>
+        </table>
+    </apex:outputPanel>
+    <apex:outputPanel rendered="{!IF(myTeamsCasesList.size > 0, false, true)}" style="margin-left:20px">
+        No Team Cases to show.
+    </apex:outputPanel>
+<c:LinkOverrideScript />
+    
+</apex:page>

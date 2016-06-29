@@ -1,0 +1,58 @@
+<apex:page standardController="Account" extensions="ReinstatementExtension" showHeader="true" sidebar="true" >
+    <apex:form id="frm">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-sm-12">
+                    <br/>
+                  <!--   <div align="left">
+                        <div>
+                            <img class="socialProfilePhoto" src="/img/social/unknown_company_pic.png" alt="Account Profile Picture"/>
+                            <h3>{!accountRecord.Name} - Reinstatement</h3>
+                        </div>
+                    </div> -->
+                    <Apex:sectionHeader title="{!accountRecord.Name}" subtitle="Reinstatement" 
+                        description="Note: {!$Label.Reinstatement_Account_Underwiting_Warning}"
+                        printUrl="/img/social/unknown_company_pic.png"/>
+                    
+
+                    <apex:pageBlock >
+
+                    <apex:pageMessages />
+                    
+                        <apex:pageBlockSection rendered="{!isReinstatementAllowed}"
+                            title="{!$Label.Reinstatement_Fill_Account_Details_Header}" collapsible="false" columns="1">
+<!--                                <apex:pageblockSectionItem > -->
+<!--                                     <apex:outputLabel style="color:red;">{!$Label.Reinstatement_Account_Underwiting_Warning}</apex:outputLabel> -->
+<!--                                 </apex:pageblockSectionItem> -->
+                                <apex:pageblockSectionItem >
+                                    <apex:outputLabel >{!$Label.Requested_Reinstatement_Date}</apex:outputLabel>
+                                    <apex:outputField value="{!AccountRecord.Requested_Cancellation_Date__c}"/>   
+                                </apex:pageblockSectionItem>
+                                <apex:pageblockSectionItem >
+                                    <apex:outputLabel >{!$Label.Reinstatement_Reason}</apex:outputLabel>
+                                    <apex:inputField required="true" value="{!AccountRecord.Cancellation_Reason__c}"/>
+                                </apex:pageblockSectionItem>
+                                <apex:pageblockSectionItem >
+                                    <apex:outputLabel >{!$Label.Reinstatement_Code}</apex:outputLabel>
+                                    <apex:outputField value="{!AccountRecord.Cancellation_Code__c}"/>
+                                </apex:pageblockSectionItem>
+                                <apex:pageblockSectionItem >
+                                    <apex:outputLabel >{!$Label.Reinstatement_Explanation}</apex:outputLabel>
+                                    <apex:inputField required="true" value="{!AccountRecord.Cancellation_Explanation__c}" style="width:19%;"/>
+                                </apex:pageblockSectionItem>
+                                
+                        </apex:pageBlockSection>
+                        
+                        <apex:pageBlockButtons location="bottom">
+                            <apex:commandButton value="Back" immediate="true" action="{!backToHome}"/>
+                            <apex:commandButton value="Cancel" action="{!cancel}"/>                           
+                            <apex:commandButton value="{!$Label.Submit_for_Reinstatement_Button}" action="{!submitAccountForReinstatement}" rendered="{!isReinstatementAllowed}"/>
+                            <apex:commandButton value="{!$Label.Withdraw_Cancellation_Button}" action="{!withdrawCancellation}" rendered="{!showWithdraw}"/>
+                            
+                        </apex:pageBlockButtons>
+                    </apex:pageBlock>
+                 </div>
+            </div>
+        </div>
+    </apex:form>
+</apex:page>

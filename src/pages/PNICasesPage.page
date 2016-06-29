@@ -1,0 +1,72 @@
+<apex:page standardController="Case" extensions="PNICasesPageExtension">
+
+<apex:stylesheet value="{!URLFOR($Resource.jQueryUI,'jquery-ui-1.11.4.custom/jquery-ui.min.css')}" />
+<apex:stylesheet value="{!URLFOR($Resource.DataTables_1_10_2, '/css/jquery.dataTables.min.css')}" />
+
+<apex:includeScript value="{!URLFOR($Resource.jQueryUI,'jquery-ui-1.11.4.custom/external/jquery/jquery.js')}" />
+<apex:includeScript value="{!URLFOR($Resource.jQueryUI,'jquery-ui-1.11.4.custom/jquery-ui.min.js')}" />
+<apex:includeScript value="{!URLFOR($Resource.DataTables_1_10_2, '/js/jquery.dataTables.min.js')}"/>
+<script type="text/javascript" src="/path/to/jquery-latest.js"></script> 
+<script type="text/javascript" src="/path/to/jquery.tablesorter.js"></script> 
+
+<apex:form >
+<script>
+    $(document).ready(function(){
+        $('#TableDisplayingRelatedPNICases').DataTable();
+    });   
+    // {bFilter: false, bInfo: false, bLength: false, bPaginate: false}
+</script>
+<style>
+table, th, td {
+    border: 1px solid black;
+}
+table {
+    border-collapse: collapse;
+}
+</style>
+
+
+
+<apex:pageBlock id="pgblock">
+    <div>
+        <span style="float:left">
+            <img src="/s.gif" alt="Case" class="pageTitleIcon" title="Case"/>
+            <h1 class="pageType" style="font-size:15px">All Account Proposal and NI Cases
+                <span class="titleSeparatingColon">:</span>
+            </h1>
+        </span>  
+    </div>
+    <div/>
+    <p>             </p>
+    <table id="TableDisplayingRelatedPNICases" class="list" border="1" cellspacing="0" cellpadding="0">    
+        <thead >
+        <tr class="headerRow">
+            <th>Case Number</th>
+            <th>Case Record Type</th>
+            <th>Subject</th>
+            <th>Status</th>
+            <th>Case Owner</th>
+            <th>Opportunity Name</th>
+            <th>Modified Date</th>
+        </tr>
+        </thead>
+        <tbody>
+        <apex:repeat var="caseVar" value="{!CaseDisplayList}">
+            <tr class="dataRow" onmouseover="if (window.hiOn){hiOn(this);}" onmouseout="if (window.hiOff){hiOff(this);}">
+                <apex:repeat var="f" value="{!Fields}">
+                    <td>
+                        <apex:outputPanel rendered="{!if(f.label != 'Case Number' && f.label != 'Subject',true,false)}">
+                            <apex:outputField value="{!caseVar[f]}" />
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!if(f.label == 'Case Number' || f.label == 'Subject',true,false)}">
+                            <apex:outputLink target="_parent" value="/{!caseVar.id}" id="Link1">{!caseVar[f]}</apex:outputLink>
+                        </apex:outputPanel>
+                    </td>
+                </apex:repeat>
+            </tr>
+        </apex:repeat>
+        </tbody>
+    </table>
+</apex:pageBlock>
+</apex:form>
+</apex:page>

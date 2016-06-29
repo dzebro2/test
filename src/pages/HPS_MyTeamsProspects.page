@@ -1,0 +1,99 @@
+<apex:page sideBar="false" showHeader="false" controller="HPS_MyTeamsProspectsController"  readonly="true">
+    <apex:stylesheet value="{!URLFOR($Resource.DataTables_1_10_2, '/css/jquery.dataTables.min.css')}" />
+    <apex:includeScript value="{!$Resource.jquery_1_11_1}" />
+    <apex:includeScript value="{!URLFOR($Resource.DataTables_1_10_2, '/js/jquery.dataTables.min.js')}"/>
+    <style>
+        .accordion div.accordion-label label h4 {
+            white-space: nowrap;
+        }
+        .media-holder {
+            width:100% !important;
+        }
+        body {
+            background:white;
+        }
+        .accordion-title{
+            font-size:16px;
+            font-weight:bold;
+            margin:20px 10px;
+        }
+        .dataTables_length{
+            display:none !important;
+        }
+    
+        .data-table thead th {
+            background-color:#1797C0 !important;
+            color:#fff;
+            font-weight:bold;
+        }
+        
+        .setup-icon {
+            height: 16px;
+            left: 98%;
+            position: absolute;
+            top: 0;
+            width: 16px;
+            z-index: 10000;
+            cursor:pointer;        
+        }
+        
+    </style>
+     <script type="text/javascript">
+        
+        $(document).ready(function(){
+            $('.my-team-prospects-table').DataTable({
+                "order" :[[2,"asc"]]
+            });
+            $('.openTab').find("a").attr("target","_blank");
+        });
+    </script>
+    <span class="accordion-title">My Team's Prospects </span><br/><br/>
+    <apex:outputPanel rendered="{!IF(myTeamsProspectsList.size > 0, true, false)}" style="width:100%">
+        <table class="my-team-prospects-table data-table"  style="width:100%">
+            <thead>
+                <tr>
+                    <th>Company Name</th>
+                    <th>Lead Sales Executive</th>
+                    <th>Status</th>
+                    <th>Number Of Open Opportunities</th>
+                    <th>Strategic Plan</th>
+                </tr>
+            </thead>
+            <tbody>
+                <apex:repeat value="{!myTeamsProspectsList}" var="myTeamsProspectObj">
+                    <tr>
+                        <td>
+                            <a href="/{!myTeamsProspectObj.accountObj.Id}" target="_top">
+                                <apex:outputText value="{!myTeamsProspectObj.accountObj.Name}" />
+                            </a>
+                        </td>
+                        <td>
+                            <div class="openTab">
+                                <apex:outputField value="{!myTeamsProspectObj.accountTeamMemberObj.UserId}" />
+                            </div>
+                        </td>
+                        <td>
+                            <apex:outputField value="{!myTeamsProspectObj.accountObj.Status__c}" />
+                        </td>
+                        
+                        <td>
+                            <a href="/{!LEFT(myTeamsProspectObj.accountObj.Id,15)}#{!LEFT(myTeamsProspectObj.accountObj.Id,15)}_RelatedOpportunityList_target" target="_top">
+                                <apex:outputText value="{!myTeamsProspectObj.accountObj.Number_Of_Open_Opportunities__c}" />
+                            </a>
+                        </td>
+                        <td>
+                            <a href="/{!myTeamsProspectObj.strategyPlanObj.Id}" target="_top">
+                                <apex:outputText value="{!myTeamsProspectObj.strategyPlanObj.Name}" />
+                            </a>
+                        </td>
+                    </tr>
+                </apex:repeat>
+            </tbody>
+        </table>
+    </apex:outputPanel>
+    <apex:outputPanel rendered="{!IF(myTeamsProspectsList.size > 0, false, true)}" style="margin-left:20px">
+        No Team Prospects to show.
+    </apex:outputPanel>
+<c:LinkOverrideScript />
+    
+</apex:page>

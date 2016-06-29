@@ -1,0 +1,32 @@
+<apex:page showHeader="false" sideBar="false" controller="ConsoleMenuController">
+
+    <style>
+    .menu-container{height:300px;overflow:auto;width:100%; word-wrap: break-word;font-size:14px;text-align:center;background-color:#47a3da;}
+    .menu-item{ padding:10px 5px;cursor:pointer !important; color:#FFFFFF;text-decoration:none;display:block}
+    .menu-item:hover{ background-color:#2278AE;padding:10px 5px;cursor:pointer !important;  color:#FFFFFF;text-decoration:none;display:block}
+    
+    </style>
+    <apex:includeScript value="{!$Resource.jquery_1_11_1}" />
+    <apex:includeScript value="/support/console/31.0/integration.js" />
+
+    <div class="menu-container">
+        <apex:repeat value="{!menuItems}" var="menuItem">
+            <a onClick="openMenuURL( '{!JSENCODE(menuItem.Name)}', '{!JSENCODE(menuItem.URL__c)}', '{!JSENCODE(menuItem.Target__c)}' )" class="menu-item" target="#">
+                <apex:outputLabel value="{!menuItem.Name}" />
+            </a>
+        </apex:repeat>
+    </div>
+    
+    <script>
+        
+        function openMenuURL( menuName, menuUrl, menuTarget ) {
+            if( sforce.console.isInConsole() &&  menuTarget == 'Console' ) {
+                sforce.console.openPrimaryTab( null, menuUrl, true, menuName, null, menuName );
+            }
+            else if( menuTarget == 'New Window' ) {
+                window.open( menuUrl );
+            }
+        }
+        
+    </script>
+</apex:page>

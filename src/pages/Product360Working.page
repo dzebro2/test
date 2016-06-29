@@ -1,0 +1,366 @@
+<apex:page sidebar="false" showheader="true" controller="Product360ControllerWorking">
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous" />
+    <!-- Optional theme -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css" integrity="sha384-fLW2N01lMqjakBkx3l/M9EahuwpSfeNvV63J5ezn3uZzapT0u7EYsXMjQV+0En5r" crossorigin="anonymous" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.11/js/jquery.dataTables.min.js"></script>
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+
+
+    <apex:stylesheet value="{!URLFOR($Resource.jQueryUI,'jquery-ui-1.11.4.custom/jquery-ui.min.css')}" />
+    <apex:stylesheet value="{!URLFOR($Resource.DataTables_1_10_2, '/css/jquery.dataTables.min.css')}" />
+    <apex:includescript value="{!URLFOR($Resource.jQueryUI,'jquery-ui-1.11.4.custom/external/jquery/jquery.js')}" />
+    <apex:includescript value="{!URLFOR($Resource.jQueryUI,'jquery-ui-1.11.4.custom/jquery-ui.min.js')}" />
+    <apex:includescript value="{!URLFOR($Resource.DataTables_1_10_2, '/js/jquery.dataTables.min.js')}" />
+    <style>
+        .tab-title {
+            margin: 10px 0;
+            font-size: 18px;
+        }
+
+        .data-table thead th {
+            background-color: #72A9D3 !important;
+            color: #fff;
+            font-weight: bold;
+        }
+
+        .accordion-row {
+            background-color: #EAF5FE !important;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        table.dataTable tbody th, table.dataTable tbody td {
+            border-bottom: 1px solid #CFEEF8 !important;
+            padding: 10px !important;
+        }
+
+        .additional-info {
+        }
+
+            .additional-info:hover {
+                background-color: #e5f5f9;
+            }
+
+        /* The Modal (background) */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1; /* Sit on top */
+            padding-top: 100px; /* Location of the box */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgb(0,0,0); /* Fallback color */
+            background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+        }
+
+        /* Modal Content */
+        .modal-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding-top: 0%;
+            padding-bottom: 0%;
+            border: 1px solid #888;
+            width: 30%;
+        }
+
+        /* The Close Button */
+        .close {
+            color: #aaaaaa;
+            text-align: center;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+            .close:hover,
+            .close:focus {
+                color: #000;
+                text-decoration: none;
+                cursor: pointer;
+            }
+
+        .icon-success {
+            color: #5CB85C;
+        }
+
+        .icon-fail {
+            color: #FF0000;
+        }
+    </style>
+    <script>
+
+        
+        function funcpls(oid, pname, pid){
+
+
+            var baseURL = "/apex/SimplifiedProductLookup?"
+
+            baseURL = baseURL + "&id=" + escapeUTF(oid);
+            baseURL = baseURL + "&pname=" + escapeUTF(pname);
+            baseURL = baseURL + "&pid=" + escapeUTF(pid);
+
+            window.open(baseURL, "" , "width=480,height=400", true);
+        }
+       
+    </script>
+    <h2>Product 360 View</h2>
+    <br />
+    <br />
+
+    <apex:pagemessages />
+    <apex:form id="f1">
+        <div style="text-align:center">
+            <button class="myBtn" onclick="showSavingModal();" type="button">Save</button>
+        </div>
+
+
+        <div id="menu">
+            <div class="panel list-group" id="menuchild">
+                <apex:repeat value="{!accountWrappers}" var="a">
+                    
+                    <div id="{!a.accountObj.Id}parent">
+                        <a href="" class="list-group-item" data-toggle="collapse" data-target="#{!a.accountObj.Id}" data-parent="#{!a.accountObj.Id}parent">{!a.accountObj.Name} - {!a.numProducts} Product(s)</a>
+                        <div id="{!a.accountObj.Id}" class="sublinks collapse">
+                            <apex:repeat value="{!a.opps}" var="o">
+
+                                <a style="margin-left:1%" class="list-group-item small" data-toggle="collapse" data-target="#{!o.opportunityObj.Id}"><span class="glyphicon glyphicon-chevron-right"></span> {!o.opportunityObj.Name} - {!o.opportunityObj.RecordType.Name} - {!o.numProducts} Product(s)</a>
+                                <div id="{!o.opportunityObj.Id}" class="sublinks collapse">
+
+                                    <apex:pageblock html-style="margin-left:2%" title="Add/Edit Opportunity Products" id="opProdPageTable">
+                                        <apex:outputlabel style="font-weight: normal;" value="Total Expected Health Members: {!o.opportunityObj.Expected_Health_Members__c}" />
+                                        &nbsp;
+                                        &nbsp;
+                                        <apex:outputlabel style="font-weight: normal;" value="Total Expected Health Contracts: {!o.opportunityObj.Expected_Health_Contracts__c}" />
+                                        &nbsp;
+                                        &nbsp;
+                                        <apex:outputlabel style="font-weight: normal;" value="Total Expected Dental Members: {!o.opportunityObj.Expected_Dental_Members__c}" />
+                                        &nbsp;
+                                        &nbsp;
+                                        <apex:outputlabel style="font-weight: normal;" value="Total Expected Dental Contracts: {!o.opportunityObj.Expected_Dental_Contracts__c}" />
+                                        
+                                        <apex:variable value="{!0}" var="rowNumber" />
+                                        <apex:pageblocktable value="{!o.opportunityProducts}" var="op">
+                                            <apex:column headervalue="Action" width="3%">
+                                                <apex:variable var="rowNumber" value="{!rowNumber + 1}" />
+                                                <apex:commandlink action="{!removeRow}" value="Del" style="color: #015BA7;font-weight:bold" rerender="opProdPageTable" immediate="true" onclick="showWorkingModal()" oncomplete="hideWorkingModalDelete()">
+                                                    <apex:param name="p1" value="{!rowNumber}" assignto="{!numberOfRowToRemove}" />
+                                                    <apex:param name="p2" value="{!op.Id}" assignto="{!recordToDelete}" />
+                                                    <apex:param name="p3" value="{!o.opportunityObj.Id}" assignto="{!currentOpportunity}" />
+                                                </apex:commandlink>
+                                            </apex:column>
+
+                                            <apex:column headervalue="Product">
+                                                
+                                                <apex:inputText html-class="prod{!op.Id}" value="{!op.Product__r.Name}" required="true" />
+                                                <apex:inputhidden id="prodhidden" html-class="hiddenprod{!op.Id}" value="{!op.Product__c}" required="true" />
+                                                <img src="/s.gif" onclick="funcpls('{!o.opportunityObj.Id}', 'prod{!op.Id}', 'hiddenprod{!op.Id}');" alt="Product Lookup (New Window)" class="lookupIcon" onblur="this.className = 'lookupIcon';" onfocus="this.className = 'lookupIconOn';" onmouseout="this.className = 'lookupIcon';this.className = 'lookupIcon';" onmouseover="this.className = 'lookupIconOn';this.className = 'lookupIconOn';" title="Product Lookup (New Window)" />
+                                                <div id="errorDiv" class="prod{!op.Id}" style="display:block; color:red;"></div>
+                                                <!--><apex:inputfield value="{!op.Product__c}" required="true" /><-->
+                                            </apex:column>
+
+                                            
+
+                                            <apex:column headervalue="Type">
+                                                <apex:inputfield value="{!op.Product_Type__c}" required="true" />
+                                            </apex:column>
+                                            <apex:column headervalue="Funding Type">
+                                                <apex:inputfield value="{!op.Funding_Type__c}" required="true" />
+                                            </apex:column>
+                                            <apex:column headervalue="Premium Type">
+                                                <apex:inputfield value="{!op.Premium_Type__c}" required="true" />
+                                            </apex:column>
+                                            <apex:column headervalue="Projected Members">
+                                                <apex:inputfield value="{!op.Projected_Members__c}" required="true" />
+                                            </apex:column>
+                                            <apex:column headervalue="Projected Contracts">
+                                                <apex:inputfield value="{!op.Projected_Contracts__c}" required="true" />
+                                            </apex:column>
+                                            <apex:column headervalue="Status">
+                                                <apex:inputfield value="{!op.Status__c}" required="true" />
+                                            </apex:column>
+                                            <apex:column headervalue="Win Probability">
+                                                <apex:inputfield value="{!op.Win_Probability__c}" required="true" />
+                                            </apex:column>
+                                        </apex:pageblocktable>
+                                        <div id="AddNewButton">
+                                            <apex:commandbutton value="Add New" action="{!addNewOpportunityProduct}" rerender="opProdPageTable" onclick="showWorkingModal()" oncomplete="hideWorkingModal()">
+                                                <apex:param name="p1" value="{!o.opportunityObj.Id}" assignto="{!currentOpportunity}" />
+                                            </apex:commandbutton>
+                                        </div>
+                                    </apex:pageblock>
+                                </div>
+                            </apex:repeat>
+                        </div>
+                    </div>
+                </apex:repeat>
+            </div>
+        </div>
+
+        <div style="text-align:center">
+            <button class="myBtn" onclick="showSavingModal();" type="button">Save</button>
+            <apex:actionfunction name="finishSave" rerender="opProdPageTable" action="{!save}" oncomplete="updateSavingModal()"></apex:actionfunction>
+            
+        </div>
+        <script>
+
+                
+                // Get the button that opens the modal
+                var btn = document.getElementById("myBtn");
+
+                // Get the <span> element that closes the modal
+                var span = document.getElementsByClassName("close")[0];
+                var isError = false;
+                var emptyInputs = [];
+                var emptyHiddenInputs = [];
+                var newInput;
+
+                function showSavingModal(){
+
+                    newInput = $('.prod').val();
+                    
+                    var inputs = $('input[class^="prod"]');
+                    var hiddens = $('input[class^="hidden"]');
+                    for (i = 0; i <inputs.length; i++){
+                        if (inputs[i].value == ""){
+
+                            emptyInputs.push($(inputs[i]).attr('class'));
+                            isError = true;
+                        }
+                    }
+
+                    for (j = 0; j <hiddens.length; j++){
+
+                        if (hiddens[j].value == ""){
+                            console.log(hiddens[j]);
+                            emptyHiddenInputs.push($(hiddens[j]).attr('class').substring(6));
+                            isError = true;
+                        }
+                    }
+
+                    $('#savingModal').css("display", "block");
+                    finishSave();
+                }
+
+
+
+                function updateSavingModal(){
+
+                    
+                    var divs = $('.prod');
+
+                    for (k = 0; k <emptyInputs.length; k++) {
+
+                        $('.'+emptyInputs[k]).html("Error: You must enter a value");
+                    }
+
+                    for (n = 0; n <emptyHiddenInputs.length; n++) {
+
+
+                        $('.'+emptyHiddenInputs[n]).html("Error: You must use the lookup selector to add a product");
+                    }
+                    var modal = $('#savingModal');
+                    modal.css("display", "block");
+                    var numErrors = $('.errorMsg').length;
+
+                    if (numErrors > 0 || isError === true) {
+
+                        $('.btn').prop('disabled', true);
+                        $('#savingModalText').html("Review all error messages to correct your data.");
+                        $('.savingModal-Title').html("<span class='glyphicon glyphicon-remove icon-fail'></span> Error");
+                    }
+                    else {
+
+                         $('#savingModalText').html("Products Saved");
+                         $('.savingModal-Title').html("<span class='glyphicon glyphicon-check icon-success'></span> Success");
+
+                    }
+                    emptyInputs = [];
+                    isError = false;
+                    emptyHiddenInputs = [];
+                    $('.prod').val(newInput);
+                    
+                }
+
+                function showWorkingModal(){
+                    $('.btn').prop('disabled', true);
+                    $('#workingModal').css("display", "block");
+                }
+
+                
+                function hideWorkingModalDelete(){
+
+                    $('#workingModal').fadeOut(400);
+                }
+
+                function hideWorkingModal(){
+                    $('.btn').prop('disabled', true);
+                    $('#workingModal').fadeOut(400);
+                }
+
+                window.onclick = function(event) {
+                    var modal = document.getElementById('savingModal');
+                    var modal2 = document.getElementById('workingModal');
+
+                    if (event.target == modal || event.target == modal2) {
+                        modal.style.display = "none";
+                        modal2.style.display = "none";
+                        $('#savingModalText').html("");
+                        $('.savingModal-Title').html("Saving...");
+                    }
+                }
+
+                function hideSavingModal(){
+
+                    $('#savingModal').css("display", "none");
+                    $('#savingModalText').html("");
+                    $('.savingModal-Title').html("Saving...");
+
+                }
+
+
+        </script>
+
+        <div id="savingModal" class="modal">
+            <!-- Modal content -->
+            <div class="modal-content">
+                <div style="text-align: center;" class="modal-header">
+                    <button type="button" class="close" onclick="hideSavingModal()">&times;</button>
+                    <h4 class="savingModal-Title" style="font-size: 200%;">Saving...</h4>
+                </div>
+                <div class="modal-body">
+                    <div>
+                        <p id="savingModalText" style="text-align: center; font-size: 150%;"></p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="mybtn" onclick="hideSavingModal()">Close</button>
+                </div>
+            </div>
+        </div>
+        <div id="workingModal" class="modal">
+            <!-- Modal content -->
+            <div style="text-align: center;" class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" onclick="hideWorkingModal()">&times;</button>
+                    <h4 class="modal-title3" style="text-align: center;font-size: 200%;">Working...</h4>
+                </div>
+                <div class="modal-body">
+                    <div>
+                        <p id="modaltext3" style="text-align: center; font-size: 150%;"></p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="mybtn" onclick="hideWorkingModal()">Close</button>
+                </div>
+            </div>
+        </div>
+
+
+    </apex:form>
+
+</apex:page>

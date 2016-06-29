@@ -1,0 +1,128 @@
+<apex:page controller="M_HomePageSliderController"> 
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+    
+    <!-- Css Styles -->
+      <!--  <apex:stylesheet value="{!URLFOR($Resource.M_Accordion,'M_settings.css')}" /> -->
+    <apex:stylesheet value="{!URLFOR($Resource.M_Accordion,'M_Horizontal_Accordion_Menu_Radio/Css/settings.css')}" />
+
+    
+    <!-- Fonts Link -->
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'/>
+    
+    <apex:includeScript value="{!URLFOR($Resource.Customer360,'scripts/vendor/jquery-1.8.3.min.js')}" />
+    
+    
+    <style>
+        body {
+            background:white;
+        }
+        .home-accordion-container{
+            width:100%;
+            float:left;
+        }
+        .accordion div.accordion-label label h4{
+            float:left;
+            transform-origin: center left 0px;
+            font-weight:bold;
+            white-space:nowrap;
+        }
+        .accordion-label ul{
+            width:80%;
+            overflow-y:auto !important;
+        }
+        .accordion-data-table{
+            width:98%;
+            margin-left:10px;
+            border-spacing:0;
+        }
+        .accordion-title{
+            font-size:16px;
+            font-weight:bold;
+            margin:20px 10px;
+        }
+        .accordion-data-table th, .accordion-data-table td {
+            padding:10px 5px;
+        }
+        .accordion-data-table th {
+            border-bottom:2px solid #1797C0;
+            border-collapse:collapse;
+        }
+        .accordion-data-table td {
+            border-bottom:1px solid #1797C0;
+            border-collapse:collapse;
+            
+        }
+        .setup-icon {
+            height: 16px;
+            left: 98%;
+            position: absolute;
+            top: 0;
+            width: 16px; 
+            z-index: 10000;
+            cursor:pointer;        
+        }
+        .media-holder {
+            width:100% !important;
+        }
+        
+    </style>
+    <!-- Accordion Start -->        
+
+    <div class="home-accordion-container" >
+        <apex:form >
+            <apex:pageMessages />
+            <apex:commandLink action="{!gotoPreferencesPage}" title="Edit Preferences"> <img src="{!$Resource.SetupIcon}" class="setup-icon"/> </apex:commandLink>
+            
+            <apex:dynamicComponent componentValue="{!accordionHTML}"/>
+            
+        </apex:form>
+    </div>
+    <!-- Accordion End -->
+    <script>
+     var numberOfItems = 0;
+
+    $(document).ready(function() {
+        
+        $(".media-holder").each( function( index, domEle ) {
+            var itemHTML = '<iframe src='+ $( domEle ).attr( "pageurl" ) +' style="width:100%;height:340px;" frameborder="0" seamless/>';
+            $( domEle ).html( itemHTML );
+            numberOfItems++;
+        } );
+        
+        adjustWidth();
+        
+        if( (typeof sforce != 'undefined') && (sforce != null) ) {
+            //alert('mobile');
+        }
+        else {
+            //alert('desktop');
+        }
+    })
+    
+    function adjustWidth() {
+        $(".accordion-label ul").width(0);
+        var accWidth = $(".home-accordion-container").width() - (45*numberOfItems);
+        $("input.tab-1").each(function(index, domEle){
+            if($(domEle).is(':checked')){
+                //console.log(domEle,accWidth,$(domEle).siblings("label"));
+                $(domEle).siblings("ul").width(accWidth);
+                $(domEle).siblings("label").width(20); 
+                $(domEle).siblings("label").css({"background-color":"#005589"});
+                
+                //$(domEle).siblings("label").css({"vertical-align":"center"});
+
+
+
+            }
+            else {
+                $(domEle).siblings("ul").width(0);
+                $(domEle).siblings("label").width(5); 
+                 $(domEle).siblings("label").css({"background-color":"#5DB4E4"});
+            }
+        })
+        
+    }
+    </script>
+
+</apex:page>

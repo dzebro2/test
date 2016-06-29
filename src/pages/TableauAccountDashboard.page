@@ -1,0 +1,7 @@
+<apex:page standardController="Account">
+
+<apex:iframe id="tableau" width="100%" height="800px" scrolling="true" frameborder="0" src="https://tableau.fyiblue.com/views/SoaKMay2015toApril2016_0/Homerun?:embed=y&Account={!Account.Name}&Plan={!Account.HCSC_Division__c}">
+
+</apex:iframe>
+
+</apex:page>

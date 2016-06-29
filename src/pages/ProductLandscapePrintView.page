@@ -1,0 +1,246 @@
+<apex:page standardController="Account" extensions="ProductLandscapeController" title="Product Landscape" showHeader="false" sidebar="false" applyBodyTag="false" applyhtmlTag="false" standardStylesheets="false" renderAs="PDF">
+
+<head>
+<apex:stylesheet value="{!URLFOR($Resource.jQueryUI,'jquery-ui-1.11.4.custom/jquery-ui.min.css')}" />
+<apex:stylesheet value="{!URLFOR($Resource.DataTables_1_10_2, '/css/jquery.dataTables.min.css')}" />
+
+<apex:includeScript value="{!URLFOR($Resource.jQueryUI,'jquery-ui-1.11.4.custom/external/jquery/jquery.js')}" />
+<apex:includeScript value="{!URLFOR($Resource.jQueryUI,'jquery-ui-1.11.4.custom/jquery-ui.min.js')}" />
+<apex:includeScript value="{!URLFOR($Resource.DataTables_1_10_2, '/js/jquery.dataTables.min.js')}"/>
+
+<style>
+    @page {
+        size:landscape;
+    }
+    table, tbody{
+        border-bottom: 1px solid #CFEEF8 !important;
+        padding: 10px !important;
+        cellpadding:10 !important;
+        width:100% !important;
+    }
+    thead{
+        background-color:#72A9D3 !important;
+        color:#fff;
+        font-weight:bold;
+        cellpadding:10; !important;
+    }
+    body{
+        font-family: 'Arial','Helvetica',sans-serif;
+    }
+</style>
+
+</head>
+
+<html>
+<body font-family="Arial Unicode MS">
+<apex:form >
+<!--
+<div align="right">
+    <apex:commandLink id="PrintLink" value="Print This Page" onclick="window.print();"/>
+</div>
+-->
+<apex:sectionHeader title="{!account.Name}"/>
+<h2>Product Landscape</h2>
+
+<div id="tabs">
+
+    <div id="tabs-1">
+        <div class="tab-title" >
+            <h3>Actively Purchasing Products</h3>
+        </div>
+    
+        <table id="activelyPurchasingProductsTable" class="data-table" >
+            <thead >
+                <tr>
+                    <th>Product Family</th>
+                    <th>Product Category</th>
+                    <th>Proposed Product</th>
+                    <th>Competitors</th>
+                    <th>Business Type</th>
+                    <th>Due Date</th>
+                    <th>Projected Members</th>
+                    <th>Associated Opportunity</th>
+                </tr>
+            </thead>
+            <tbody>
+                <apex:repeat value="{!activelyPurchasingProductsList}" var="activelyPurchasingProd">
+                    <tr>
+                        <td>{!activelyPurchasingProd.productFamily}</td>
+                        <td>{!activelyPurchasingProd.productCategory}</td>
+                        <td>{!activelyPurchasingProd.productName}</td><!--<a href="/{!activelyPurchasingProd.productId}" target="_blank">{!activelyPurchasingProd.productName}</a></td>-->
+                        <td style="text-align:center">{!activelyPurchasingProd.numberOfCompetitors}</td>
+                        <td>{!activelyPurchasingProd.businessType}</td>
+                        <td>{!activelyPurchasingProd.dueDate}</td>
+                        <td  style="text-align:center">{!activelyPurchasingProd.numberOfProjectedMembers}</td>
+                        <td>{!activelyPurchasingProd.associatedOpportunityName}</td> <!--<a href="/{!activelyPurchasingProd.associatedOpportunityId}" target="_blank">{!activelyPurchasingProd.associatedOpportunityName}</a></td>     -->          
+                    </tr>
+                </apex:repeat>
+            </tbody>
+            
+        </table>
+    </div>
+
+    <div id="tabs-2">
+        <div class="tab-title">
+            <h3>Implementing Products</h3>
+        </div>
+
+        <table id="implementingProductsTable" class="data-table" cellpadding="5">
+            <thead>
+                <tr>
+                    <th>Opportunity</th>
+                    <th>Product</th>
+                    <th>Projected Members</th>
+                    <th>Funding Type</th>
+                    <th>Opportunity Team Member</th>
+                    <th>Opportunity Effective Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                <apex:repeat value="{!impb}" var="impProd">
+                    <tr>
+                        <td>{!impProd.oppName}</td>
+                        <td>{!impProd.productName}</td>
+                        <td>{!impProd.members}</td>
+                        <td>{!impProd.funding}</td>
+                        <td>
+                            <apex:outputpanel rendered="{!IF(CONTAINS(ChkMapKeyI,impProd.oppId),true,false)}">
+                                <apex:repeat value="{!teamMemberMapI[impProd.oppId]}" var="key">
+                                        {!key} <br />
+                                </apex:repeat>
+                            </apex:outputpanel>
+                        </td>
+                        <td>{!impProd.effectiveDate}</td>
+                    </tr>
+                </apex:repeat>
+            </tbody>
+
+        </table>
+    </div>
+  
+    <div id="tabs-3">
+        <div class="tab-title">
+            <h3>Current Products</h3>
+        </div>
+
+        <table id="currentProductsTable" class="data-table" cellpadding = "5">
+            <thead>
+                <tr>
+                    <th>Product Family</th>
+                    <th>Product Category</th>
+                    <th>Active Product</th>
+                    <th>Carrier/Vendor</th>
+                    <th>Business Type</th>
+                    <th>Renewal Date</th>
+                    <th>Members</th>
+                    <th>Projected Members</th>
+                    <th>Associated Renewal</th>
+                </tr>
+            </thead>
+            <tbody>
+                <apex:repeat value="{!currentProductsList}" var="currentProd">
+                    <tr >
+                        <td>{!currentProd.productFamily}</td>
+                        <td>{!currentProd.productCategory}</td>
+                        <td>{!currentProd.productName}</td><!--<a href="/{!currentProd.productId}" target="_blank">{!currentProd.productName}</a></td>-->
+                        <td>
+                            {!currentProd.carrierName}
+                          <!--  <apex:outputPanel rendered="{!IF( currentProd.carrierId == null, true, false )}">
+                                {!currentProd.carrierName}
+                            </apex:outputPanel>
+                            <apex:outputPanel rendered="{!IF( currentProd.carrierId == null, false, true)}">
+                                <a href="/{!currentProd.carrierId}" target="_blank">{!currentProd.carrierName}</a>
+                            </apex:outputPanel>-->
+                        </td>
+                        <td>{!currentProd.businessType}</td>
+                        <td>{!currentProd.renewalDate}</td>
+                        <td>{!currentProd.numberOfMembers}</td>
+                        <td>{!currentProd.numberOfProjectedMembers}</td>
+                        <td>{!currentProd.associatedOpportunityName}</td><!--<a href="/{!currentProd.associatedOpportunityId}" target="_blank">{!currentProd.associatedOpportunityName}</a></td> -->
+                    </tr>
+                </apex:repeat>
+            </tbody>
+        </table>
+        
+    </div>
+
+    <div id="tabs-4">
+        <div class="tab-title">
+            <h3>Lost Products</h3>
+        </div>
+
+        <table id="lostProductsTable" class="data-table" cellpadding="5">
+            <thead>
+                <tr>
+                    <th>Opportunity</th>
+                    <th>Product</th>
+                    <th>Projected Members</th>
+                    <th>Funding Type</th>
+                    <th>Opportunity Team Member</th>
+                    <th>Opportunity Effective Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                <apex:repeat value="{!lostp}" var="lostProd">
+                    <tr>
+                        <td>{!lostProd.oppName}</td>
+                        <td>{!lostProd.productName}</td>
+                        <td>{!lostProd.members}</td>
+                        <td>{!lostProd.funding}</td>
+                        <td>
+                            <apex:outputpanel rendered="{!IF(CONTAINS(ChkMapKeyL,lostProd.oppId),true,false)}">
+                                <apex:repeat value="{!teamMemberMapL[lostProd.oppId]}" var="key">
+                                        {!key} <br />
+                                </apex:repeat>
+                            </apex:outputpanel>
+                        </td>
+                        <td>{!lostProd.effectiveDate}</td>
+                    </tr>
+                </apex:repeat>
+            </tbody>
+
+        </table>
+    </div>
+
+    <div id="tabs-5">
+        <div class="tab-title">
+            <h3>Other HCSC Products</h3>
+        </div>
+
+            <apex:outputPanel id="otherHCSCProductsPanel">
+                <table id="otherHCSCProductsTable" class="data-table" cellpadding = "5">
+                    <thead>
+                        <tr>
+                            <th>Product Family</th>
+                            <th>Product Category</th>
+                            <th>Product</th>
+                            <th>Additional Information</th>
+                            
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <apex:repeat value="{!otherProductsList}" var="prod">
+                            <tr>
+                                <td>{!prod.productFamily}</td>
+                                <td>{!prod.productCategory}</td>
+                                <td> {!prod.productName} </td><!-- <a href="/{!prod.productId}" target="_blank">{!prod.productName}</a></td> -->
+                                <td class="additional-info" title="Double click to edit Additional Information.">
+                                    
+                                    <apex:outputField value="{!prod.accoutProductInfo.Additional_Information__c}" title="Double click to edit Additional Information.">
+                                    <!--    <apex:inlineEditSupport showOnEdit="saveButton, cancelButton" event="ondblclick" 
+                                            changedStyleClass="myBoldClass" resetFunction="resetInlineEdit"/>   -->                                
+                                    </apex:outputField>
+                                
+                                </td>    
+                                            
+                            </tr>
+                        </apex:repeat>
+                    </tbody>
+                </table>
+            </apex:outputPanel>
+    </div>
+</div>
+</apex:form>
+</body>
+</html>
+</apex:page>

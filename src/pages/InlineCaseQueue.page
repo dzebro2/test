@@ -1,0 +1,9 @@
+<apex:page StandardController="Case" extensions="InlineCaseQueueController" showHeader="false" sidebar="false" id="page" >
+<apex:form >
+    <apex:selectradio value="{!selectedQueue}">
+        <apex:selectoptions value="{!Options}" />
+    </apex:selectradio>
+    <apex:commandlink value="Save" action="{!assignQueue}"  id="theButton" styleclass="btn" style="text-decoration:none;padding:4px;" />
+   
+</apex:form>
+</apex:page>

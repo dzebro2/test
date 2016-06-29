@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Report xmlns="http://soap.sforce.com/2006/04/metadata">
+    <columns>
+        <field>KnowledgeableUser$RawRank</field>
+    </columns>
+    <columns>
+        <field>KnowledgeableUser$Topic</field>
+    </columns>
+    <columns>
+        <field>KnowledgeableUser$User</field>
+    </columns>
+    <description>Top knowledgeable people across all topics.</description>
+    <format>Tabular</format>
+    <name>CH T - Top Knowledgeable People</name>
+    <params>
+        <name>co</name>
+        <value>1</value>
+    </params>
+    <reportType>Chatter_Knowledgeable_Users_1_0__c</reportType>
+    <scope>organization</scope>
+    <showDetails>true</showDetails>
+    <sortColumn>KnowledgeableUser$RawRank</sortColumn>
+    <sortOrder>Desc</sortOrder>
+</Report>

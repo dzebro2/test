@@ -1,0 +1,749 @@
+<apex:page sidebar="false" docType="html-5.0"> 
+<html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<head>
+     
+    <apex:stylesheet value="{!URLFOR($Resource.TodayViewFiles,'css/iphone-scroller.css')}" />
+
+    <apex:stylesheet value="{!URLFOR($Resource.TodayViewFiles,'css/bootstrap.min.css')}" />
+    <apex:stylesheet value="{!URLFOR($Resource.salesforce_lightning,'assets/styles/salesforce-lightning-design-system-vf.min.css')}" />
+    <apex:stylesheet value="{!URLFOR($Resource.TodayViewFiles,'css/waitMe.min.css')}" />
+
+    <apex:includeScript value="{!URLFOR($Resource.AccountMap,'AccountMapFiles/jquery-1.11.1.min.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.TodayViewFiles,'js/iphone-scroller.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.TodayViewFiles,'js/bootstrap.min.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.TodayViewFiles,'js/jquery-ui.js')}"/>
+         <apex:includeScript value="{!URLFOR($Resource.TodayViewFiles,'js/moment.min.js')}"/>
+         <apex:includeScript value="{!URLFOR($Resource.TodayViewFiles,'js/commonDD.js')}"/>
+    <script src="/soap/ajax/33.0/connection.js" type="text/javascript"></script> 
+     <script src="/soap/ajax/33.0/apex.js" type="text/javascript"></script> 
+    <script type="text/javascript">
+
+(function(){try{var a=navigator.userAgent; 
+var a = navigator.userAgent;
+if ((a.indexOf('Salesforce') != -1) && (a.indexOf('iPhone') != -1 || a.indexOf('iPad') != -1) && (a.indexOf('Safari') == -1)) {
+     var s = document.createElement('style');
+     if ((a.indexOf('OS/8') != -1 || a.indexOf('OS 8') != -1)) {
+         s.innerHTML = "html,html body{overflow: auto;-webkit-overflow-scrolling:touch;}body{position:absolute;left:0;right:0;top:0;bottom:0;}";
+     } else if ((a.indexOf('OS/9') != -1 || a.indexOf('OS 9') != -1)) {
+         s.innerHTML = "html,html body{overflow: auto;-webkit-overflow-scrolling:auto;}body{position:absolute;left:0;right:0;top:0;bottom:0;}";
+     }
+     document.getElementsByTagName('head')[0].appendChild(s);
+}}catch(e){}})(); 
+
+        $(document).ready(function(){ 
+            $("#myTab li:eq(1) a").tab('show');
+             //Recent Records data
+            sforce.connection.sessionId = '{!$Api.Session_ID}'; 
+            fillRecent('');
+           
+
+            fillActivities('',true);
+
+            //End of recent records data
+
+            //Search for accounts owned
+            fillAZ('');
+            fillRecordtypes();
+            //end of accounts owned
+             
+
+        });
+
+    $( "#inputFilter" ).keyup(function( event ) {
+        //console.log('key pressed');
+       if ( event.which == 13 ) {
+          event.preventDefault();
+        }
+        filterTab($('#inputFilter').val());
+    });
+
+      function fillRecordtypes(){
+        run_waitMe('bounce');
+        var result = sforce.connection.describeSObject("Account");
+        var recordTypesRecords="";
+        var recordtypeList = '<div class="slds"> <ul class="slds-list--vertical slds-has-cards">';
+        for (var i=0; i<result.recordTypeInfos.length; i++) {
+        var rt = result.recordTypeInfos[i];
+          // console.log("Record Type Name: "+rt.name);
+          // console.log("Record Type Id: "+rt.recordTypeId);
+          // console.log("Record Type Availability: "+rt.available);
+           if (rt.available == 'true' && rt.name!='Master'){
+              var createRecordLink = "sforce.one.createRecord('Account','"+ rt.recordTypeId +"')";
+              recordtypeList = recordtypeList + '<li class="slds-list__item makeWhite"> <div class="slds-media slds-tile slds-hint-parent"><div class="slds-media__body"> <div class="slds-grid slds-grid--align-spread slds-has-flexi-truncate"> <p class="slds-tile__title slds-truncate"><a href="" onclick="'+createRecordLink+'" id="companyInformationLink">'+rt.name+'</a></p></div><div class="slds-tile__detail"> <dl class="dl--horizontal slds-text-body--small"> <dt class="slds-dl--horizontal__label"> <p class="slds-truncate"></p></dt> </dl> </div></div></div></li>';
+            }
+
+        }
+        
+        
+           recordtypeList = recordtypeList + '</ul></div>';
+            $("#recordTypeId").append(recordtypeList);
+             $('#container').waitMe('hide'); 
+       }
+
+    function cleanAllli(){
+        for (var i = 65; i <= 90; i++) {
+            $('#ul'+String.fromCharCode(i).toLowerCase()+ " li").remove();
+        }
+    }
+    function fillRecent(dataToFill){
+            run_waitMe('bounce');
+            $("#recentList").empty();
+            var queryRecentRecords ='';
+            if (dataToFill == ''){
+                queryRecentRecords ="SELECT Id, Name FROM RecentlyViewed WHERE Type IN ('Account') and LastViewedDate!=null ORDER BY LastViewedDate DESC LIMIT 20";  
+            }else{
+                queryRecentRecords ="SELECT Id, Name FROM RecentlyViewed WHERE Type IN ('Account') AND LastViewedDate!=null AND Name LIKE '%"+dataToFill+"%' ORDER BY LastViewedDate DESC LIMIT 20"; 
+            }
+            
+            var resultRecentRecords = sforce.connection.query(queryRecentRecords);
+            var recordsRR = resultRecentRecords.getArray("records");
+            //$("#numberOfRecentRecords").text(recordsRR.length);
+            if (recordsRR.length == 0){
+                $("#noRecordsFound").show();
+                setTimeout(function(){ $("#noRecordsFound").hide(); }, 3000);
+                
+            }
+              
+             
+              var recentListHtml = '<div class="slds"> <ul class="slds-list--vertical slds-has-cards">';
+              for (var h=0; h< recordsRR.length; h++) {
+                var recordRR = recordsRR[h];
+                var recordtoNavigateRR ="'" + recordRR.Id + "'";
+                var navigateURL ="'/apex/M_Individual_Account?Id="+recordRR.Id +"'";
+                recentListHtml = recentListHtml +  '<li class="slds-list__item"><svg aria-hidden="true" class="slds-icon slds-icon-standard-account"> <use xlink:href="{!URLFOR($Resource.salesforce_lightning,'/assets/icons/standard-sprite/svg/symbols.svg#account')}"></use> </svg> <span><h2 style="font-size: 1.15em;font-weight: normal;" class="slds-truncate" onclick="sforce.one.navigateToSObject('+recordtoNavigateRR+')"" id="companyInformationLink">'+getTruncatedStringAccounts(recordRR.Name)+'</h2></span></li>';
+
+
+            }
+            recentListHtml = recentListHtml + '</ul></div>';
+            $("#recentList").append(recentListHtml);
+            $('#container').waitMe('hide'); 
+    }
+
+    function fillActivities(dataToFill,firstTime){
+
+        run_waitMe('bounce');
+        $("#openEventsdiv").empty();
+        var queryAccountEvents = '';
+        if (dataToFill == ''){
+            queryAccountEvents = "Select Id,Subject,WhatId, What.Name, What.Type,ActivityDate from Event where  What.Type = 'Account' and OwnerId='{!$User.Id}' and ActivityDate>= TODAY";
+        }else{
+            queryAccountEvents = "Select Id,Subject,WhatId, What.Name, What.Type,ActivityDate from Event where  What.Type = 'Account' AND OwnerId='{!$User.Id}' AND What.Name LIKE '%"+dataToFill+"%' and ActivityDate>= TODAY";
+        }
+        
+            var resultAccountEvents = sforce.connection.query(queryAccountEvents);
+            var recordsAE = resultAccountEvents.getArray("records");
+             if (recordsAE.length == 0 && firstTime == false){
+                //$("#noRecordsFound").show();
+                //setTimeout(function(){ $("#noRecordsFound").hide(); }, 3000);
+                
+            }
+            for (var y=0; y< recordsAE.length; y++) {
+                var recordAE = recordsAE[y];
+                var recordtoNavigateAE ="'" + recordAE.Id + "'";
+                 var navigateURL ="'/apex/M_Individual_Account?Id="+recordAE.WhatId +"'";
+                if($("#" + recordAE.WhatId).length == 0) {
+
+                        $("#openEventsdiv").append('<br><div class="slds-card"> <div id="'+recordAE.WhatId+'" class="slds-card__header slds-grid" onclick="sforce.one.navigateToSObject('+recordtoNavigateAE+')"><div class="slds-media slds-media--center slds-has-flexi-truncate"> <div class="slds-media__figure"> <svg aria-hidden="true" class="slds-icon slds-icon-standard-account slds-icon--small"> <use xlink:href="{!URLFOR($Resource.salesforce_lightning,"/assets/icons/standard-sprite/svg/symbols.svg#account")}"></use> </svg> </div><div class="slds-media__body"> <h2 class="slds-text-heading--small slds-truncate">'+recordAE.What.Name+'</h2> </div></div><div class="slds-no-flex"> <div class="slds-button-group"> </div></div></div><div class="slds-card__body"><table id="tableData'+recordAE.WhatId+'" class="table makeWhite"><thead><tr><th>Activity</th><th>Due Date</th></tr><tr></td><td width="75%" class="slds-truncate"><a href="#" onclick="sforce.one.navigateToSObject('+ recordtoNavigateAE + ')">'+getTruncatedStringAccounts(recordAE.Subject)+'</a></td><td>'+moment(recordAE.ActivityDate).format('MM/DD/YYYY') +'</td></tr></thead><tbody></tbody></table></div></div></div>');
+
+                        // $("#openEventsdiv").append('<br><div id="'+recordAE.WhatId+'" class="panel panel-primary"><div class="panel-heading" onclick="sforce.one.navigateToURL('+navigateURL+')">'+recordAE.What.Name+'</div><div class="panel-body"> <table id="tableData'+recordAE.WhatId+'" class="table table-condensed"><thead><tr><th>Task</th><th>Due Date</th></tr><tr></td><td><a href="#" onclick="">'+recordAE.Subject+'<a></td><td>'+convert2MDY(recordAE.ActivityDate) +'</td></tr></thead><tbody></tbody></table></div></div>');//it doesn't exist
+                    }else{
+                            $('#tableData'+recordAE.WhatId).append('<tr"><td width="75%"><a href="#" onclick="sforce.one.navigateToSObject('+ recordtoNavigateAE + ')">'+getTruncatedStringAccounts(recordAE.Subject)+'<a></td><td>'+moment(recordAE.ActivityDate).format('MM/DD/YYYY')+'</td></tr>');
+                    }
+
+        
+            }
+            var queryforTasks = '';
+            if (dataToFill == ''){
+                  queryforTasks = "Select Id,Subject,WhatId, What.Name, What.Type,ActivityDate from Task where  What.Type = 'Account' and ActivityDate>= TODAY and OwnerId='{!$User.Id}'";
+            }else{
+                  queryforTasks = "Select Id,Subject,WhatId, What.Name, What.Type,ActivityDate from Task where  What.Type = 'Account' AND What.Name LIKE '%"+dataToFill+"%' and ActivityDate>= TODAY and OwnerId='{!$User.Id}'";
+            }
+            
+             var resultAccountTasks = sforce.connection.query(queryforTasks);
+            var recordsTasksN = resultAccountTasks.getArray("records");
+             if (recordsAE.length == 0 && firstTime == false){
+                //$("#noRecordsFound").show();
+                //setTimeout(function(){ $("#noRecordsFound").hide(); }, 3000);
+                
+            }
+            //console.log(recordsTasksN);
+            for (var y=0; y< recordsTasksN.length; y++) {
+                var recordTasksN = recordsTasksN[y];
+                var recordtoNavigateAE ="'" + recordTasksN.Id + "'";
+                 var navigateURL ="'/apex/M_Individual_Account?Id="+recordTasksN.WhatId +"'";
+                if($("#" + recordTasksN.WhatId).length == 0) {
+
+                        $("#openEventsdiv").append('<br><div class="slds-card"> <div id="'+recordTasksN.WhatId+'" class="slds-card__header slds-grid" onclick="sforce.one.navigateToSObject('+recordtoNavigateAE+')"><div class="slds-media slds-media--center slds-has-flexi-truncate"> <div class="slds-media__figure"> <svg aria-hidden="true" class="slds-icon slds-icon-standard-contact slds-icon--small"> <use xlink:href="{!URLFOR($Resource.salesforce_lightning,"/assets/icons/standard-sprite/svg/symbols.svg#event")}"></use> </svg> </div><div class="slds-media__body"> <h2 class="slds-text-heading--small slds-truncate">'+recordTasksN.What.Name+'</h2> </div></div><div class="slds-no-flex"> <div class="slds-button-group"> </div></div></div><div class="slds-card__body"><table id="tableData'+recordTasksN.WhatId+'" class="table makeWhite"><thead><tr class="slds-hint-parent" ><th class="slds-size--1-of-4 slds-cell-wrap">Activity</th><th>Due Date</th></tr><tr class="slds-hint-parent" ><td class="slds-size--1-of-4 slds-cell-wrap" width="75%"><a href="#" onclick="sforce.one.navigateToSObject('+ recordtoNavigateAE + ')">'+getTruncatedStringAccounts(recordTasksN.Subject)+'</a></td><td>'+ moment(recordTasksN.ActivityDate).format('MM/DD/YYYY') +'</td></tr></thead><tbody></tbody></table></div></div></div>');
+
+                        // $("#openEventsdiv").append('<br><div id="'+recordAE.WhatId+'" class="panel panel-primary"><div class="panel-heading" onclick="sforce.one.navigateToURL('+navigateURL+')">'+recordAE.What.Name+'</div><div class="panel-body"> <table id="tableData'+recordAE.WhatId+'" class="table table-condensed"><thead><tr><th>Task</th><th>Due Date</th></tr><tr></td><td><a href="#" onclick="">'+recordAE.Subject+'<a></td><td>'+convert2MDY(recordAE.ActivityDate) +'</td></tr></thead><tbody></tbody></table></div></div>');//it doesn't exist
+                    }else{
+                            $('#tableData'+recordTasksN.WhatId).append('<tr"><td width="75%"><a href="#" onclick="sforce.one.navigateToSObject('+ recordtoNavigateAE + ')">'+getTruncatedStringAccounts(recordTasksN.Subject)+'<a></td><td>'+ moment(recordTasksN.ActivityDate).format('MM/DD/YYYY') +'</td></tr>');
+                    }
+
+        
+             }
+
+
+
+             $('#container').waitMe('hide'); 
+    }
+    
+    function filterTab(dataToFill){
+        var index = $(".slds-tabs--default__nav .slds-active").index();
+        if(dataToFill == ''){
+            $("#text2Search").val('');
+        }
+        switch (index){
+            case 0:
+                fillAZ(dataToFill);
+                break;
+            case 1:
+                fillRecent(dataToFill);
+                break;
+            case 2:
+                fillActivities(dataToFill,false);
+                break;
+            default:
+               // console.log('error on selected tab');
+        }
+    }
+    function fillAZ(dataToFill){
+            run_waitMe('bounce');
+            // var index = $(".nav .active").index();
+            // console.log(index);
+            
+            cleanAllli();
+            var queryAccountsOwned = '';
+            
+            // ******** Querying acc team members ****************
+            var queryAccTeamMembers;
+            queryAccTeamMembers = "Select AccountId From AccountTeamMember Where UserId ='{!$User.Id}'";
+            var accTeamMembers = sforce.connection.query(queryAccTeamMembers).getArray("records");
+            //console.log(accTeamMembers);
+           // console.log(accTeamMembers.length);
+            if(accTeamMembers.length > 0){
+                var accList = [];
+                $.each(accTeamMembers, function (i, atm) {
+                    accList.push("'"+atm.AccountId+"'");
+                })
+               // console.log(accList);
+            }
+            
+            
+            // ************** buiding acc query *****************
+            if(accTeamMembers.length > 0){
+                if (dataToFill == ''){
+                    queryAccountsOwned ="SELECT Id, Name FROM Account where (OwnerId='{!$User.Id}' OR Id IN("+accList+")) AND RecordType.Name IN ('Prospect','Prospect (Non BlueSTAR)','Group Account','Group Account (Non BlueSTAR)') AND Status__c NOT IN ('Dormant','Cancelled','Inactive') LIMIT 100";
+                }else{
+                	queryAccountsOwned ="SELECT Id, Name FROM Account where (OwnerId='{!$User.Id}' OR Id IN("+accList+")) AND Name LIKE '%"+dataToFill+"%' AND RecordType.Name IN ('Prospect','Prospect (Non BlueSTAR)','Group Account','Group Account (Non BlueSTAR)') AND Status__c NOT IN ('Dormant','Cancelled','Inactive')  LIMIT 100";
+                }   
+            }else{
+                if (dataToFill == ''){
+                    queryAccountsOwned ="SELECT Id, Name FROM Account where OwnerId='{!$User.Id}' AND RecordType.Name IN ('Prospect','Prospect (Non BlueSTAR)','Group Account','Group Account (Non BlueSTAR)') AND Status__c NOT IN ('Dormant','Cancelled','Inactive')  LIMIT 100";
+                }else{
+                	queryAccountsOwned ="SELECT Id, Name FROM Account where OwnerId='{!$User.Id}' AND Name LIKE '%"+dataToFill+"%' AND RecordType.Name IN ('Prospect','Prospect (Non BlueSTAR)','Group Account','Group Account (Non BlueSTAR)') AND Status__c NOT IN ('Dormant','Cancelled','Inactive')  LIMIT 100";
+                }   
+            }    
+            
+            
+            
+            
+            var resultAccountsOwned = sforce.connection.query(queryAccountsOwned);
+            var recordsAO = resultAccountsOwned.getArray("records");
+            if (recordsAO.length == 0){
+                $("#noRecordsFound").show();
+
+                setTimeout(function(){ $("#noRecordsFound").hide(); }, 3000);
+                
+            }
+             for (var i = 65; i <= 90; i++) {
+              
+                $("#nav-" + String.fromCharCode(i).toLowerCase()).hide();
+             }
+             $("#nav-number").hide();
+
+             for (var h=0; h< recordsAO.length; h++) {
+                var recordAO = recordsAO[h];
+                var recordtoNavigateAO ="'" + recordAO.Id + "'";
+                var navigateURL ="'/apex/M_Individual_Account?Id="+recordAO.Id +"'";
+                var recordAccountFound = false;
+                for (var i = 65; i <= 90; i++) {
+                    
+                    if(recordAO.Name.substr(0,1).toLowerCase()==String.fromCharCode(i).toLowerCase()){
+                        // $('#ul'+String.fromCharCode(i).toLowerCase()).append('<li><a href="" onclick="sforce.one.navigateToURL('+navigateURL+')"><strong>'+recordAO.Name+'</strong></a></li>');
+                        $("#nav-" + String.fromCharCode(i).toLowerCase()).show();
+                        recordAccountFound = true;
+                        $('#ul'+String.fromCharCode(i).toLowerCase()).append('<li class="slds-list__item"><svg aria-hidden="true" class="slds-icon slds-icon-standard-account"> <use xlink:href="{!URLFOR($Resource.salesforce_lightning,'/assets/icons/standard-sprite/svg/symbols.svg#account')}"></use> </svg> <span><h2 style="font-size: 1.15em;font-weight: normal;" class="slds-truncate" onclick="sforce.one.navigateToSObject('+recordtoNavigateAO+')"" id="companyInformationLink">'+getTruncatedStringAccounts(recordAO.Name)+'</h2></span></li>');
+
+
+                    }   
+                }
+               if (!recordAccountFound){
+                $("#nav-number").show();
+                $("#ulnumber").append('<li class="slds-list__item"><svg aria-hidden="true" class="slds-icon slds-icon-standard-account"> <use xlink:href="{!URLFOR($Resource.salesforce_lightning,'/assets/icons/standard-sprite/svg/symbols.svg#account')}"></use> </svg> <span><h2 style="font-size: 1.15em;font-weight: normal;" class="slds-truncate" onclick="sforce.one.navigateToSObject('+recordtoNavigateAO+')"" id="companyInformationLink">'+getTruncatedStringAccounts(recordAO.Name)+'</h2></span></li>');  
+               }
+               
+            }
+            $('#container').waitMe('hide'); 
+    }
+    function convert2MDY(date2){
+        var date = new Date(date2);
+        return ((date.getMonth() + 1) + '/' + date.getDate() + '/' +  date.getFullYear());
+    }
+    function run_waitMe(effect){
+        $('#container').waitMe({
+            effect: effect,
+            text: 'Please wait...',
+            bg: 'rgba(255,255,255,0.7)',
+            color:'#000',
+            sizeW:'',
+            sizeH:'',
+            source: 'img.svg'
+        });
+}
+
+$(function() {
+   $("li[name=navli]").click(function() {
+
+      $(".slds-tabs__item").attr("tabindex","-1");
+      $(".slds-tabs__item").removeClass("slds-active");
+      // add class to the one we clicked
+      $(this).addClass("slds-active");
+       $(this).attr("tabindex","0");
+       $(".slds-tabs__content").removeClass("slds-show");
+       $(".slds-tabs__content").addClass("slds-hide");
+       $("#" + $(this).attr("divid")).removeClass("slds-hide");
+       $("#" + $(this).attr("divid")).addClass("slds-show");
+     
+   });
+});
+
+
+
+    </script>
+    <style type="text/css">
+  
+    .makeGray {
+       background: rgb(244, 246, 249) no-repeat;
+       background-image: radial-gradient(farthest-side at 50% 0, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0)),radial-gradient(farthest-side at 50% 100%, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0));
+       background-position: 0 0,0 100%;
+        background-size: 100% 14px;
+    }
+    .slds {
+        height: 100%;
+        font: 100%/1.5 "Salesforce Sans", Arial, sans-serif;
+        background: white;
+        color: #16325c;
+        -webkit-tap-highlight-color: transparent; }
+
+        .slds-scrollable--y {
+          @include scrollbar;
+          max-height: 100%;
+          overflow: hidden {
+            y: auto;
+          };
+        }
+        .page-header{
+            top:10px;
+        }
+        
+        .makeWhite {
+     
+          background-color: white;
+    }
+    .makeWhiteChevron {
+     
+          background-color: white;
+          border-color: white;
+        
+     
+
+   }
+   .add-on .input-group-btn > .btn {
+      border-left-width:0;left:-2px;
+      -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+      box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+    }
+    /* stop the glowing blue shadow */
+    .add-on .form-control:focus {
+     box-shadow:none;
+     -webkit-box-shadow:none; 
+  /*   border-color:#cccccc; */
+    }
+    #navli ul {
+      display: inline-block;
+      list-style-type: none;
+    }
+  
+  body{
+  background-color:#F4F6F9
+  }
+
+  .slds-list__item,.slds-card__header,.slds-card__body, .slds-no-flex ,.slds-button-group,.slds-card,.slds body{
+      background-color:white
+  }/*
+ .slds-card__header {
+      background-color:white
+  } 
+.slds-card__body{
+      background-color:white
+  } 
+  .slds-no-flex{
+      background-color:white
+  }
+   .slds-button-group{
+      background-color:white
+  }
+   .slds-card{
+      background-color:white
+  }*/
+
+    </style>
+</head>
+<body style="background-color:#F4F6F9">
+ <div class="container" id="container">
+  <section> 
+          <div id="header" class="slds">
+                <div class="slds-page-header" role="banner">
+                <div class="slds-grid">
+                  <div class="slds-col slds-has-flexi-truncate">
+                    <div class="slds-media">
+                      <div class="slds-media__figure">
+                        <svg aria-hidden="true" class="slds-icon slds-icon--large slds-icon-standard-account">
+                          <use xlink:href="{!URLFOR($Resource.salesforce_lightning,'/assets/icons/standard-sprite/svg/symbols.svg#account')}"></use>
+                        </svg>
+                      </div>
+                      <div class="slds-media__body">
+                        <p class="slds-text-heading--label"></p>
+                        <div class="slds-grid">
+                          <h1 class="slds-text-heading--medium slds-m-right--small slds-align-middle" title="Record Title">My Accounts</h1>
+                          <div class="slds-col slds-shrink-none">
+                          </div>
+                        </div>
+                      </div>
+                         <div class="slds-col slds-no-flex slds-align-bottom">
+                          <div class="slds-button-group" role="group">
+                            <button onclick="$('#myModalRT').modal('show');" class="slds-button slds-button--neutral">New</button>
+                           </div>
+                        </div>
+                      </div>
+                  
+                    </div>
+
+                  </div>
+                </div>  
+              </div>
+   
+     <div class="slds">
+           <div class="slds-form-element">
+        <label class="slds-form-element__label" for="sample1"></label>
+        <div class="slds-form-element__control">
+          <input id="inputFilter" onkeyup="filterTab($('#inputFilter').val())" class="slds-input" type="text" placeholder="Filter..." />
+        </div>
+      </div>   
+      <div class="slds-tabs--default">
+        <ul class="slds-tabs--default__nav" role="tablist">
+          <li name="navli" class="slds-tabs__item slds-text-heading--label slds-active" divid="tab-default-1" title="tab-default-1" role="presentation"><a href="#" role="tab" tabindex="0" aria-selected="true" aria-controls="tab-default-1">My Accounts</a></li>
+          <li name="navli" class="slds-tabs__item slds-text-heading--label" divid="tab-default-2" title="Item Two" role="presentation"><a href="#" role="tab" tabindex="-1" aria-selected="false"  aria-controls="tab-default-2">Recent</a></li>
+          <li name="navli" class="slds-tabs__item slds-text-heading--label" divid="tab-default-3" title="Item Three" role="presentation"><a href="#" role="tab" tabindex="-1" aria-selected="false"  aria-controls="tab-default-3">Open Activities</a></li>
+         
+        </ul>
+        <div id="tab-default-1" class="slds-tabs__content slds-show" role="tabpanel">
+          <br/>
+            <div id="iphone-scrollcontainer" class="slds">
+            <ul id="iphone-search" >
+                <li><a href="#A" title="A">A</a></li>
+                <li><a href="#B" title="B">B</a></li>
+                <li><a href="#C" title="C">C</a></li>
+                <li><a href="#D" title="D">D</a></li>
+                <li><a href="#E" title="E">E</a></li>
+                <li><a href="#F" title="F">F</a></li>
+                <li><a href="#G" title="G">G</a></li>
+                <li><a href="#H" title="H">H</a></li>
+                <li><a href="#I" title="I">I</a></li>
+                <li><a href="#J" title="J">J</a></li>
+                <li><a href="#K" title="K">K</a></li>
+                <li><a href="#L" title="L">L</a></li>
+                <li><a href="#M" title="M">M</a></li>
+                <li><a href="#N" title="N">N</a></li>
+                <li><a href="#O" title="O">O</a></li>
+                <li><a href="#P" title="P">P</a></li>
+                <li><a href="#Q" title="Q">Q</a></li>
+                <li><a href="#R" title="R">R</a></li>
+                <li><a href="#S" title="S">S</a></li>
+                <li><a href="#T" title="T">T</a></li>
+                <li><a href="#U" title="U">U</a></li>
+                <li><a href="#V" title="V">V</a></li>
+                <li><a href="#W" title="W">W</a></li>
+                <li><a href="#X" title="X">X</a></li>
+                <li><a href="#Y" title="Y">Y</a></li>
+                <li><a href="#Z" title="Z">Z</a></li>
+                <li><a href="#numberDiv" title="number">#</a></li>
+
+            </ul>
+            <ul id="iphone-scroll" class="slds-list--vertical slds-has-cards">
+                <li>
+                <!-- <div id="nav-indicator-fixed"></div> -->
+                <a name="A"></a>
+                <div class="nav-indicator" id="nav-a">A</div>
+                    <ul id="ula">
+                        
+                        
+                    </ul>
+                </li>
+                <li>
+                <a name="B"></a>
+                <div class="nav-indicator" id="nav-b">B</div>
+                    <ul id="ulb">
+                   
+                    </ul>   
+                </li>
+                 <li>
+                <a name="C"></a>
+                <div class="nav-indicator" id="nav-c">C</div>
+                    <ul id="ulc">
+                       
+                    </ul>   
+                </li>
+                 <li>
+                <a name="D"></a>
+                <div class="nav-indicator" id="nav-d">D</div>
+                    <ul id="uld">
+                       
+                    </ul>   
+                </li>
+                 <li>
+                <a name="E"></a>
+                <div class="nav-indicator" id="nav-e">E</div>
+                    <ul id="ule">
+                       
+                    </ul>   
+                </li>
+                 <li>
+                <a name="F"></a>
+                <div class="nav-indicator" id="nav-f">F</div>
+                    <ul id="ulf">
+                       
+                    </ul>   
+                </li>
+                 <li>
+                <a name="G"></a>
+                <div class="nav-indicator" id="nav-g">G</div>
+                    <ul id="ulg">
+                       
+                    </ul>   
+                </li>
+                 <li>
+                <a name="H"></a>
+                <div class="nav-indicator" id="nav-h">H</div>
+                    <ul id="ulh">
+                      
+                    </ul>   
+                </li>
+                <li>
+                 <a name="I"></a>
+                <div class="nav-indicator" id="nav-i">I</div>
+                    <ul  id="uli">
+                      
+                    </ul>   
+                </li>
+                 <li>
+                 <a name="J"></a>
+                <div class="nav-indicator" id="nav-j">J</div>
+                    <ul id="ulj">
+                        
+                    </ul>   
+                </li>
+                  <li>
+                 <a name="K"></a>
+                <div class="nav-indicator" id="nav-k">K</div>
+                    <ul id="ulk">
+                        
+                    </ul>   
+                </li>
+                  <li>
+                 <a name="L"></a>
+                <div class="nav-indicator" id="nav-l">L</div>
+                    <ul id="ull">
+                        
+                    </ul>   
+                </li>
+                  <li>
+                 <a name="M"></a>
+                <div class="nav-indicator" id="nav-m">M</div>
+                    <ul id="ulm">
+                       
+                    </ul>   
+                </li>
+                  <li>
+                 <a name="N"></a>
+                <div class="nav-indicator" id="nav-n">N</div>
+                    <ul id="uln">
+                      
+                    </ul>   
+                </li>
+                  <li>
+                 <a name="O"></a>
+                <div class="nav-indicator" id="nav-o">O</div>
+                    <ul id="ulo">
+                        
+                    </ul>   
+                </li>
+                  <li>
+                 <a name="P"></a>
+                <div class="nav-indicator" id="nav-p">P</div>
+                    <ul id="ulp">
+                        
+                    </ul>   
+                </li>
+                  <li>
+                 <a name="Q"></a>
+                <div class="nav-indicator" id="nav-q">Q</div>
+                    <ul id="ulq">
+                       
+                    </ul>   
+                </li>
+                  <li>
+                 <a name="R"></a>
+                <div class="nav-indicator" id="nav-r">R</div>
+                    <ul id="ulr">
+                        
+                    </ul>   
+                </li>
+                  <li>
+                 <a name="S"></a>
+                <div class="nav-indicator" id="nav-s">S</div>
+                    <ul id="uls">
+                      
+                    </ul>   
+                </li>
+                  <li>
+                 <a name="T"></a>
+                <div class="nav-indicator" id="nav-t">T</div>
+                    <ul id="ult">
+                      
+                    </ul>   
+                </li>
+                  <li>
+                 <a name="U"></a>
+                <div class="nav-indicator" id="nav-u">U</div>
+                    <ul id="ulu">
+                      
+                    </ul>   
+                </li>
+                  <li>
+                 <a name="V"></a>
+                <div class="nav-indicator" id="nav-v">V</div>
+                    <ul id="ulv">
+                     
+                    </ul>   
+                </li>
+                  <li>
+                 <a name="W"></a>
+                <div class="nav-indicator" id="nav-w">W</div>
+                    <ul id="ulw">
+                      
+                    </ul>   
+                </li>
+                  <li>
+                 <a name="X"></a>
+                <div class="nav-indicator" id="nav-x">X</div>
+                    <ul id="ulx">
+                       
+                    </ul>   
+                </li>
+                  <li>
+                 <a name="Y"></a>
+                <div class="nav-indicator" id="nav-y">Y</div>
+                    <ul id="uly">
+                       
+                    </ul>   
+                </li>
+                <li>
+                <a name="Z"></a>
+                <div class="nav-indicator" id="nav-z">Z</div>
+                    <ul id="ulz">
+                    
+                    </ul>   
+                </li>
+                <li>
+                <a name="numberDiv"></a>
+                <div class="nav-indicator" id="nav-number">#</div>
+                    <ul id="ulnumber">
+                      
+                    </ul>   
+                </li>
+
+             </ul>
+            </div>
+        </div>
+        <div id="tab-default-2" class="slds-tabs__content slds-hide" role="tabpanel">
+            <br/>
+           <div class="list-group" id="recentList">
+            
+            </div>
+        </div>
+        <div id="tab-default-3" class="slds-tabs__content slds-hide" role="tabpanel">
+         <div id="openEventsdiv" class="slds">
+           </div>
+        </div>
+        </div>
+       </div>
+   
+
+  </section>
+
+</div>
+
+ </body>
+
+ <!-- Modal -->
+<div class="modal fade" id="myModalRT" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="myModalLabelRecordtype">Select New Record Type</h4>
+      </div>
+      <div class="modal-body makeGray">
+        <div class="container">
+        <div id="recordTypeId" class="">
+        <script type="text/javascript">
+                    (function(){try{var a=navigator.userAgent; 
+                  var a = navigator.userAgent;
+                  if ((a.indexOf('Salesforce') != -1) && (a.indexOf('iPhone') != -1 || a.indexOf('iPad') != -1) && (a.indexOf('Safari') == -1)) {
+                       var s = document.createElement('style');
+                       if ((a.indexOf('OS/8') != -1 || a.indexOf('OS 8') != -1)) {
+                           s.innerHTML = "html,html body{overflow: auto;-webkit-overflow-scrolling:touch;}body{position:absolute;left:0;right:0;top:0;bottom:0;}";
+                       } else if ((a.indexOf('OS/9') != -1 || a.indexOf('OS 9') != -1)) {
+                           s.innerHTML = "html,html body{overflow: auto;-webkit-overflow-scrolling:auto;}body{position:absolute;left:0;right:0;top:0;bottom:0;}";
+                       }
+               document.getElementsByTagName('head')[0].appendChild(s);
+          }}catch(e){}})(); 
+        </script>
+   <!--  <div class="row">
+        <div class='col-sm-6'>
+            <div class="form-group">
+                <div class='input-group date' id='datetimepicker1'>
+                    <input type='text' class="form-control" id="calendarValue"/>
+                    <span class="input-group-addon">
+                        <span class="glyphicon glyphicon-calendar"></span>
+                    </span>
+                </div>
+            </div>
+        </div>
+       
+    </div> -->
+      </div>
+    </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+       <!--  <button type="button" onclick="updateDates()" class="btn btn-primary" data-dismiss="modal">Save changes</button> -->
+      </div>
+    </div>
+  </div>
+</div>
+ <apex:includeScript value="{!URLFOR($Resource.TodayViewFiles,'js/waitMe.min.js')}"/>
+ </html>
+</apex:page>

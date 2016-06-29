@@ -1,0 +1,297 @@
+<apex:page standardController="Account" extensions="ReinstatementExtension" showHeader="true" sidebar="true" docType="html-5.0">
+    <!-- <apex:stylesheet value="{!URLFOR($Resource.Bootstrap, 'bootstrap-3.3.4-dist/css/bootstrap.min.css')}"/> -->
+    <apex:stylesheet value="{!URLFOR($Resource.DataTables_1_10_2, '/css/jquery.dataTables.min.css')}" />
+    <apex:includeScript value="{!$Resource.jquery_1_11_1}" />
+    <apex:includeScript value="{!URLFOR($Resource.jQueryUI, '/jquery-ui-1.11.4.custom/jquery-ui.js')}" />
+    <apex:stylesheet value="{!URLFOR($Resource.jQueryUI, '/jquery-ui-1.11.4.custom/jquery-ui.min.css')}" />
+    <apex:includeScript value="{!URLFOR($Resource.DataTables_1_10_2, '/js/jquery.dataTables.min.js')}"/>
+    
+    
+    <style>
+         .accordion div.accordion-label label h4 {
+            white-space: nowrap;
+        }
+        .media-holder {
+            width:100% !important;
+        }     
+        .dataTables_length{
+            display:none !important;
+        }
+    
+        .data-table thead th {
+            background-color:#1797C0 !important;
+            color:#fff;
+            font-weight:bold;
+        } 
+        .accountTab .tertiaryPalette, .individualPalette .accountBlock .tertiaryPalette, .layoutEdit .individualPalette .accountBlock .tertiaryPalette {
+            background-color: #1797C0 !important;
+            border-color: #1797C0 !important;
+        }
+        
+        
+        #crumbs, #tasksPanel {
+            
+        } 
+        #crumbs td {
+         //   background: #1797C0;
+            padding: 30px 20px 30px 70px;
+            position: relative;
+            margin: 0 10px 0 0; 
+            font-size: 14px;
+            font-weight:bold;
+            text-decoration: none;
+            color: #fff;
+            cursor:pointer;
+            height:30px;
+        }
+        #crumbs .pending-mark:after {
+            content: "";  
+            border-top: 50px solid transparent;
+            border-bottom: 50px solid transparent;
+            border-left: 50px solid #1797C0;
+            position: absolute; 
+            right: -50px; 
+            top: 0;
+            z-index: 1;
+            height:30px !important;
+        }
+                
+        #crumbs td:before {
+            content: "";  
+            border-top: 50px solid transparent;
+            border-bottom: 50px solid transparent;
+            border-left: 52px solid #d4f2ff;
+            position: absolute; 
+            left: 0; 
+            top: 0;
+        }
+        
+        #crumbs td:first-child {
+            border-top-left-radius: 10px; 
+            border-bottom-left-radius: 10px;
+        }
+        #crumbs td:first-child:before {
+            display: none; 
+        }
+        
+        #crumbs td:last-child {
+            //padding-right: 80px;
+            border-top-right-radius: 10px; 
+            border-bottom-right-radius: 10px;
+        }
+        #crumbs td:last-child:after {
+            display: none; 
+        }  
+        
+         .status-mark {
+            
+            border-radius: 50%;
+            color: #fff;
+            display: inline-block;
+            height: 20px;
+            text-align: center;
+            width: 20px;
+            font-weight:bold;
+            position:absolute;
+            top:5px;
+            left:30px;
+        }
+        .completed-mark{
+            background-color: #379426 !important;
+        }
+        .pending-mark{
+            background-color:#f7b500 !important;
+        }
+        .notcompleted-mark{
+            background-color:#1797C0 !important;
+        }
+        .popup
+            {
+            
+                background-color: white;
+                border-width: 2px;
+                border-style: solid;
+                z-index: 9999;
+                left: 60%;
+                padding:10px;
+                position: absolute;
+                width: 500px;
+                margin-left: -250px;
+                top:20%;
+                color : #1797c0 !important;
+                border: 1px solid #1797c0 !important;
+                border-radius: 3px !important;
+                font-size: 14px !important;
+                text-align: center !important;
+                font-weight: bold !important;
+               
+            }
+    
+            .popupBg
+            {
+                background-color:black;
+                opacity: 0.20;
+                filter: alpha(opacity = 70);
+                position: absolute;
+                width: 100%;
+                height: 100%;
+                top: 0;
+                left: 0;
+                z-index: 9998;
+                color : #1797c0 !important;
+                border: 1px solid #1797c0 !important;
+                border-radius: 3px !important;
+            }
+            .dataTables_filter{
+                display:none;
+            }
+        
+        
+    </style>
+    <apex:outputPanel id="scriptPanel">
+        <script>
+            function ChangeAllCheckBoxes(){
+                   var parentCheckBox = document.getElementsByClassName("selectAllChk");
+                   var childCheckboxList = document.getElementsByClassName("CheckBoxClass");
+                   for(var i=0; i < childCheckboxList.length; i++){
+                       childCheckboxList[i].checked = parentCheckBox[0].checked;
+                   }
+               }
+              
+                function checkForCheckBoxSelected(){
+                   var childCheckboxList = document.getElementsByClassName("CheckBoxClass");
+                   var checkBoxSelected = false;
+                   for(var i=0; i < childCheckboxList.length; i++){
+
+                       if(childCheckboxList[i].checked)
+                            checkBoxSelected = true;
+                   }
+                   if(!checkBoxSelected)
+                        alert('Please select a Benefit Agreement first');
+                   else
+                        gotoNextPage();
+                } 
+                $(document).ready(function(){
+                    
+                    if({!benefitAgreementList.size > 0}){
+                         $('.My-Benefit-agree').dataTable( {
+                            "order": [[ 1, "desc" ]]
+                         } );
+                     }
+                     $( ".fromDate" ).datepicker();
+                        $( ".toDate" ).datepicker();
+                     $( ".fromDate" ).datepicker("option", "dateFormat", "mm/dd/yy" );
+                        $( ".toDate" ).datepicker("option", "dateFormat", "mm/dd/yy" );
+                    
+                });
+                function  updateTheToDate(todateValue){
+                    if($(".toDate").val() == '')
+                        $(".toDate").val(todateValue);
+                }
+                function checkForFromAndToDate(parameter){
+                    if($(".toDate").val() == '' || $( ".fromDate" ).val() == ''){
+                        alert('{!$Label.ReinstatementFromToDateValidation2}');
+                    }
+                    else if(new Date($(".toDate").val()) < new Date($( ".fromDate" ).val())){
+                        alert('{!$Label.ReinstatementFromToDateValidation1}');
+                    }
+                    else if(parameter == 'search'){
+                        search();
+                    }
+                    else if(parameter == 'next'){
+                            gotoNextPage();
+                    }
+                }
+        </script>
+    </apex:outputPanel>
+    
+    <apex:form id="frm">
+        <apex:actionFunction name="gotoNextPage" action="{!NavigateToBAReasonPage}"/>
+        <apex:actionFunction name="search" action="{!searchBenefitAgreements}" rerender="tablePanel,scriptPanel,pgMsgId,pbdId"/>
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-sm-12">
+
+                    <Apex:sectionHeader title="Benefit Agreement" subtitle="Reinstatement" printUrl="/img/social/unknown_company_pic.png"/>
+
+                    
+                    <Apex:pageBlock id="pbId">
+                        
+                        <apex:pagemessages id="pgMsgId"/>
+
+                        
+                        <apex:PageblockSection columns="4" id="pbdId" rendered="{!initialBARecordsPresent}">
+                            <apex:pageBlockSectionItem rendered="{!isReinstatementAllowed}">
+                                <label>{!$Label.Requested_Reinstatement_Date}</label>
+                            </apex:pageBlockSectionItem>
+                            <apex:pageBlockSectionItem rendered="{!isReinstatementAllowed}">
+                                <label>From :</label>
+                                <apex:input styleClass="fromDate" onchange="updateTheToDate(this.value);return false;"  value="{!FromDate}"/>
+                                <!-- <Apex:inputField value="{!tempBAObject.Cancellation_Submitted_Date__c}" styleclass="fromDate" onchange="updateTheToDate(this.value);return false;"/> -->
+                            </apex:pageBlockSectionItem>
+                            <apex:pageBlockSectionItem rendered="{!isReinstatementAllowed}">
+                                <label>To :</label>
+                               <apex:input styleClass="toDate"   value="{!ToDate}"/> 
+                               <!-- <Apex:inputField value="{!tempBAObject.Requested_Cancellation_Date__c}" styleclass="toDate" />-->
+                            </apex:pageBlockSectionItem>
+                            <apex:pageBlockSectionItem rendered="{!isReinstatementAllowed}">
+                                <apex:commandbutton value="Search" onclick="checkForFromAndToDate('search');return false;" />
+                            </apex:pageBlockSectionItem>
+                        </apex:PageblockSection>
+                        
+                        <apex:outputPanel id="tablePanel" >
+                            <apex:outputPanel rendered="{!benefitAgreementList.size > 0}">
+                                <table class="My-Benefit-agree data-table"  style="width:100%">
+                                      <thead>
+                                          <tr>
+        <!--                                     <th><apex:inputCheckbox id="idPLchk" html-selectClass="pliCls" styleClass="selectAllChk"  onchange="ChangeAllCheckBoxes();"/> </th> -->
+                                            <th>Name</th>
+                                            <th>Benefit Agree Number</th>
+                                            <th>Product</th>                    
+                                            <th>Requested Cancellation Date</th>
+                                            <th>Cancellation Date</th>
+                                          </tr>
+                                          
+                                      </thead>
+                                      <tbody>                                    
+                                          <apex:repeat value="{!benefitAgreementList}" var="grpsec">
+                                             <tr>
+        <!--                                           <td>                                   -->
+        <!--                                               <apex:inputCheckbox value="{!grpsec.entrySelected}"  html-data-Child="{!grpsec.entry.id}" styleClass="CheckBoxClass"/> -->
+        <!--                                           </td>  -->
+                                                  <td>
+                                                      <a href="/{!grpsec.Id}" target="_blank">
+                                                          <apex:outputField value="{!grpsec.Name}" />
+                                                      </a>
+                                                  </td>
+                                                  <td>                            
+                                                       <apex:outputField value="{!grpsec.Benefit_Agreement_Number__c}" />
+                                                  </td>
+                                                  <td>
+                                                       <apex:outputField value="{!grpsec.Product__c}" />                           
+                                                  </td>  
+                                                  <td>
+                                                      <apex:outputField value="{!grpsec.Requested_Cancellation_Date__c}"  />
+                                                  </td>
+                                                  <td >
+                                                      <apex:outputField value="{!grpsec.Cancellation_Date__c }" />
+                                                  </td>  
+                                                  
+                                              </tr>
+                                          </apex:repeat>
+                                      </tbody>
+                                  </table>
+                              </apex:outputPanel>
+                          </apex:outputPanel>
+                          
+                          <apex:pageBlockButtons location="bottom">
+                                <apex:commandButton value="Back" action="{!backToHome}"/>
+                                <apex:commandButton value="Cancel" action="{!cancel}"/>
+                                <apex:commandButton value="Next" onclick="checkForFromAndToDate('next');return false;" rendered="{!isReinstatementAllowed}"/>
+                          </apex:pageBlockButtons>
+                      </Apex:pageBlock>
+                 </div>
+            </div>
+        </div>
+    </apex:form>
+</apex:page>

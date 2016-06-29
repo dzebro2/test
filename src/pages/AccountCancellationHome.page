@@ -1,0 +1,54 @@
+<apex:page standardController="Account" extensions="AccountCancellationClass" showHeader="true" sidebar="true" standardStylesheets="false">
+    
+    <!-- <apex:stylesheet value="{!URLFOR($Resource.Bootstrap, 'bootstrap-3.3.4-dist/css/bootstrap.min.css')}"/>  -->  
+    <style>
+        .container{
+        bgcolor:#F0F0F0;
+        }
+        
+    </style> 
+    <apex:form >  
+        <Apex:pageMessages />  
+        <apex:outputPanel rendered="{!hasEditAccess}">
+            <div class="container">
+                <div class="row">
+                    <div class="col-sm-12"> 
+                        <!--   <apex:sectionHeader title="{!accountRecord[0].Name}" subtitle="Cancellation"/>  -->
+                        
+                        <!--  <div align="left">
+<div class="headerPhotoContainer">
+<img class="socialProfilePhoto" src="/img/social/unknown_company_pic.png" alt="Account Profile Picture"/>
+<h3>{!accountRecord[0].Name} - Cancellation</h3>
+</div>
+</div> -->
+                        <Apex:sectionHeader title="{!accountRecord[0].Name}" subtitle="Cancellation"   /> 
+                        
+                        <br/>
+                        
+                        <apex:pageBlock >
+                            <apex:pageBlockSection title="Please select the type of cancellation." collapsible="false" columns="1">
+                                <apex:pageBlockSectionItem >                                
+                                    <apex:selectradio style="font-weight:normal;" value="{!selectedValue}" layout="pageDirection">
+                                        <span style="font-weight:normal;">
+                                            <apex:selectoptions value="{!items}" />
+                                        </span>
+                                    </apex:selectradio>
+                                    
+                                </apex:pageBlockSectionItem>   
+                            </apex:pageBlockSection>
+                            <br/>
+                            <apex:pageBlockButtons location="bottom">
+                                <apex:commandButton value="Cancel" action="{!cancel}"/>
+                                <apex:commandButton value="Next" action="{!NavigateToSelectedPage}"/>
+                            </apex:pageBlockButtons>
+                        </apex:pageBlock>  
+                    </div>
+                </div>
+            </div> 
+        </apex:outputPanel>
+        
+        <apex:outputPanel rendered="{!NOT(hasEditAccess)}">
+            <a href="/{!account.Id}"><apex:outputText value="<< Back to Account" /></a>
+        </apex:outputPanel> 
+    </apex:form>  
+</apex:page>

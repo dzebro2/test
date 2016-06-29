@@ -1,0 +1,25 @@
+<apex:component >
+<apex:includeScript value="/support/console/31.0/integration.js" />
+<apex:includeScript value="/jslibrary/1413852410000/sfdc/ServiceDeskView.js" />
+<script>
+
+$(document).ready(function(){
+	if (sforce.console.isInConsole() ){
+		$(".back-to-previous-link").hide();
+	}
+	
+	$('a:not(.ui-tabs-anchor)').attr("target","_top");
+	
+	$(document).on('click', 'a:not(.ui-tabs-anchor)', function(e) {
+		var urlString = this.href;
+		if (sforce.console.isInConsole() && typeof(srcUp) == 'function') {
+			e.preventDefault();
+			srcUp(urlString);
+		} 
+	});
+})
+
+	
+
+</script>
+</apex:component>

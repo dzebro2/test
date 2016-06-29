@@ -1,0 +1,217 @@
+<apex:page standardController="Case" extensions="ResubmitCasePageController" tabStyle="Case" showHeader="true" sidebar="true">   
+    <apex:form >        
+        <apex:outputPanel id="fullpage">
+        <apex:pageBlock title="Re-Submit Case" >
+            <apex:pageblocksection >
+                <apex:pageMessages />
+            </apex:pageblocksection>
+        
+        <apex:pageBlockButtons style="padding-left: 100px;">
+            <apex:commandButton action="{!save}" rendered="{!IF(selectedRecordType == 'Proposal' || selectedRecordType == 'Network Information' || selectedRecordType == 'Performance Guarantee', true, false)}" value="Save" id="save_button"/>
+            <apex:commandButton action="{!cancel}" value="Cancel"/>
+        </apex:pageBlockButtons>
+        
+        
+        <apex:pageBlockSection title="Choose Record Type" columns="1">
+            
+            <apex:pageblockSectionItem >
+                <apex:outputLabel value="Case Record Type" for="record__type"/>
+                <apex:actionRegion >
+                    <apex:selectList value="{!selectedRecordType}" multiselect="false" size="1" required="true" id="ayy">
+                        <apex:actionSupport event="onchange" rerender=" fullpage"/>
+                        <apex:selectOptions value="{!items}" id="record__type" />
+                    </apex:selectList>
+                </apex:actionRegion>
+            </apex:pageblockSectionItem>
+       </apex:pageBlockSection>
+        <apex:outputPanel id="proposal_request_info">
+        
+            <apex:pageBlockSection title="Request Information" columns="2" rendered="{!IF(selectedRecordType == 'Network Information', true, false)}">
+                
+                    <apex:repeat value="{!$ObjectType.Case.FieldSets.Network_Information_Request_Info}" var="f">
+                        <apex:inputField value="{!thecase[f]}" required="{!OR(f.required, f.dbrequired)}"/>          
+                    </apex:repeat> 
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection title="Network Information" columns="2" rendered="{!IF(selectedRecordType == 'Network Information', true, false)}">
+                
+                    <apex:repeat value="{!$ObjectType.Case.FieldSets.Network_Information_Additional_NI_Info}" var="f">
+                        <apex:inputField value="{!thecase[f]}" required="{!OR(f.required, f.dbrequired)}"/>          
+                    </apex:repeat> 
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection title="Group Information" columns="2" rendered="{!IF(selectedRecordType == 'Network Information', true, false)}">
+                
+                    <apex:repeat value="{!$ObjectType.Case.FieldSets.Network_Information_Group_Info}" var="f">
+                        <apex:inputField value="{!thecase[f]}" required="{!OR(f.required, f.dbrequired)}"/>          
+                    </apex:repeat> 
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection title="Number of Contacts" columns="2" rendered="{!IF(selectedRecordType == 'Network Information', true, false)}">
+                
+                    <apex:repeat value="{!$ObjectType.Case.FieldSets.Network_Information_No_Contracts}" var="f">
+                        <apex:inputField value="{!thecase[f]}" required="{!OR(f.required, f.dbrequired)}"/>          
+                    </apex:repeat> 
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection title="Network Info Delivery" columns="2" rendered="{!IF(selectedRecordType == 'Network Information', true, false)}">
+                
+                    <apex:repeat value="{!$ObjectType.Case.FieldSets.Network_Information_Network_Info_Deliver}" var="f">
+                        <apex:inputField value="{!thecase[f]}" required="{!OR(f.required, f.dbrequired)}"/>          
+                    </apex:repeat> 
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection title="BCBS Information" columns="2" rendered="{!IF(selectedRecordType == 'Network Information', true, false)}">
+                
+                    <apex:repeat value="{!$ObjectType.Case.FieldSets.Network_Information_BCBS_Info}" var="f">
+                        <apex:inputField value="{!thecase[f]}" required="{!OR(f.required, f.dbrequired)}"/>          
+                    </apex:repeat> 
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection title="General Network Request Information" columns="2" rendered="{!IF(selectedRecordType == 'Network Information', true, false)}">
+                
+                    <apex:repeat value="{!$ObjectType.Case.FieldSets.Network_Information_General_Network_Requ}" var="f">
+                        <apex:inputField value="{!thecase[f]}" required="{!OR(f.required, f.dbrequired)}"/>          
+                    </apex:repeat> 
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection title="Accessibility Criteria" columns="2" rendered="{!IF(selectedRecordType == 'Network Information', true, false)}">
+                
+                    <apex:repeat value="{!$ObjectType.Case.FieldSets.Network_Information_Accessibility_Criter}" var="f">
+                        <apex:inputField value="{!thecase[f]}" required="{!OR(f.required, f.dbrequired)}"/>          
+                    </apex:repeat> 
+            </apex:pageBlockSection>
+            
+            
+            
+            <apex:pageBlockSection title="Request Information" columns="2" rendered="{!IF(selectedRecordType == 'Proposal', true, false)}">
+                    
+                    <apex:repeat value="{!$ObjectType.Case.FieldSets.Proposal_Case_Request_Info}" var="f">
+                        <apex:inputField value="{!thecase[f]}" required="{!OR(f.required, f.dbrequired)}"/>          
+                    </apex:repeat> 
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection title="Additional Request Information" columns="2" rendered="{!IF(selectedRecordType == 'Proposal', true, false)}">
+                
+                    <apex:repeat value="{!$ObjectType.Case.FieldSets.Proposal_Additional_Request_Info}" var="f">
+                        <apex:inputField value="{!thecase[f]}" required="{!OR(f.required, f.dbrequired)}"/>          
+                    </apex:repeat> 
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection title="Binder Information" columns="2" rendered="{!IF(selectedRecordType == 'Proposal', true, false)}">
+                
+                    <apex:repeat value="{!$ObjectType.Case.FieldSets.Proposal_Binder_Info}" var="f">
+                        <apex:inputField value="{!thecase[f]}" required="{!OR(f.required, f.dbrequired)}"/>          
+                    </apex:repeat> 
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection title="BCBS Information" columns="2" rendered="{!IF(selectedRecordType == 'Proposal', true, false)}">
+                
+                    <apex:repeat value="{!$ObjectType.Case.FieldSets.Proposal_BCBS_Info}" var="f">
+                        <apex:inputField value="{!thecase[f]}" required="{!OR(f.required, f.dbrequired)}"/>          
+                    </apex:repeat> 
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection title="Group Information" columns="2" rendered="{!IF(selectedRecordType == 'Proposal', true, false)}">
+                
+                    <apex:repeat value="{!$ObjectType.Case.FieldSets.Proposal_Group_Info}" var="f">
+                        <apex:inputField value="{!thecase[f]}" required="{!OR(f.required, f.dbrequired)}"/>          
+                    </apex:repeat> 
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection title="Number of Contracts" columns="2" rendered="{!IF(selectedRecordType == 'Proposal', true, false)}">
+                
+                    <apex:repeat value="{!$ObjectType.Case.FieldSets.Proposal_No_Contracts}" var="f">
+                        <apex:inputField value="{!thecase[f]}" required="{!OR(f.required, f.dbrequired)}"/>          
+                    </apex:repeat> 
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection title="Proposal Specifications" columns="2" rendered="{!IF(selectedRecordType == 'Proposal', true, false)}">
+                
+                    <apex:repeat value="{!$ObjectType.Case.FieldSets.Proposal_Proposal_Specification}" var="f">
+                        <apex:inputField value="{!thecase[f]}" required="{!OR(f.required, f.dbrequired)}"/>          
+                    </apex:repeat> 
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection title="Funding and Rating" columns="2" rendered="{!IF(selectedRecordType == 'Proposal', true, false)}">
+                
+                    <apex:repeat value="{!$ObjectType.Case.FieldSets.Proposal_Funding_And_Rating}" var="f">
+                        <apex:inputField value="{!thecase[f]}" required="{!OR(f.required, f.dbrequired)}"/>          
+                    </apex:repeat> 
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection title="Proposed Product Components" columns="2" rendered="{!IF(selectedRecordType == 'Proposal', true, false)}">
+                
+                    <apex:repeat value="{!$ObjectType.Case.FieldSets.Proposal_Proposed_Product_Components}" var="f">
+                        <apex:inputField value="{!thecase[f]}" required="{!OR(f.required, f.dbrequired)}"/>          
+                    </apex:repeat> 
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection title="Additional Case Information" columns="2" rendered="{!IF(selectedRecordType == 'Network Information' || selectedRecordType == 'Proposal', true, false)}">
+                
+                    <apex:repeat value="{!$ObjectType.Case.FieldSets.Network_Information_Additional_Case_Info}" var="f">
+                        <apex:inputField value="{!thecase[f]}" required="{!OR(f.required, f.dbrequired)}"/>          
+                    </apex:repeat> 
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection title="Account Information" columns="2" rendered="{!IF(selectedRecordType == 'Performance Guarantee', true, false)}">
+                
+                    <apex:repeat value="{!$ObjectType.Case.FieldSets.Performance_Guarantee_Account_Info}" var="f">
+                        <apex:inputField value="{!thecase[f]}" required="{!OR(f.required, f.dbrequired)}"/>          
+                    </apex:repeat> 
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection title="Request Information" columns="2" rendered="{!IF(selectedRecordType == 'Performance Guarantee', true, false)}">
+                
+                    <apex:repeat value="{!$ObjectType.Case.FieldSets.Performance_Guarantee_Request_Info}" var="f">
+                        <apex:inputField value="{!thecase[f]}" required="{!OR(f.required, f.dbrequired)}"/>          
+                    </apex:repeat> 
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection title="Account Team" columns="2" rendered="{!IF(selectedRecordType == 'Performance Guarantee', true, false)}">
+                
+                    <apex:repeat value="{!$ObjectType.Case.FieldSets.Performance_Guarantee_Account_Team}" var="f">
+                        <apex:inputField value="{!thecase[f]}" required="{!OR(f.required, f.dbrequired)}"/>          
+                    </apex:repeat> 
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection title="Requested Guarantee Types" columns="2" rendered="{!IF(selectedRecordType == 'Performance Guarantee', true, false)}">
+                
+                    <apex:repeat value="{!$ObjectType.Case.FieldSets.Performance_Guarantee_Requested_Types}" var="f">
+                        <apex:inputField value="{!thecase[f]}" required="{!OR(f.required, f.dbrequired)}"/>          
+                    </apex:repeat> 
+            </apex:pageBlockSection>
+            
+            
+            <apex:pageBlockSection title="Requested Performance Guarantees" columns="2" rendered="{!IF(selectedRecordType == 'Performance Guarantee', true, false)}">
+                
+                    <apex:repeat value="{!$ObjectType.Case.FieldSets.Performance_Guarantee_Requested_Performa}" var="f">
+                        <apex:inputField value="{!thecase[f]}" required="{!OR(f.required, f.dbrequired)}"/>          
+                    </apex:repeat> 
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection title="Additional Comments" columns="2" rendered="{!IF(selectedRecordType == 'Performance Guarantee', true, false)}">
+                
+                    <apex:repeat value="{!$ObjectType.Case.FieldSets.Performance_Guarantee_Additional_Comment}" var="f">
+                        <apex:inputField value="{!thecase[f]}" required="{!OR(f.required, f.dbrequired)}"/>          
+                    </apex:repeat> 
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection title="System Information" columns="2" rendered="{!IF(selectedRecordType == 'Performance Guarantee', true, false)}">
+                
+                    <apex:repeat value="{!$ObjectType.Case.FieldSets.Performance_Guarantee_System_Information}" var="f">
+                        <apex:inputField value="{!thecase[f]}" required="{!OR(f.required, f.dbrequired)}"/>          
+                    </apex:repeat> 
+            </apex:pageBlockSection>
+        </apex:outputPanel>
+        
+    </apex:pageBlock> 
+    </apex:outputPanel>
+
+     
+
+
+
+    </apex:form>
+    
+</apex:page>

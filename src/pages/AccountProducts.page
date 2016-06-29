@@ -1,0 +1,42 @@
+<apex:page showHeader="false" standardController="Account" extensions="AccountProductsExtension" sidebar="false">
+
+	<apex:form >
+		<apex:pageBlock id="prods" title="Account Products">
+		<apex:outputPanel layout="block" style="height:200px;">
+			<apex:pageMessages id="errorMessage" ></apex:pageMessages>
+			<apex:pageBlockSection columns="1" >			
+			<!--display list of records in table-->
+			<apex:pageBlockTable value="{!opportunities}" var="prod" id="thetable">
+				<apex:column >
+					<apex:facet name="header">OP #</apex:facet>
+					<apex:outputLink value="/{!prod.Id}" target="_parent">{!prod.Name}</apex:outputLink>
+				</apex:column>
+				<apex:column >
+					<apex:facet name="header">Opportunity</apex:facet>
+					<apex:outputLink value="/{!prod.Opportunity_Name__c}" target="_parent">{!prod.Opportunity_Name__r.Name}</apex:outputLink>
+				</apex:column>
+				<apex:column >
+					<apex:facet name="header">Product</apex:facet>
+					<apex:outputLink value="/{!prod.Product__c}" target="_parent">{!prod.Product__r.Name}</apex:outputLink>
+				</apex:column>
+				<apex:column >
+					<apex:facet name="header">Projected Members</apex:facet>
+					<apex:outputText value="{!prod.Projected_Members__c}"/>
+				</apex:column>
+				<apex:column >
+					<apex:facet name="header">Status</apex:facet>
+					<apex:outputText value="{!prod.Status__c}"/>
+				</apex:column>
+			</apex:pageBlockTable>
+			<!-- handle pagination for table-->
+			 <apex:outputPanel style="text-align:center;horizontal-align:center;">
+                <apex:commandButton disabled="{!(pageNumber == 0 || totalNoOfRecs == 0)}" reRender="prods" value="Prev" action="{!previous}"  title="Previous Page"/>
+                <apex:commandButton disabled="{!(pageNumber == noOfPages -1 || totalNoOfRecs == 0)}" reRender="prods" value="Next" action="{!next}"  title="Next Page"/>
+                <apex:outputText >{!IF(totalNoOfRecs < 1, totalNoOfRecs, ((pageNumber+1) * pageSize)+1-pageSize)}-{!IF(totalNoOfRecs < 1, totalNoOfRecs, IF(((pageNumber+1) * pageSize)>totalNoOfRecs, totalNoOfRecs,((pageNumber+1) * pageSize)))} of {!totalNoOfRecs}</apex:outputText>
+            </apex:outputPanel>
+            </apex:pageBlockSection>
+            </apex:outputPanel>
+		</apex:pageBlock>
+	</apex:form>
+	
+</apex:page>

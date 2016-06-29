@@ -1,0 +1,205 @@
+<apex:page standardController="Case" extensions="ResubmitCasePageController" tabStyle="Case" showHeader="true" sidebar="true">   
+    <apex:form >        
+        <apex:outputPanel id="fullpage">
+        <apex:pageBlock title="Re-Submit Case" >
+            <apex:pageblocksection >
+                <apex:pageMessages />
+            </apex:pageblocksection>
+        
+        <apex:pageBlockButtons style="padding-left: 100px;">
+            <apex:commandButton action="{!save}" rendered="{!IF(selectedRecordType == 'Proposal' || selectedRecordType == 'Network Information' || selectedRecordType == 'Performance Guarantee', true, false)}" value="Save" id="save_button"/>
+            <apex:commandButton action="{!cancel}" value="Cancel"/>
+        </apex:pageBlockButtons>
+        
+        
+        <apex:pageBlockSection title="Choose Record Type" columns="1" collapsible="false">
+            
+            <apex:pageblockSectionItem >
+                <apex:outputLabel value="Case Record Type" for="record__type"/>
+                <apex:actionRegion >
+                    <apex:selectList value="{!selectedRecordType}" multiselect="false" size="1" required="true" id="ayy">
+                        <apex:actionSupport event="onchange" rerender=" fullpage"/>
+                        <apex:selectOptions value="{!items}" id="record__type" />
+                    </apex:selectList>
+                </apex:actionRegion>
+            </apex:pageblockSectionItem>
+        </apex:pageBlockSection>
+        <apex:outputPanel id="performance" rendered="{!IF(selectedRecordType == 'Performance Guarantee', true, false)}" >
+            <apex:pageBlockSection title="Account Information" columns="2">
+                <apex:inputField value="{!thecase.AccountId}" required="true"/>
+                <apex:outputLabel ></apex:outputLabel>
+                <apex:inputField value="{!thecase.HCSC_Division__c}" required="true"/>
+                <apex:inputField value="{!thecase.Status}" required="true"/>
+                <apex:inputField value="{!thecase.Group_Status__c}" required="true"/>
+                <apex:inputField value="{!thecase.PG_Product_Type__c}" />
+                <apex:inputField value="{!thecase.Group_Number_s__c}" />
+                <apex:inputField value="{!thecase.Opportunity_Name__c}" />
+                <apex:inputField value="{!thecase.Funding_Type__c}" required="true"/>
+                <apex:inputField value="{!thecase.Medical_Management__c}" />
+                <apex:outputLabel ></apex:outputLabel>
+                <apex:inputField value="{!thecase.Expected_Health_Contracts__c}" required="true"/>
+                <apex:outputLabel ></apex:outputLabel>
+                <apex:inputField value="{!thecase.Expected_Dental_Contracts__c}" />
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection title="Request Information" columns="2">
+                <apex:inputField value="{!thecase.Requested_By__c}" />
+                <apex:inputField value="{!thecase.Mail_Date_Due_Date__c}" required="true"/>
+                <apex:inputField value="{!thecase.Guarantee_Period_Start__c}" required="true"/>
+                <apex:inputField value="{!thecase.Requested_By_Extn__c}" />
+                <apex:inputField value="{!thecase.Multi_Year__c}" />
+                <apex:inputField value="{!thecase.Guarantee_Period_End__c}" required="true" />
+                <apex:outputLabel ></apex:outputLabel>
+                <apex:inputField value="{!thecase.Quarterly_PG_Reporting_Requested__c}" />
+                
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection title="Account Team" columns="2">
+                <apex:inputField value="{!thecase.Account_Executive__c}" />
+                <apex:inputField value="{!thecase.Account_Executive_Ext__c}" />
+                <apex:inputField value="{!thecase.Underwriter_Lookup__c}" required="true" />
+                <apex:inputField value="{!thecase.Underwriter_Ext__c}" />
+                <apex:inputField value="{!thecase.Consulting_Firm__c}" />
+                <apex:inputField value="{!thecase.Producer_Account__c}" />
+                <apex:inputField value="{!thecase.FSU_Location__c}" required="true"/>
+                <apex:inputField value="{!thecase.FSU_FSU_Manager_Ext__c}" />
+                <apex:inputField value="{!thecase.Other_FSU_Location__c}" />
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection title="Requested Guarantee Types" columns="2">
+                <apex:inputField value="{!thecase.Medical_Service__c}" />
+                <apex:inputField value="{!thecase.Medical_Management_1000__c}" />
+                <apex:inputField value="{!thecase.Prescription_Drug_Service_1000__c}" />
+                <apex:inputField value="{!thecase.Financial__c}" />
+                <apex:inputField value="{!thecase.Dental_Service_1000__c}" />
+                <apex:inputField value="{!thecase.Benefit_Value_Advisor_ROI__c}" />
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection title="Requested Performance Guarantees" columns="2">
+                <apex:inputField value="{!thecase.Medical_Guarantees__c}" />
+                <apex:inputField value="{!thecase.Blue_Care_Connection__c}" />
+                <apex:inputField value="{!thecase.X1000_Optional_Services_PG__c}" />
+                <apex:inputField value="{!thecase.BCC_Elite__c}" />
+                <apex:inputField value="{!thecase.Prescription_Drug_Guarantees__c}" />
+                <apex:inputField value="{!thecase.BCC_Elite_Staffing_Ratio__c}" />
+                <apex:inputField value="{!thecase.Dental_Guarantees__c}" />
+                <apex:inputField value="{!thecase.Mercer_Health_Advantage__c}" />
+            </apex:pageBlockSection>
+            <apex:pageBlockSection title="Additional Comments" columns="2">
+                <apex:inputField value="{!thecase.Additional_Comments__c}" />
+                <apex:outputLabel ></apex:outputLabel>
+                <apex:inputField value="{!thecase.Additional_Information__c}" />
+            </apex:pageBlockSection>
+            <apex:pageBlockSection title="System Information" columns="2">
+                <apex:inputField value="{!thecase.Subject}" />
+                <apex:inputField value="{!thecase.Priority}" />
+                <apex:inputField value="{!thecase.Description}" />
+                <apex:inputField value="{!thecase.Origin}" />
+                <apex:inputField value="{!thecase.ContactId}" />
+            </apex:pageBlockSection>
+        </apex:outputPanel>
+        
+        <apex:outputPanel rendered="{!IF(selectedRecordType == 'Proposal', true, false)}">
+            <apex:pageBlockSection title="Request Information">
+                <apex:inputField value="{!thecase.Opportunity_Name__c}" />
+                <apex:outputLabel ></apex:outputLabel>
+                <apex:inputField value="{!thecase.AccountId}" />
+                <apex:inputField value="{!thecase.Mail_Date_Due_Date__c}" />
+                <apex:inputField value="{!thecase.Legal_Name__c}" />
+                <apex:inputField value="{!thecase.Status}" />
+                <apex:outputLabel ></apex:outputLabel>
+                <apex:inputField value="{!thecase.Requested_Effective_Date__c}" />
+                <apex:outputLabel ></apex:outputLabel>
+                <apex:inputField value="{!thecase.NI_Type__c}" />
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection title="Additional Request Information">
+                <apex:inputField value="{!thecase.HCSC_Division__c}" required="true" />
+                <apex:inputField value="{!thecase.Proposal_Type_Totals__c}" />
+                <apex:inputField value="{!thecase.ParentId}" />
+                <apex:inputField value="{!thecase.Complexity__c}" />
+                <apex:inputField value="{!thecase.Related_Case__c}" />
+                 
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection title="Binder Information">
+                <apex:inputField value="{!thecase.Binder_s_Required__c}" />
+                <apex:inputField value="{!thecase.Include_your_business_card__c}" />
+                <apex:inputField value="{!thecase.of_Binders_for_Proposal__c}" />
+                <apex:inputField value="{!thecase.Mailing_Street_Address__c}" />
+                <apex:inputField value="{!thecase.of_Binders_for_Requestor__c}" />
+                <apex:inputField value="{!thecase.Mailing_City__c}" />
+                <apex:inputField value="{!thecase.Delivery_Arrangements__c}" required="true"/>
+                <apex:inputField value="{!thecase.Mailing_State__c}" />
+                <apex:inputField value="{!thecase.Involve_RR_Donnelly__c}" />
+                <apex:inputField value="{!thecase.Mailing_Zip__c}" />
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection title="BCBS Information" >
+                <apex:inputField value="{!thecase.Requestor_Name__c}" required="true"/>
+                <apex:inputField value="{!thecase.FSU_Location__c}" />
+                <apex:inputField value="{!thecase.Proposed_Account_Executive__c}" required="true" />
+                <apex:inputField value="{!thecase.Other_FSU_Location__c}" />
+                <apex:inputField value="{!thecase.Underwriter_Lookup__c}" />
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection title="Group Information">
+                <apex:inputField value="{!thecase.Group_Type__c}" required="true"/>
+                <apex:inputField value="{!thecase.Consulting_Firm__c}" />
+                <apex:inputField value="{!thecase.Group_Number_s__c}" />
+                <apex:inputField value="{!thecase.Producer_Account__c}" />
+                <apex:inputField value="{!thecase.Current_Carrier__c}" />
+                <apex:inputField value="{!thecase.Current_Benefits__c}" />
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection title="Number of Contracts">
+                <apex:inputField value="{!thecase.Total_Contracts__c}" />
+            </apex:pageblockSection>
+            
+            <apex:pageBlockSection title="Proposal Specifications">
+                <apex:inputField value="{!thecase.Questionnaire_Attached__c}" />
+                <apex:inputField value="{!thecase.Plan_Ceded_by_another_BCBS_plan__c}" />
+                <apex:inputField value="{!thecase.Boilerplate__c}" />
+                <apex:inputField value="{!thecase.BCBS_Plan_HQ_Address__c}" />
+                <apex:inputField value="{!thecase.Financials_Required__c}" />
+                <apex:inputField value="{!thecase.BCBS_Plan_Name__c}" />
+                <apex:inputField value="{!thecase.Governmental_Entity__c}" />
+                <apex:inputField value="{!thecase.Network_Designation__c}" />
+                <apex:inputField value="{!thecase.Package_Type__c}" />
+                <apex:inputField value="{!thecase.Additional_Comments__c}" />
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection title="Funding and Rating">
+                <apex:inputField value="{!thecase.Funding_Type_Multiselect__c}" />
+                <apex:inputField value="{!thecase.Stop_Loss_Individual__c}" />
+                <apex:inputField value="{!thecase.Premium_Type__c}" />
+                <apex:inputField value="{!thecase.Stop_Loss_Aggregate__c}" />
+                <apex:outputLabel ></apex:outputLabel>
+                <apex:inputField value="{!thecase.Unified_Rating__c}" />
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection title="Proposed Product Components">
+                <apex:inputField value="{!thecase.PPO__c}" />
+                <apex:inputField value="{!thecase.Other__c}" />
+                <apex:inputField value="{!thecase.HMO__c}" />
+                <apex:inputField value="{!thecase.FDL_Dearborn_National__c}" />
+                <apex:inputField value="{!thecase.Rx__c}" />
+                <apex:inputField value="{!thecase.BlueCare_Connection__c}" />
+                <apex:inputField value="{!thecase.Dental__c}" />
+                
+            </apex:pageBlockSection>
+            <apex:pageBlockSection title="System Information" columns="2">
+                <apex:inputField value="{!thecase.Subject}" />
+                <apex:inputField value="{!thecase.Priority}" />
+                <apex:inputField value="{!thecase.Description}" />
+                <apex:inputField value="{!thecase.Origin}" />
+                <apex:inputField value="{!thecase.ContactId}" />
+            </apex:pageBlockSection>
+        </apex:outputPanel>
+        
+    </apex:pageBlock> 
+    </apex:outputPanel>
+
+    </apex:form>
+    
+</apex:page>

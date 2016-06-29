@@ -1,0 +1,38 @@
+<apex:page StandardController="Form_Library__c" extensions="FormLibraryExt2" showheader="true" sidebar="true">
+<style>
+#Attachment{
+width:10%;
+}
+</style>
+<apex:form id="formLib">
+            <apex:pagemessages />
+            <apex:pageblock title="Form Library" >
+                <apex:pageblockbuttons location="Bottom" >
+                    <apex:commandbutton value="Save" action="{!returnToRecord}"/>
+                    <apex:commandButton value="Attach file" action="{!processPage}"/>               
+                </apex:pageblockbuttons>
+                    <apex:pageBlockSection columns="1" >
+                    <apex:inputField label="Name" value="{!Form_Library__c.Name}" />
+                    <apex:inputField label="Type" value="{!Form_Library__c.Type__c}"/>
+                    <apex:inputField label="State" value="{!Form_Library__c.State__c}"/>        
+                  <apex:inputfile value="{!filebody}" filename="{!filename}" contenttype="{!filetype}"/>                  
+              </apex:pageBlockSection>
+              <apex:pageBlockSection title="Attachments" rendered="{!reRend}"  >
+                  <apex:pageBlockTable value="{!attachmentDetails}" var="a" >
+                      <apex:column id="Attachment" >
+                        <apex:facet name="header">
+                            <apex:outputPanel > Name </apex:outputPanel>
+                        </apex:facet>
+                        <apex:outputText >{!a.Name}</apex:outputText>
+                      </apex:column>
+                      <apex:column >
+                        <apex:facet name="header">
+                            <apex:outputPanel > File Type</apex:outputPanel>
+                        </apex:facet>
+                        <apex:outputText >{!a.ContentType}</apex:outputText>
+                      </apex:column>
+                  </apex:pageBlockTable>
+              </apex:pageBlockSection>
+            </apex:pageblock>
+        </apex:form>
+</apex:page>

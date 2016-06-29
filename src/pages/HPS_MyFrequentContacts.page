@@ -1,0 +1,93 @@
+<apex:page sideBar="false" showHeader="false" controller="HPS_MyFrequentContactsController" readonly="true">
+    <apex:stylesheet value="{!URLFOR($Resource.DataTables_1_10_2, '/css/jquery.dataTables.min.css')}" />
+    <apex:includeScript value="{!$Resource.jquery_1_11_1}" />
+    <apex:includeScript value="{!URLFOR($Resource.DataTables_1_10_2, '/js/jquery.dataTables.min.js')}"/>
+    <style>
+        .accordion div.accordion-label label h4 {
+            white-space: nowrap;
+        }
+        .media-holder {
+            width:100% !important;
+        }
+        body {
+            background:white;
+        }
+        .accordion-title{
+            font-size:16px;
+            font-weight:bold;
+            margin:20px 10px;
+        }
+        .dataTables_length{
+            display:none !important;
+        }
+    
+        .data-table thead th {
+            background-color:#1797C0 !important;
+            color:#fff;
+            font-weight:bold;
+        }
+        
+        .setup-icon {
+            height: 16px;
+            left: 98%;
+            position: absolute;
+            top: 0;
+            width: 16px;
+            z-index: 10000;
+            cursor:pointer;        
+        }
+    </style>
+     <script type="text/javascript">
+        
+        $(document).ready(function(){
+            $('.openTab').find("a").attr("target","_blank");
+            $('.my-frequent-contacts-table').DataTable();
+        });
+    </script>
+    <span class="accordion-title">My Frequent Contacts </span><br/><br/>
+    <apex:outputPanel rendered="{!IF(myFrequentContactsList.size > 0, true, false)}" style="width:100%">
+        <table class="my-frequent-contacts-table data-table"  style="width:100%">
+            <thead>
+                <tr>
+                    <th>Contact Name</th>
+                    <th>{!$ObjectType.Contact.Fields.Email.Label}</th>
+                    <th>{!$ObjectType.Contact.Fields.Phone.Label}</th>
+                    <th>Number Of Interactions</th>
+                    <th>Last Interaction</th>
+                </tr>
+            </thead>
+            <tbody>
+                <apex:repeat value="{!myFrequentContactsList}" var="myFrequentContactsObj">
+                    <tr>
+                        <td>
+                            <a href="/{!myFrequentContactsObj.contactObj.Id}" target="_top">
+                                <apex:outputText value="{!myFrequentContactsObj.contactObj.Name}" />
+                            </a>
+                        </td>
+                        <td>
+                            <a href="/_ui/core/email/author/EmailAuthor?p2_lkid={!myFrequentContactsObj.contactObj.Id}&rtype=003&p3_lkid={!myFrequentContactsObj.contactObj.AccountId}&retURL=/{!myFrequentContactsObj.contactObj.AccountId}" target="_top">
+                                <apex:outputText value="{!myFrequentContactsObj.contactObj.Email}" />
+                            </a>
+                        </td>
+                        <td>
+                            <apex:outputField value="{!myFrequentContactsObj.contactObj.Phone}" />
+                        </td>
+                        <td>
+                            <apex:outputText value="{!myFrequentContactsObj.numberOfInteractions}" />
+                        </td> 
+                        <td>
+                            <a href="/{!myFrequentContactsObj.activityHistoryObj.Id}" target="_top">
+                                <apex:outputText value="{!myFrequentContactsObj.activityHistoryObj.Subject}" />
+                            </a>
+                        </td> 
+                    </tr>
+                </apex:repeat>
+            </tbody>
+        </table>
+    </apex:outputPanel>
+    <apex:outputPanel rendered="{!IF(myFrequentContactsList.size > 0, false, true)}" style="margin-left:20px">
+        No Frequent Contacts to show.
+    </apex:outputPanel>
+<c:LinkOverrideScript />
+    
+</apex:page>

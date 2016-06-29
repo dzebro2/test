@@ -1,0 +1,29 @@
+<apex:component controller="TaskEmailTemplateComponentController" access="global">
+<apex:attribute name="record" type="String" assignTo="{!recordId}" description="task Id" />
+<apex:attribute name="relatedrecord" type="String" assignTo="{!relatedrecordId}" description="related record Id" />
+<apex:attribute name="name" type="String" assignTo="{!relatedrecordName}" description="related record Name" />
+<apex:attribute name="subject" type="String" assignTo="{!relatedSubject}" description="related subject" />
+<style>
+	p {
+		font-family: 'Arial','Helvetica',sans-serif;
+	}
+</style>
+<apex:outputPanel rendered="{!StartingIndex == '001'}" >
+<p>The task "{!relatedSubject}" is completed for Account {!relatedrecordName}.<br/><br/>
+The task and associated account can be accessed using the following links: <br/><br/>
+Task: {!OrgURL}/{!recordId}<br/>
+Account: {!OrgURL}/{!relatedrecordId}<br/></p>
+</apex:outputPanel>
+<apex:outputPanel rendered="{!StartingIndex == '006'}">
+<p>The task "{!relatedSubject}" is completed for Opportunity {!relatedrecordName}.<br/><br/>
+The task and associated opportunity can be accessed using the following links: <br/><br/>
+Task: {!OrgURL}/{!recordId}<br/>
+Opportunity: {!OrgURL}/{!relatedrecordId}<br/></p>
+</apex:outputPanel>
+<apex:outputPanel rendered="{!StartingIndex == '500'}">
+<p>The task "{!relatedSubject}" is completed for Case {!relatedrecordName}.<br/><br/>
+The task and associated case can be accessed using the following links: <br/><br/>
+Task: {!OrgURL}/{!recordId}<br/>
+Case: {!OrgURL}/{!relatedrecordId}<br/></p>
+</apex:outputPanel>
+</apex:component>

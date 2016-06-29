@@ -1,0 +1,14 @@
+<apex:page standardController="Secure_Information__c" recordSetVar="informations"  extensions="ShareSecureAttachmentRecords" action="{!shareRecordToOpportunityTeam}">
+    <apex:pageMessages id="pgMsgId"/>
+    <apex:includeScript value="{!URLFOR($Resource.BuyerJQueryUI, '/BuyerJQueryUI/jquery-1.8.2.min.js')}"  />
+    <Apex:outputPanel id="scriptPanel">
+        
+    </Apex:outputPanel>
+    <Apex:form >
+        <apex:outputPanel rendered="{!!hasError}">
+        	<apex:pageMessage severity="info" strength="3" summary="{!$Label.SharedRecordsSuccessfully}"/>
+        	
+        </apex:outputPanel>
+        <apex:commandLink value="Back" action="{!goBack}"/>
+    </Apex:form>
+</apex:page>

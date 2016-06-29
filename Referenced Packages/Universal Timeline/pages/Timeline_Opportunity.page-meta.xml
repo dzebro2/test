@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ApexPage xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>30.0</apiVersion>
+    <availableInTouch>true</availableInTouch>
+    <confirmationTokenRequired>false</confirmationTokenRequired>
+    <description>A horizontal timeline to display Opportunity-related time-based events tracked by the Event/Interaction Tracker, intended as a VisualForce Page element of a standard (non-Console) Opportunity page layout (width 100%, height 150 (no CSAT meter) or 170 (CSAT meter), no scrollbars, no label): suggest placement in a 1-column section named &quot;Timeline&quot;, display section header on Detail Page only).</description>
+    <label>Opportunity Timeline (150/170px high)</label>
+</ApexPage>

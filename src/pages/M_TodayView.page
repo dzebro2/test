@@ -1,0 +1,956 @@
+<apex:page sidebar="false" showheader="false">
+<html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<head>
+ 
+
+<apex:stylesheet value="{!URLFOR($Resource.TodayViewFiles,'css/bootstrap.min.css')}" />
+
+   <apex:stylesheet value="{!URLFOR($Resource.salesforce_lightning,'assets/styles/salesforce-lightning-design-system-vf.min.css')}" />
+   <apex:stylesheet value="{!URLFOR($Resource.TodayViewFiles,'css/vscroller.css')}" />
+<apex:stylesheet value="{!URLFOR($Resource.TodayViewFiles,'css/jquery-ui.css')}" />
+<apex:stylesheet value="{!URLFOR($Resource.TodayViewFiles,'css/waitMe.min.css')}" />
+
+
+
+
+<apex:includeScript value="{!URLFOR($Resource.AccountMap,'AccountMapFiles/jquery-1.11.1.min.js')}"/>
+<!-- <apex:includeScript value="{!URLFOR($Resource.AccountMap,'AccountMapFiles/jquery.mobile-1.4.5.min.js')}"/> -->
+<apex:includeScript value="{!URLFOR($Resource.TodayViewFiles,'js/bootstrap.min.js')}"/>
+<apex:includeScript value="{!URLFOR($Resource.TodayViewFiles,'js/vscroller.js')}"/>
+     <apex:includeScript value="{!URLFOR($Resource.TodayViewFiles,'js/moment.min.js')}"/>
+<apex:includeScript value="{!URLFOR($Resource.TodayViewFiles,'js/jquery-ui.js')}"/>
+<apex:includeScript value="{!URLFOR($Resource.TodayViewFiles,'js/commonDD.js')}"/>
+<!-- <apex:includeScript value="{!URLFOR($Resource.TodayViewFiles,'js/jquery.p2r.min.js')}"/> -->
+
+<script src="/soap/ajax/33.0/connection.js" type="text/javascript"></script> 
+<style type="text/css">
+
+</style>
+<script type="text/javascript">
+
+
+
+    // $("body").ready(function _onbodyready() {
+
+    //     var $state = $('#state');
+          
+    //     $("document").pullToRefresh({refresh:300},{sensibility:10},{simulateTouch:true},{threshold:5})
+          
+                   
+    //         .on("refresh.pulltorefresh", function (evt, y){
+    //           //$(this).html('Refresh.. ' + evt + ', '+y)
+    //            // alert('regresh');
+    //             //alert('test');
+    //             run_waitMe('bounce');
+    //            loadActivities();
+    //           //  loadNews();
+    //             loadRecentRecords();
+    //             loadDashBoards();
+
+    //              $('#container').waitMe('hide'); 
+    //            //sforce.one.navigateToURL('/apex/M_TodayView');
+    //         });
+
+    //   });
+   
+ 
+    var arrayOfId = [];
+    var arrayOfAccountNames= [];
+    var current_effect = 'bounce';
+    var myScroll,
+    pullDownEl, pullDownOffset,
+    pullUpEl, pullUpOffset,
+    generatedCount = 0;
+
+   
+    //salesforce fix 
+     (function(){try{var a=navigator.userAgent; 
+                var a = navigator.userAgent;
+                if ((a.indexOf('Salesforce') != -1) && (a.indexOf('iPhone') != -1 || a.indexOf('iPad') != -1) && (a.indexOf('Safari') == -1)) {
+                     var s = document.createElement('style');
+                     if ((a.indexOf('OS/8') != -1 || a.indexOf('OS 8') != -1)) {
+                         s.innerHTML = "html,html body{overflow: auto;-webkit-overflow-scrolling:touch;}body{position:absolute;left:0;right:0;top:0;bottom:0;}";
+                     } else if ((a.indexOf('OS/9') != -1 || a.indexOf('OS 9') != -1)) {
+                         s.innerHTML = "html,html body{overflow: auto;-webkit-overflow-scrolling:auto;}body{position:absolute;left:0;right:0;top:0;bottom:0;}";
+                     }
+                     document.getElementsByTagName('head')[0].appendChild(s);
+                }}catch(e){}})(); 
+
+    // end of salesforce fix
+      $(document).ready(function()
+    {
+    
+    
+    
+    
+         // var wrapper = document.getElementById('wrapper');
+     //   var myScroll = new IScroll(wrapper);
+  //     WebPullToRefresh.init( {
+  //                   loadingFunction: exampleLoadingFunction;
+  //               } );
+          
+  // };
+
+    // $("#container").pullToRefresh();
+
+              run_waitMe('bounce');
+           sforce.connection.sessionId = '{!$Api.Session_ID}'; 
+
+               loadActivities();
+            //Account news code
+
+            loadNews();
+           
+           loadHotTopics();
+           //End of account news code
+            //Recent Records data
+            loadRecentRecords();
+            // recentRecordsVar = recentRecordsVar + '</ul></div>';
+            // $("#innerRecentRecords").append(recentRecordsVar);
+
+            //End of recent records data
+
+             //Recent Dashboards data
+              loadDashBoards();
+            // recentRecordsVar = recentRecordsVar + '</ul></div>';
+            // $("#innerRecentRecords").append(recentRecordsVar);
+            
+            //End of recent records data
+            $('#container').waitMe('hide'); 
+});
+
+function loadActivities(){
+  var query = "Select Id,ActivityDate, OwnerId, Owner.Name, AccountId, ActivityDateTime, WhatId,What.Name,What.Type,Subject,Type from Event where OwnerId='{!$User.Id}' and ActivityDate = TODAY Order By ActivityDateTime Asc";
+      var result = sforce.connection.query(query);
+        var records = result.getArray("records");
+        var numberOfAccounts = 0;
+        $('#numberOfEvents').text(records.length);
+        //$("#numberOfTodayAccounts").text(records.length);
+          $("#innerTodaysAccounts").empty();
+        $("#eventsTableid tr").remove(); 
+        //console.log(records);
+        for (var i=0; i< records.length; i++) {
+          var record = records[i];
+        //console.log(record);
+          var date = new Date(record.ActivityDateTime);
+
+      // $("#eventsDiv").append('<div class="slds-card"><header class="slds-card__header slds-grid"> <span class="badge">'+ formatDatetoAMPM(date)+'</span><span aria-hidden="true">&larr;</span> '+ record.Subject+'</header> <table  class="table table-hover"><tbody id="tableData"></tbody></table></div>');
+
+            var iconLink = "{!URLFOR($Resource.salesforce_lightning,'/assets/icons/action-sprite/svg/symbols.svg#log_event')}";
+            var recordtoNavigate ="'" + record.Id + "'";
+              var recordtoNavigate2DayAccount ="'" + record.WhatId + "'";
+            //console.log(recordtoNavigate);
+          
+           //console.log(record.What.Name);
+            if ((record.WhatId!=null) && ($("#tA" + record.WhatId).length == 0))
+            {
+             arrayOfId.push("'" + record.WhatId + "'");
+             numberOfAccounts+=1;
+             if (record.What.Type!='Case'){
+               arrayOfAccountNames.push(record.What.Name.replace(/[^a-zA-Z ]/g, "")); 
+             }
+            
+               $("#innerTodaysAccounts").append('<div class="slds-media slds-tile bottom_border_gray" id="tA'+record.WhatId+'"> <div class="slds-media__figure"> <svg aria-hidden="true" class="slds-icon slds-icon-standard-groups"> <use xlink:href="{!URLFOR($Resource.salesforce_lightning,"/assets/icons/standard-sprite/svg/symbols.svg#account")}"></use> </svg> </div><div class="slds-media__body"> <p class="slds-tile__title slds-truncate"><a href="#" onclick="sforce.one.navigateToSObject('+ recordtoNavigate2DayAccount + ')" class="slds-list__item">'+ record.What.Name + '</a></p><div class="slds-tile__detail slds-text-body--small"> <p class="slds-truncate"></p></div></div></div>');
+           }
+           
+
+            // $("#innterEvents").append(' <a href="#" onclick="sforce.one.navigateToSObject('+ recordtoNavigate + ')" class="list-group-item"><span class="badge">'+ formatDatetoAMPM(date)+'</span><span aria-hidden="true"></span>'+ record.Subject + '</a>');
+               
+              $('#eventsTableid').append('<tr class="slds-hint-parent" onclick="sforce.one.navigateToSObject('+ recordtoNavigate + ')" class="list-group-item"><td class="slds-size--1-of-12 slds-cell-wrap"><span class="slds-badge slds-theme--inverse">'+ formatDatetoAMPM(date)+'</span></td><td class="slds-size--5-of-6 slds-truncate">'+ record.Subject + '</td></tr>');
+
+            // $("#innerTodaysAccounts").append(' <a href="#todaysAccountsDiv  " onclick="sforce.one.navigateToSObject('+ recordtoNavigate + ')" class="list-group-item"><span aria-hidden="true"></span>'+ record.What.Name + '</a>');
+              
+           
+            // $("#listGroup").append('<li class="slds-list__item"><a href="#" onclick="sforce.one.navigateToSObject('+ recordtoNavigate + ')"><span class="badge">'+ formatDatetoAMPM(date)+'</span><span aria-hidden="true"></span> '+ record.Subject + '</a></li>');
+         
+      // var queryTasksRelatedToActivities = "Select Id,WhatId, ActivityDate, Subject from Task where Status<>'Completed' and WhatId ='"+record.WhatId + "' or ActivityDate = TODAY)";
+  
+
+        //console.log(date.toString());
+         }
+         //console.log(arrayOfId);
+         var queryTasksRelatedToActivities = "";
+         if(arrayOfId.length > 0){
+            var whatIdin ="";
+            if(arrayOfId.length  == 1){
+                whatIdin = arrayOfId[0];
+            }
+            else{
+
+            for(v=0; v < arrayOfId.length;v++)
+            {   
+                if (v == arrayOfId.length -1){
+                    whatIdin = whatIdin +  arrayOfId[v];
+                }else{
+                    whatIdin = whatIdin +  arrayOfId[v] + ",";
+                }
+            }
+            }
+            queryTasksRelatedToActivities = "Select Id,WhatId, ActivityDate,What.Name,Subject,What.Type from Task where OwnerId='{!$User.Id}' AND ((ActivityDate = TODAY AND Status<>'Completed') OR  (Status<>'Completed' and WhatId in ("+whatIdin+")))";
+            //console.log(queryTasksRelatedToActivities);
+
+         }else{
+             queryTasksRelatedToActivities = "Select Id,WhatId, ActivityDate,What.Name,What.Type,Subject from Task where OwnerId='{!$User.Id}' AND Status<>'Completed' AND ActivityDate = TODAY";
+         }
+            var resultSub = sforce.connection.query(queryTasksRelatedToActivities);
+            var recordsSub = resultSub.getArray("records");
+            $('#numberOfTasks').text(recordsSub.length);
+            // console.log(recordsSub);
+             $("#tableData tr").remove(); 
+            for (var x=0; x< recordsSub.length; x++) {
+               var recordSub = recordsSub[x];
+                  var recordtoNavigateTasks ="'" + recordSub.Id + "'";
+                   var recordtoNavigate2DayAccountTask ="'" + recordSub.WhatId + "'";
+                   //console.log(recordSub);
+                    //console.log(x);
+                    
+                   $('#tableData').append('<tr id="tr'+recordSub.Id+'" class="slds-hint-parent"><td width="10%" class="slds-cell-wrap"><input id="input'+recordSub.Id+'" type="checkbox" onclick="completeTask('+recordtoNavigateTasks+');" aria-label="..."></td><td class="slds-cell-wrap" width="70%"><a href="#" onclick="sforce.one.navigateToSObject('+ recordtoNavigateTasks + ')">'+getTruncatedString(recordSub.Subject) +'</a></td><td class="slds-cell-shrink">'+moment(recordSub.ActivityDate).format('MM/DD/YYYY') +'</td></tr>');
+
+                    if ((recordSub.WhatId!=null) && ($("#tA" + recordSub.WhatId).length == 0))
+                    {
+                     arrayOfId.push("'" + recordSub.WhatId + "'");
+                     numberOfAccounts+=1;
+                      if (recordSub.What.Type!='Case'){
+                     arrayOfAccountNames.push(recordSub.What.Name.replace(/[^a-zA-Z ]/g, "")); 
+                   }
+                       $("#innerTodaysAccounts").append('<div class="slds-media slds-tile bottom_border_gray" id="tA'+recordSub.WhatId+'"> <div class="slds-media__figure"> <svg aria-hidden="true" class="slds-icon slds-icon-standard-groups"> <use xlink:href="{!URLFOR($Resource.salesforce_lightning,"/assets/icons/standard-sprite/svg/symbols.svg#account")}"></use> </svg> </div><div class="slds-media__body"> <p class="slds-tile__title slds-truncate"><a href="#" onclick="sforce.one.navigateToSObject('+ recordtoNavigate2DayAccountTask + ')" class="slds-list__item">'+ recordSub.What.Name + '</a></p><div class="slds-tile__detail slds-text-body--small"> <p class="slds-truncate"></p></div></div></div>');
+                   }
+
+                   // $("#innterTasks").append(' <a href="#" onclick="sforce.one.navigateToSObject('+ recordtoNavigateTasks + ')" class="list-group-item"><span class="badge">'+ formatDatetoAMPM(date)+'</span><span aria-hidden="true"></span>'+ record.Subject + '</a>');
+            }
+        $("#numberOfTodayAccounts").text(numberOfAccounts);
+}
+function loadRecentRecords(){
+   var queryRecentRecords ="SELECT Id, Name,Type FROM RecentlyViewed WHERE Type IN ('Account', 'Contact', 'Opportunity','Case') AND LastViewedDate !=null ORDER BY LastViewedDate DESC LIMIT 10";
+            var resultRecentRecords = sforce.connection.query(queryRecentRecords);
+            var recordsRR = resultRecentRecords.getArray("records");
+            $("#numberOfRecentRecords").text(recordsRR.length);
+            $("#innerRecentRecords").empty();
+            // var recentRecordsVar = '<div class="slds"><ul class="slds-list--horizontal slds-has-dividers">';
+             for (var h=0; h< recordsRR.length; h++) {
+                var recordRR = recordsRR[h];
+                var recordtoNavigateRR ="'" + recordRR.Id + "'";
+                  // recentRecordsVar = recentRecordsVar + '<li onclick="sforce.one.navigateToSObject('+ recordtoNavigateRR + ')" class="slds-list__item">'+ recordRR.Name + '</li>';
+                  // $("#innerRecentRecords").append(' <a href="#recentRecordsDiv" onclick="sforce.one.navigateToSObject('+ recordtoNavigateRR + ')" class="list-group-item"><span aria-hidden="true"></span>'+ recordRR.Name + '</a>');
+                  var icon = '';
+                  switch (recordRR.Type){
+                    case 'Account':
+                      icon = 'account';
+                      break;
+                    case 'Contact':
+                      icon = 'contact';
+                      break;
+                    case 'Opportunity':
+                      icon = 'opportunity';
+                      break;
+                    case 'Case':
+                      icon = 'case';
+                      break;
+                    default:
+                      icon = 'question_feed';
+                      break;
+                  }
+
+                  $("#innerRecentRecords").append('<div class="slds-media slds-tile bottom_border_gray"> <div class="slds-media__figure"> <svg aria-hidden="true" class="slds-icon slds-icon-standard-'+icon+'"> <use xlink:href="{!URLFOR($Resource.salesforce_lightning,"/assets/icons/standard-sprite/svg/symbols.svg#'+icon+'")}"></use> </svg> </div><div class="slds-media__body"> <p class="slds-tile__title slds-truncate"><a href="#" onclick="sforce.one.navigateToSObject('+ recordtoNavigateRR + ')" class="slds-list__item">'+ recordRR.Name + '</a></p><div class="slds-tile__detail slds-text-body--small"> <p class="slds-truncate"></p></div></div></div>');
+            }
+}
+
+function loadHotTopics(){
+                    var bringHotTopics = "Select Id,Name, TalkingAbout,Description,CreatedDate from Topic where TalkingAbout>0 order by TalkingAbout desc LIMIT 5";
+                    var resultHotTopic = sforce.connection.query(bringHotTopics);
+                    var recordsHotTopic = resultHotTopic.getArray("records");
+                    // console.log(recordsSub);
+                    var today = new Date();
+                    //console.log(recordsHotTopic);
+
+                    $("#numberOfHotTopics").text(recordsHotTopic.length);
+                    for (var h=0; h< recordsHotTopic.length; h++) {
+                       var recordHotTopic = recordsHotTopic[h];
+                       var recordtoNavigateHT =recordHotTopic.Id;
+
+                       var recordtoNavigateHTlink ="'" + recordHotTopic.Id + "'";
+
+                       var topicDescription = ''
+                       if (recordHotTopic.Description != null){
+                          topicDescription = recordHotTopic.Description;
+                       }
+                       //console.log(recordtoNavigateHT);
+                        // $("#innerHotTopics").append('<div class="slds-media slds-tile"> <div class="slds-media__figure"> <svg aria-hidden="true" class="slds-icon slds-icon-standard-groups"> <use xlink:href="{!URLFOR($Resource.salesforce_lightning,"/assets/icons/standard-sprite/svg/symbols.svg#dashboard")}"></use> </svg> </div><div class="slds-media__body"> <p class="slds-tile__title slds-truncate"><a href="#" onclick="sforce.one.navigateToSObject('+ recordtoNavigateHT + ')" class="slds-list__item">'+ recordRR.Name + '</a></p><div class="slds-tile__detail slds-text-body--small"> <p class="slds-truncate"></p></div></div></div>');
+
+                          $('#tableDataHotTopics').append('<tr id="tr'+recordtoNavigateHT+'" class="slds-hint-parent""><td class="slds-size--1-of-4 slds-cell-wrap"><a href="#" onclick="sforce.one.navigateToSObject('+ recordtoNavigateHTlink + ')">'+recordHotTopic.Name+'<a></td><td class="slds-size--1-of-4">'+recordHotTopic.TalkingAbout+'</td></tr>');
+
+                     //  newsXMl+= '<news category="blue" url="'+ recordtoNavigateHT +'"" date="'+convert2MDY(recordHotTopic.CreatedDate)+'"><headline>'+ recordHotTopic.Name+'</headline><detail>'+ topicDescription +'</detail></news>';
+                    }   
+
+}
+function loadDashBoards(){
+    var queryRecentRecords ="SELECT Id, Name,Type FROM RecentlyViewed WHERE Type IN ('Dashboard') ORDER BY LastViewedDate DESC LIMIT 15";
+            var resultRecentRecords = sforce.connection.query(queryRecentRecords);
+            var recordsRR = resultRecentRecords.getArray("records");
+            $("#numberOfRecentDashboards").text(recordsRR.length);
+             $("#innerDashboardRecords").empty();
+            // var recentRecordsVar = '<div class="slds"><ul class="slds-list--horizontal slds-has-dividers">';
+             for (var h=0; h< recordsRR.length; h++) {
+                var recordRR = recordsRR[h];
+                var recordtoNavigateRR ="'" + recordRR.Id + "'";
+                  // recentRecordsVar = recentRecordsVar + '<li onclick="sforce.one.navigateToSObject('+ recordtoNavigateRR + ')" class="slds-list__item">'+ recordRR.Name + '</li>';
+                  // $("#innerRecentRecords").append(' <a href="#recentRecordsDiv" onclick="sforce.one.navigateToSObject('+ recordtoNavigateRR + ')" class="list-group-item"><span aria-hidden="true"></span>'+ recordRR.Name + '</a>');
+                  // var icon = '';
+                  // switch (recordRR.Type){
+                  //   case 'Account':
+                  //     icon = 'account';
+                  //     break;
+                  //   case 'Contact':
+                  //     icon = 'contact';
+                  //     break;
+                  //   case 'Opportunity':
+                  //     icon = 'opportunity';
+                  //     break;
+                  //   default:
+                  //     icon = 'question_feed';
+                  //     break;
+                  // }
+                  $("#innerDashboardRecords").append('<div class="slds-media slds-tile bottom_border_gray"> <div class="slds-media__figure"> <svg aria-hidden="true" class="slds-icon slds-icon-standard-dashboard"> <use xlink:href="{!URLFOR($Resource.salesforce_lightning,"/assets/icons/standard-sprite/svg/symbols.svg#dashboard")}"></use> </svg> </div><div class="slds-media__body"> <p class="slds-tile__title slds-truncate"><a href="#" onclick="sforce.one.navigateToSObject('+ recordtoNavigateRR + ')" class="slds-list__item">'+ recordRR.Name + '</a></p><div class="slds-tile__detail slds-text-body--small"> <p class="slds-truncate"></p></div></div></div>');
+            }
+}
+function loadNews(){
+ $(function(){
+                console.log(arrayOfAccountNames);
+
+                url = "https://news.google.com/?output=rss&q="+returnStringFromArray(arrayOfAccountNames)+"&num=1";
+               // console.log(url);
+                $.ajax({
+                type: "GET",
+                url: document.location.protocol + '//ajax.googleapis.com/ajax/services/feed/load?v=1.0&num=1000&callback=?&q=' + encodeURIComponent(url),
+                dataType: 'json',
+                error: function(){
+                    $('#container').waitMe('hide'); 
+                    alert('Unable to load feed, Incorrect path or invalid feed');
+                },
+                success: function(xml){
+                    values = xml.responseData.feed.entries;
+                    var newsXMl = '<?xml version="1.0" encoding="utf-8" ?><newslist title="News">';
+                    for (x=0;x<values.length;x++){
+                        var datefromnews = moment(values[x].publishedDate,'ddd, DD MMM YYYY HH:mm:ss ZZ').fromNow();
+                       // console.log(datefromnews);
+                        var sourceNewstitle = values[x].title.substring(values[x].title.indexOf('-')+1,values[x].title.length);
+                       // console.log(sourceNewstitle);
+                        $("#innerNewsli").append('<li class="slds-list__item makeWhite"> <div class="slds-tile slds-tile--board"> <p class="slds-tile__title"><a href="'+values[x].link+'">'+values[x].title+'</a></p><div class="slds-tile__detail"> <p class="slds-text-heading--medium"></p><br/><p class="slds-wrap">'+values[x].contentSnippet+'</p> <div class="slds-tile__detail slds-text-body--small"><p class="slds-truncate">'+ sourceNewstitle + " " + datefromnews +'</p></div></div></div></li>');
+                        newsXMl+= '<news category="red" url="'+ values[x].link+'"" date="'+values[x].publishedDate+'"><headline>'+values[x].title+'</headline><detail>'+values[x].contentSnippet+'</detail></news>';
+                    }
+                    var bringHotTopics = "Select Id,Name, TalkingAbout,Description,CreatedDate from Topic where TalkingAbout>0 order by TalkingAbout desc LIMIT 5";
+                    var resultHotTopic = sforce.connection.query(bringHotTopics);
+                    var recordsHotTopic = resultHotTopic.getArray("records");
+                    // console.log(recordsSub);
+                    var today = new Date();
+                    //console.log(recordsHotTopic);
+                    for (var h=0; h< recordsHotTopic.length; h++) {
+                       var recordHotTopic = recordsHotTopic[h];
+                       var recordtoNavigateHT =recordHotTopic.Id;
+
+                       var topicDescription = ''
+                       if (recordHotTopic.Description != null){
+                          topicDescription = recordHotTopic.Description;
+                       }
+                       //console.log(recordtoNavigateHT);
+                       newsXMl+= '<news category="blue" url="'+ recordtoNavigateHT +'"" date="'+convert2MDY(recordHotTopic.CreatedDate)+'"><headline>'+ recordHotTopic.Name+'</headline><detail>'+ topicDescription +'</detail></news>';
+                    }   
+                    $('#vscroller').vscroller({ newsfeed: newsXMl });
+                    //console.log(values);
+                }
+            });
+            });
+}
+
+function run_waitMe(effect){
+        $('#container').waitMe({
+            effect: effect,
+            text: 'Please wait...',
+            bg: 'rgba(255,255,255,0.7)',
+            color:'#000',
+            sizeW:'',
+            sizeH:'',
+            source: 'img.svg'
+        });
+}
+
+function completeTask(taskID){
+   // console.log(taskID);
+    // alert('test');
+   // BootstrapDialog.confirm('Hi Apple, are you sure?', function(result){
+   //          if(result) {
+   //              alert('Yup.');
+   //          }else {
+   //              alert('Nope.');
+   //          }
+   //      });
+              run_waitMe('bounce');
+              //console.log('got to bounce');
+              sforce.connection.sessionId = '{!$Api.Session_ID}'; 
+              var taskToUpdate = new sforce.SObject("Task");
+              taskToUpdate.id = taskID; 
+              taskToUpdate.Status = 'Completed';
+              result = sforce.connection.update([taskToUpdate]);
+              //console.log(result[0]);
+              if (result[0].getBoolean("success")) {
+                //console.log('task updated');
+                 
+                  $("#tr" +taskID ).addClass("strikeout");
+                  $("#input" + taskID).attr("onclick","");
+                  $("#input" + taskID).attr("disabled","true");
+                 
+              }else{
+                $("#input" + taskID).prop('checked',false);
+                //console.log('task failed to update');
+              }
+              $('#container').waitMe('hide'); 
+              // sforce.one.navigateToURL("#");
+        
+
+    // $(function() {
+    //     $( "#dialog-confirm" ).dialog({
+    //       resizable: false,
+    //       height:140,
+    //       modal: true,
+    //       buttons: {
+    //         "Ok": function() {
+             
+    //           run_waitMe('bounce');
+    //           //console.log('got to bounce');
+    //           sforce.connection.sessionId = '{!$Api.Session_ID}'; 
+    //           var taskToUpdate = new sforce.SObject("Task");
+    //           taskToUpdate.id = taskID; 
+    //           taskToUpdate.Status = 'Completed';
+    //           result = sforce.connection.update([taskToUpdate]);
+    //           //console.log(result[0]);
+    //           if (result[0].getBoolean("success")) {
+    //             console.log('task updated');
+                 
+    //               $("#tr" +taskID ).addClass("strikeout");
+    //               $("#input" + taskID).attr("onclick","");
+    //               $("#input" + taskID).attr("disabled","true");
+                 
+    //           }else{
+    //             $("#input" + taskID).prop('checked',false);
+    //             console.log('task failed to update');
+    //           }
+    //           $('#container').waitMe('hide'); 
+    //           // sforce.one.navigateToURL("#");
+    //           $( this ).dialog( "close" );
+    //         },
+    //         Cancel: function() {
+    //            $("#input" + taskID).prop('checked',false);
+    //           $( this ).dialog( "close" );
+
+    //         }
+    //       }
+    //     });
+    //   });
+}
+function formatDatetoAMPM(date) {
+    var d = new Date(date);
+    var hh = d.getHours();
+    var m = d.getMinutes();
+    var s = d.getSeconds();
+    var dd = "AM";
+    var h = hh;
+    if (h >= 12) {
+        h = hh-12;
+        dd = "PM";
+    }
+    if (h == 0) {
+        h = 12;
+    }
+    m = m<10?"0"+m:m;
+
+    s = s<10?"0"+s:s;
+
+    return (h + ":" + m + " " + dd);
+}
+function returnStringFromArray(arrayToConver){
+        //console.log(arrayToConver);
+        var accountsForNews = "";
+         if(arrayToConver.length > 0){
+            var accountsForNews ="";
+            if(arrayToConver.length  == 1){
+                accountsForNews = arrayToConver[0];
+            }
+            else{
+
+                for(v=0; v < arrayToConver.length;v++)
+                {   
+                    if (v == arrayToConver.length -1){
+                        accountsForNews = accountsForNews +  arrayToConver[v];
+                    }else{
+                        accountsForNews = accountsForNews +  arrayToConver[v] + " OR ";
+                    }
+                }
+            }
+           
+         }
+         return accountsForNews;
+}
+
+// $(function() {
+//       $('a[href*=#]:not([href=#])').click(function() {
+//         if (location.pathname.replace(/^\//,'') == this.pathname.replace(/^\//,'') && location.hostname == this.hostname) {
+
+//           var target = $(this.hash);
+//           target = target.length ? target : $('[name=' + this.hash.slice(1) +']');
+//           if (target.length) {
+//             $('html,body').animate({
+//               scrollTop: target.offset().top
+//             }, 1000);
+//             return false;
+//           }
+//         }
+//       });
+//     });
+
+  function convert2MDY(date2){
+      if (date2 =='undefined' || date2 == null){
+        return '';
+      }else{
+    var date = new Date(date2);
+    var day = '';
+    var month = '';
+    if(date.getDate()  < 10){
+      day = '0' + date.getDate();
+    }else{
+      day = date.getDate();
+    }
+    if(date.getMonth() + 1  < 10){
+      month = '0' + (date.getMonth() + 1);
+    }else{
+      month = date.getMonth() + 1;
+    }
+    return (month + '/' + day + '/' +  date.getFullYear());
+    }
+  }
+ function refreshPage(){
+        alert('test');
+      }
+      
+     
+
+
+      
+      
+
+</script>
+<style type="text/css">
+    .makeWhite {
+     
+          background-color: white;
+          border-top: 1px solid #ffffff;
+          border-color: #ffffff;
+}
+    
+
+body{
+
+  background-color:#F4F6F9;
+}
+
+tr.strikeout td {
+    text-decoration:line-through;
+}
+        
+.customTruncate a {
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+    width: 30px;
+  }
+.bottom_border_gray{
+    
+    border-bottom: 1px solid rgb(216, 221, 230);
+    border-bottom-width: thin;
+    border-bottom-style: solid
+}
+</style>
+</head>
+<body>
+
+   
+
+  <div class="container" id="container">
+     
+     
+     <div id="header" class="slds">
+        <div class="slds-page-header" role="banner">
+        <div class="slds-grid">
+          <div class="slds-col slds-has-flexi-truncate">
+            <div class="slds-media">
+              <div class="slds-media__figure">
+                <svg aria-hidden="true" class="slds-icon slds-icon--large slds-icon-standard-user">
+                  <use xlink:href="{!URLFOR($Resource.salesforce_lightning,'/assets/icons/standard-sprite/svg/symbols.svg#today')}"></use>
+                </svg>
+              </div>
+              <div class="slds-media__body">
+                <p class="slds-text-heading--label"></p>
+                <div class="slds-grid">
+                  <h1 class="slds-text-heading--medium slds-m-right--small slds-truncate slds-align-middle" title="Record Title">Today</h1>
+                  <div class="slds-col slds-shrink-none">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+        
+      </div>
+     </div>
+     </div>
+     
+     
+     <br/>
+        <div id="eventsDiv" class="slds">
+          <div class="slds-card makeWhite">
+                <div class="slds-card__header slds-grid makeWhite">
+                  <div class="slds-media slds-media--center slds-has-flexi-truncate">
+                    <div class="slds-media__figure">
+                      <svg aria-hidden="true" class="slds-icon slds-icon-standard-event slds-icon--small">
+                        <use xlink:href="{!URLFOR($Resource.salesforce_lightning,'/assets/icons/standard-sprite/svg/symbols.svg#event')}"></use>
+                      </svg>
+                    </div>
+                    <div class="slds-media__body makeWhite">
+                      <h2 class="slds-text-heading--small slds-truncate">Events (<span id="numberOfEvents"></span>)</h2>
+                    </div>
+                  </div>
+                  <div class="slds-no-flex makeWhite">
+                    <div class="slds-button-group makeWhite">
+                     
+                      <button class="slds-button slds-button--icon-border-filled collapsed" data-toggle="collapse" data-target="#innterEvents">
+                        <svg aria-hidden="true" class="slds-button__icon">
+                          <use xlink:href="{!URLFOR($Resource.salesforce_lightning,'/assets/icons/utility-sprite/svg/symbols.svg#down')}"></use>
+                        </svg>
+                        <span class="slds-assistive-text">Show More</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div class="slds-card__body makeWhite">
+
+                   <div  id="innterEvents" class="collapsed">
+                       <table class="slds-table slds-table--bordered  slds-no-row-hover" id="eventsTableid">
+                        
+                        <tbody>
+                         
+                        </tbody>
+                      </table>
+                    </div>
+                </div>
+                <div class="slds-card__footer makeWhite"><a href="#" onclick="sforce.one.createRecord('Event')">New Event <span class="slds-assistive-text">entity type</span></a></div>
+              </div>
+       <!--  <div class="list-group" id="listGroup">
+                  <a href="#eventsDiv" class="list-group-item active collapsed" data-toggle="collapse" data-target="#innterEvents"> <span> </span> Events <span class="badge" id="numberOfEvents"></span> </a>
+                  <div class="list-group collapse" id="innterEvents">
+                  </div>
+                  <a href="#" class="list-group-item">  <button type="button"  onclick="sforce.one.createRecord('Event')"  class="btn btn-primary btn-sm pull-right">Add Event</button>&nbsp; </a>
+        </div> -->
+         
+         
+      </div>
+       <br/>
+      <div id="tasksDiv" class="slds">
+      
+        <div class="slds-card">
+          <div class="slds-card__header slds-grid makeWhite">
+            <div class="slds-media slds-media--center slds-has-flexi-truncate makeWhite">
+              <div class="slds-media__figure">
+                <svg aria-hidden="true" class="slds-icon slds-icon-standard-task slds-icon--small">
+                     <use xlink:href="{!URLFOR($Resource.salesforce_lightning,'/assets/icons/standard-sprite/svg/symbols.svg#task')}"></use>
+                </svg>
+              </div>
+              <div class="slds-media__body makeWhite">
+                <h2 class="slds-text-heading--small slds-truncate">Open Tasks (<span id="numberOfTasks"></span>)</h2>
+              </div>
+            </div>
+            <div class="slds-no-flex makeWhite">
+              <div class="slds-button-group">
+               
+                <button class="slds-button slds-button--icon-border-filled collapsed" data-toggle="collapse" data-target="#innerTasks">
+                  <svg aria-hidden="true" class="slds-button__icon">
+                      <use xlink:href="{!URLFOR($Resource.salesforce_lightning,'/assets/icons/utility-sprite/svg/symbols.svg#down')}"></use>
+                  </svg>
+                  <span class="slds-assistive-text">Show More</span>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="slds-card__body makeWhite">
+             <div class="list-group makeWhite collapsed" id="innerTasks">
+            <table id="tableData" class="slds-table slds-table--bordered slds-no-row-hover">
+              <!-- <thead>
+                <tr>
+                  <th class="slds-text-heading--label" width="10%" scope="col"></th>
+                  <th class="slds-text-heading--label" width="70%" scope="col">Task</th>
+                  <th class="slds-text-heading--label" scope="col" width="20%">Due Date</th>
+                </tr>
+              </thead> -->
+              <tbody>
+              </tbody>
+            </table>
+            </div>
+          </div>
+            <div class="slds-card__footer makeWhite"><a href="#" onclick="sforce.one.createRecord('Task')">New Task <span class="slds-assistive-text">entity type</span></a></div>
+        </div>
+      
+
+
+
+      <!--   <div class="list-group" id="listGroup">
+                <a href="#tasksDiv" class="list-group-item active collapsed" data-toggle="collapse" data-target="#innerTasks"> <span> </span> Open Tasks <span class="badge" id="numberOfTasks"></span> </a>
+                <div class="list-group collapse" id="innerTasks">
+                 <table id="tableData" class="table table-condensed">
+                  <thead>
+                  <tr>
+                    <th></th>
+                    <th>Task</th>
+                    <th>Due Date</th>
+                  </tr>
+                </thead>
+                 <tbody>
+                     
+                 </tbody>
+                 </table>
+                </div>
+                <a href="#" class="list-group-item">  <button type="button"  onclick="sforce.one.createRecord('Task')"  class="btn btn-primary btn-sm pull-right">Add Task</button>&nbsp; </a>
+        </div> -->
+       
+       
+    </div>
+
+
+    <div class="slds" id="">
+      <br/>
+         <div class="slds-card makeWhite">
+                <div class="slds-card__header slds-grid makeWhite">
+                  <div class="slds-media slds-media--center slds-has-flexi-truncate">
+                  <div class="slds-media__figure">
+                      <svg aria-hidden="true" class="slds-icon slds-icon-standard-opportunity slds-icon--small">
+                        <use xlink:href="{!URLFOR($Resource.salesforce_lightning,'/assets/icons/standard-sprite/svg/symbols.svg#news')}"></use>
+                      </svg>
+                    </div>
+                    <div class="slds-media__body makeWhite">
+                      <h2 class="slds-text-heading--small slds-truncate">Account News </h2>
+                    </div>
+                    <div class="slds-media__figure makeWhite">
+                      <span><a href="/apex/M_TodayNews">More</a></span>
+                     <!--  <svg aria-hidden="true" class="slds-icon slds-icon-action-more slds-icon--small">
+                        <use xlink:href="{!URLFOR($Resource.salesforce_lightning,'/assets/icons/action-sprite/svg/symbols.svg#more')}"></use>
+                      </svg> -->
+                    </div>
+                  </div>
+                  <div class="slds-no-flex makeWhite">
+                    <div class="slds-button-group">
+                     
+                  <!--     <button class="slds-button slds-button--icon-border-filled collapsed" data-toggle="collapse" data-target="#innterEvents">
+                        <svg aria-hidden="true" class="slds-button__icon">
+                          <use xlink:href="{!URLFOR($Resource.salesforce_lightning,'/assets/icons/utility-sprite/svg/symbols.svg#down')}"></use>
+                        </svg>
+                        <span class="slds-assistive-text">Show More</span>
+                      </button> -->
+                    </div>
+                  </div>
+                </div>
+                <div class="slds-card__body makeWhite">
+
+                   <div  id="" class="">
+                    <ul  class="slds-list--vertical slds-has-cards">
+                    <div id="innerNewsli">
+                      </div>
+                      </ul>
+                   
+                    </div>
+                </div>
+               
+              </div>
+    </div>
+    
+    
+    
+    <p></p>
+
+    <div id="hotTopicsDIV" class="slds"> 
+        <div class="slds-card">
+                <div class="slds-card__header slds-grid makeWhite">
+                  <div class="slds-media slds-media--center slds-has-flexi-truncate">
+                    <div class="slds-media__figure">
+                      <svg aria-hidden="true" class="slds-icon slds-icon-standard-topic slds-icon--small">
+                        <use xlink:href="{!URLFOR($Resource.salesforce_lightning,'/assets/icons/standard-sprite/svg/symbols.svg#topic')}"></use>
+                      </svg>
+                    </div>
+                    <div class="slds-media__body makeWhite">
+                      <h2 class="slds-text-heading--small slds-truncate">Hot Topics (<span id="numberOfHotTopics"></span>)</h2>
+                    </div>
+                  </div>
+                  <div class="slds-no-flex makeWhite">
+                    <div class="slds-button-group makeWhite">
+                     
+                      <button class="slds-button slds-button--icon-border-filled collapsed" data-toggle="collapse" data-target="#innerHotTopics">
+                        <svg aria-hidden="true" class="slds-button__icon">
+                          <use xlink:href="{!URLFOR($Resource.salesforce_lightning,'/assets/icons/utility-sprite/svg/symbols.svg#down')}"></use>
+                        </svg>
+                        <span class="slds-assistive-text">Show More</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div class="slds-card__body makeWhite">
+
+                   <div  id="innerHotTopics" class="collapse makeWhite">
+                             <table id="tableDataHotTopics" class="slds-table slds-table--bordered slds-no-row-hover">
+                    <thead>
+                      <tr>
+                       <th class="slds-text-heading--label slds-size--1-of-4 slds-cell-wrap" scope="col">Topic</th>
+                        <th class="slds-text-heading--label slds-size--1-of-4" scope="col">People Talking</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                  </table>   
+                     
+                    </div>
+                </div>
+               <!--  <div class="slds-card__footer"><a href="#" onclick="sforce.one.createRecord('Event')">Add Event <span class="slds-assistive-text">entity type</span></a></div> -->
+              </div>
+     </div>
+     <p></p>
+     <div id="recentDashboards" class="slds"> 
+        <div class="slds-card">
+                <div class="slds-card__header slds-grid makeWhite">
+                  <div class="slds-media slds-media--center slds-has-flexi-truncate">
+                    <div class="slds-media__figure">
+                      <svg aria-hidden="true" class="slds-icon slds-icon-standard-dashboard slds-icon--small">
+                        <use xlink:href="{!URLFOR($Resource.salesforce_lightning,'/assets/icons/standard-sprite/svg/symbols.svg#dashboard')}"></use>
+                      </svg>
+                    </div>
+                    <div class="slds-media__body makeWhite">
+                      <h2 class="slds-text-heading--small slds-truncate">Recent Dashboards (<span id="numberOfRecentDashboards"></span>)</h2>
+                    </div>
+                  </div>
+                  <div class="slds-no-flex makeWhite">
+                    <div class="slds-button-group makeWhite">
+                     
+                      <button class="slds-button slds-button--icon-border-filled collapsed" data-toggle="collapse" data-target="#innerDashboardRecords">
+                        <svg aria-hidden="true" class="slds-button__icon">
+                          <use xlink:href="{!URLFOR($Resource.salesforce_lightning,'/assets/icons/utility-sprite/svg/symbols.svg#down')}"></use>
+                        </svg>
+                        <span class="slds-assistive-text">Show More</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div class="slds-card__body makeWhite">
+
+                   <div  id="innerDashboardRecords" class=" collapse makeWhite">
+                       
+                     
+                    </div>
+                </div>
+               <!--  <div class="slds-card__footer"><a href="#" onclick="sforce.one.createRecord('Event')">Add Event <span class="slds-assistive-text">entity type</span></a></div> -->
+              </div>
+     </div>
+     <p></p>
+    <div id="recentRecordsDiv" class="slds"> 
+        <div class="slds-card">
+                <div class="slds-card__header slds-grid makeWhite">
+                  <div class="slds-media slds-media--center slds-has-flexi-truncate">
+                    <div class="slds-media__figure">
+                      <svg aria-hidden="true" class="slds-icon slds-icon-standard-recent slds-icon--small">
+                        <use xlink:href="{!URLFOR($Resource.salesforce_lightning,'/assets/icons/standard-sprite/svg/symbols.svg#recent')}"></use>
+                      </svg>
+                    </div>
+                    <div class="slds-media__body makeWhite">
+                      <h2 class="slds-text-heading--small slds-truncate">Recent Records (<span id="numberOfRecentRecords"></span>)</h2>
+                    </div>
+                  </div>
+                  <div class="slds-no-flex makeWhite">
+                    <div class="slds-button-group">
+                     
+                      <button class="slds-button slds-button--icon-border-filled collapsed" data-toggle="collapse" data-target="#innerRecentRecords">
+                        <svg aria-hidden="true" class="slds-button__icon">
+                          <use xlink:href="{!URLFOR($Resource.salesforce_lightning,'/assets/icons/utility-sprite/svg/symbols.svg#down')}"></use>
+                        </svg>
+                        <span class="slds-assistive-text">Show More</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div class="slds-card__body makeWhite">
+
+                   <div  id="innerRecentRecords" class="collapse makeWhite">
+                       
+                     
+                    </div>
+                </div>
+               <!--  <div class="slds-card__footer"><a href="#" onclick="sforce.one.createRecord('Event')">Add Event <span class="slds-assistive-text">entity type</span></a></div> -->
+              </div>
+     <!--    <div class="list-group" id="listGroupRR">
+                <a href="#innerRecentRecords" class="list-group-item active collapsed" data-toggle="collapse" data-target="#innerRecentRecords"> <span> </span> Recent Records <span class="badge" id="numberOfRecentRecords"></span> </a>
+                <div class="list-group collapse" id="innerRecentRecords">
+                </div>
+                
+        </div> -->
+    </div>
+    <p></p>
+  
+    <div id="todaysAccountsDiv" class="slds">
+      <div class="slds-card">
+                <div class="slds-card__header slds-grid makeWhite">
+                  <div class="slds-media slds-media--center slds-has-flexi-truncate">
+                    <div class="slds-media__figure">
+                      <svg aria-hidden="true" class="slds-icon slds-icon-standard-contact slds-icon--small">
+                        <use xlink:href="{!URLFOR($Resource.salesforce_lightning,'/assets/icons/standard-sprite/svg/symbols.svg#account')}"></use>
+                      </svg>
+                    </div>
+                    <div class="slds-media__body makeWhite">
+                      <h2 class="slds-text-heading--small slds-truncate">Today's Accounts (<span id="numberOfTodayAccounts"></span>)</h2>
+                    </div>
+                  </div>
+                  <div class="slds-no-flex makeWhite">
+                    <div class="slds-button-group makeWhite">
+                     
+                      <button class="slds-button slds-button--icon-border-filled collapsed" data-toggle="collapse" data-target="#innerTodaysAccounts">
+                        <svg aria-hidden="true" class="slds-button__icon">
+                          <use xlink:href="{!URLFOR($Resource.salesforce_lightning,'/assets/icons/utility-sprite/svg/symbols.svg#down')}"></use>
+                        </svg>
+                        <span class="slds-assistive-text">Show More</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div class="slds-card__body makeWhite">
+
+                   <div  id="innerTodaysAccounts" class="makeWhite collapse">
+                       
+                     
+                    </div>
+                </div>
+               <!--  <div class="slds-card__footer"><a href="#" onclick="sforce.one.createRecord('Event')">Add Event <span class="slds-assistive-text">entity type</span></a></div> -->
+              </div>
+       <!--  <div class="list-group" id="listGroupTodaysAccount">
+                <a href="#todaysAccountsDiv" class="list-group-item active collapsed" data-toggle="collapse" data-target="#innerTodaysAccounts"> <span> </span> Today's Accounts <span class="badge" id="numberOfTodayAccounts"></span> </a>
+                <div class="list-group collapse" id="innerTodaysAccounts">
+                </div>
+                
+        </div> -->
+    </div>
+<!--  <a href="" onclick="sforce.one.navigateToObjectHome('Contact')">DashBoards</a> -->
+ <!-- <a href="" >Create Record</a> -->
+</div>
+
+
+
+</body>
+<div id="dialog-confirm" style="display:none" title="Complete Task?">
+  <p><span class="ui-icon ui-icon-alert" style="float:left; margin:0 7px 20px 0;"></span>Are you sure?</p>
+</div>
+<apex:includeScript value="{!URLFOR($Resource.TodayViewFiles,'js/waitMe.min.js')}"/>
+
+
+
+</html>
+</apex:page>

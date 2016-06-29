@@ -1,0 +1,504 @@
+<apex:page sideBar="false" showHeader="false" standardController="Case" extensions="TakeACasePrimaryTabController" 
+    title="{!IF(ISNULL($CurrentPage.parameters.queueName), '',$CurrentPage.parameters.queueName)}" standardStyleSheets="true">
+    
+    <apex:stylesheet value="{!URLFOR($Resource.DataTables_1_10_2, '/css/jquery.dataTables.min.css')}" />
+
+    <apex:includeScript value="/jslibrary/1413852410000/sfdc/ServiceDeskView.js" />
+    <apex:includeScript value="{!$Resource.jquery_1_11_1}" />
+    <apex:includeScript value="{!URLFOR($Resource.DataTables_1_10_2, '/js/jquery.dataTables.min.js')}"/>
+    <apex:includeScript value="/support/console/31.0/integration.js" />
+    
+    <apex:includeScript value="{!URLFOR($Resource.CometD, '/js/cometd.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.CometD, '/js/json2.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.CometD, '/js/jquery.cometd.js')}"/>    
+    <apex:includeScript value="{!URLFOR($Resource.jqueryVisibleMaster, '/jquery-visible-master/jquery.visible.min.js')}"/>
+    
+    <style>
+    
+        .small-text{
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 15px;
+            
+        }
+        
+        .large-text{
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 15px;
+            
+        }
+        tr:hover td {
+            background-color: #F3FAFB !important; 
+            color: #000;
+        }
+        .dataTables_length{
+            margin-bottom : 20px !important;
+        }
+        td{
+            border-bottom : 1px solid #F7F7F7 !important;
+        }
+        .dataTables_length {
+            width:33% !important;
+        }
+        .dataTables_paginate{
+            float: left !important;
+            text-align: center !important;
+            width: 33% !important;
+        }
+        .dataTables_info{
+            clear: none !important;
+            text-align: right !important;
+            width: 33% !important;
+        }
+        .section-title {
+            padding-left: 15px;
+            margin-top: 15px;
+            font-size: 18px;
+        }
+        .up-down-navigator { 
+            background-color: #EAEAA6;
+            border: 2px solid #DA9C09;
+            border-right:none; 
+            width:160px;
+            min-height:26px;
+            position:fixed;
+            top:25%;
+            right:-144px;
+            z-index:100000;
+            text-decoration:none !important;
+            font-weight: bold;
+            color:#000000 !important;
+            cursor:pointer;
+            transition:right 0.5s; /* Animation time */
+            -webkit-transition:right 0.5s; /* For Safari */         
+        }
+        .up-down-navigator:hover { 
+            right:0px;
+        }           
+        
+        .up-down-navigator label {
+            cursor:pointer;
+        } 
+        
+        
+        .navigator-section{
+             vertical-align:middle;
+             display:inline-block;
+             text-align:center;
+             margin-top:5px;
+        }
+        
+        .navigator-section-left {
+            width:20px;
+        }
+        .navigator-section-right {
+            width:130px;
+        }
+    </style>
+
+    <script type="text/javascript">
+        
+        // Trigger the scroll event
+        $(document).scroll(function(){
+            
+            // Select the detection type.
+            var detectPartial = true;
+            
+            // Is this element visible onscreen?
+            var visible = $('#AssignedToMe').visible( detectPartial );
+            if( visible ) {
+                $("#downArrow").css('display','none');  
+                $("#upArrow").css('display','inline-block');
+                $("#upDownNavigator").addClass('upFlowEnabled');
+                $("#upDownNavigator").removeClass('downFlowEnabled');
+                $("#upDownNavigator").attr('title','Go to {!$Label.Cases_I_Own} section');
+                $("#sectionLabelNavigator").text("{!$Label.Cases_I_Own}");
+            }   
+            else {
+                $("#downArrow").css('display','inline-block');  
+                $("#upArrow").css('display','none');
+                $("#upDownNavigator").addClass('downFlowEnabled');
+                $("#upDownNavigator").removeClass('upFlowEnabled');
+                $("#upDownNavigator").attr('title','Go to {!$Label.Cases_Assigned_to_Me} section');
+                $("#sectionLabelNavigator").text("{!$Label.Cases_Assigned_to_Me}");
+            }   
+        });
+    
+        
+        function scrollToSection() {
+            if( $("#upDownNavigator").hasClass("downFlowEnabled") ) {
+                $('html, body').animate({
+                    scrollTop: $("#AssignedToMe").offset().top
+                }, 1000);       
+            }
+            else if( $("#upDownNavigator").hasClass("upFlowEnabled") ) {
+                $('html, body').animate({
+                    scrollTop: $("#casesIOwn").offset().top
+                }, 1000);       
+            }
+        }
+    </script>
+        
+    <script type="text/javascript">
+
+        $(document).ready(function() {
+
+            
+            $.cometd.init({
+                url: window.location.protocol+'//'+window.location.hostname+'/cometd/28.0/',
+                requestHeaders: { Authorization: 'OAuth {!$Api.Session_ID}'}
+            });
+    
+            $.cometd.subscribe('/topic/HCSCCaseNotifications', function(message) {
+                
+                populateCaseListsAF();
+                
+            });
+       });
+       
+   </script> 
+    
+    <script>
+        var myCasesTable        = null;
+        var assignedCasesTable  = null;
+        var CaseId;
+        var CaseNumber;
+        
+        $(document).ready(function() {
+            
+            populateCaseListsAF();
+
+        }); 
+        
+        function initDataTable() {
+
+            
+            //Styling records table.
+            myCasesTable = $('.my-cases-table').dataTable( {
+                "destroy": true,
+                "aLengthMenu": [[15, 25, 50, 75, 100, -1], [15, 25, 50, 75, 100, "All"]],
+                "iDisplayLength": 15,
+                "dom": '<<"top" f>rt<lpi>>',
+                'aaSorting': [[9, 'desc']],
+                columnDefs: [
+                    { 
+                        type: 'datetime-us-flex', targets: [9]  
+                    }
+                ]
+            });
+            
+            assignedCasesTable = $('.assigned-cases-table').dataTable( {
+                "destroy": true,
+                "aLengthMenu": [[15, 25, 50, 75, 100, -1], [15, 25, 50, 75, 100, "All"]],
+                "iDisplayLength": 15,
+                "dom": '<<"top" f>rt<lpi>>',
+                'aaSorting': [[9, 'desc']],
+                columnDefs: [
+                    { 
+                        type: 'datetime-us-flex', targets: [9]
+                    }
+                ]
+            });
+            
+            $('[id$="loadingPanel"]').css("display","none"); 
+            $('[id$="containerPanel"]').css("display","block");       
+        }
+        
+        jQuery.extend( jQuery.fn.dataTableExt.oSort, {
+            "formatted-num-pre": function ( a ) {
+                a = (a === "-" || a === "") ? 0 : a.replace( /[^\d\-\.]/g, "" );
+                return parseFloat( a );
+            },
+         
+            "formatted-num-asc": function ( a, b ) {
+                return a - b;
+            },
+         
+            "formatted-num-desc": function ( a, b ) {
+                return b - a;
+            }
+        });
+        
+        jQuery.extend( jQuery.fn.dataTableExt.oSort, {
+            "datetime-us-flex-pre": function ( a ) {
+                // If there's no slash, then it's not an actual date, so return zero for sorting
+                if(a.indexOf('/') === -1) {
+                    return '0';
+                } 
+                else {
+                    // Set optional items to zero
+                    var hour = 0,
+                    min = 0,
+                    ap = 0;
+                    // Execute match. Requires month, day, year. Can be mm/dd or m/d. Can be yy or yyyy
+                    // Time is optional. am/pm is optional
+                    // TODO - remove extra time column from array
+                    var b = a.match(/(\d{1,2})\/(\d{1,2})\/(\d{2,4})( (\d{1,2}):(\d{1,2}))? ?(am|pm|AM|PM|Am|Pm)?/),
+                    month = b[1],
+                    day = b[2],
+                    year = b[3];
+                    // If time exists then output hours and minutes
+                    if (b[4] != undefined) {
+                        hour = b[5];
+                        min = b[6];
+                    }
+                    // if using am/pm then change the hour to 24 hour format for sorting
+                    if (b[7] != undefined) {
+                        ap = b[7];
+                        if(hour == '12') 
+                            hour = '0';
+                            if(ap == 'PM') 
+                                hour = parseInt(hour, 10)+12;
+                    }
+     
+                    // for 2 digit years, changes to 20__ if less than 70
+                    if(year.length == 2){
+                        if(parseInt(year, 10) < 70) 
+                            year = '20'+year;
+                        else
+                            year = '19'+year;
+                    }
+                    // Converts single digits
+                    if(month.length == 1)
+                        month = '0'+month;
+                    if(day.length == 1)
+                        day = '0'+day;
+                    if(hour.length == 1)
+                        hour = '0'+hour;
+                    if(min.length == 1)
+                        min = '0'+min;
+                    var tt = year+month+day+hour+min;
+                    return tt;
+                }
+            },
+            "datetime-us-flex-asc": function ( a, b ) {
+            return a - b;
+            },
+            "datetime-us-flex-desc": function ( a, b ) {
+            return b - a;
+            }
+        });
+        
+        
+        function storeCaseId (PassCaseId, PassCaseNumber)
+        {
+            CaseId = PassCaseId;
+            CaseNumber = PassCaseNumber;
+            openCasePrimaryTab(CaseId, CaseNumber);
+        }
+        
+        
+        function openCasePrimaryTab(CaseId, CaseNumber)
+        {
+            
+            try {
+                if(sforce.console.isInConsole()) {
+                    sforce.console.openPrimaryTab( null, "/" + CaseId, true, CaseNumber, null, CaseNumber );
+                }
+                else {
+                    window.open("/"+CaseId);
+                }
+            } catch(err) {
+                alert(err);
+            }
+        }
+        
+        var contactId = null;
+        var contactName = null;
+        var contactsAccountName = null;
+        
+        var openContactAsSubtab = {!openContactAsSubtab};
+        
+        function openSubTab( recId, recName, parentTabName, parentId ) {
+            contactId = recId;
+            contactName = recName;
+            contactsAccountName = parentTabName;
+            sforce.console.openPrimaryTab(null, "/" + parentId , true, parentTabName , openSuccess, parentTabName)
+            
+        }
+        
+        var openSuccess = function openSuccess(result) {
+            //Report whether we succeeded in opening the subtab
+            if (result.success == true) {
+                sforce.console.openSubtabByPrimaryTabName( contactsAccountName, "/" + contactId, true, contactName, null, openSuccessContact, contactName);    
+            } else {
+                alert('An error occurred.');
+            }
+        };
+        
+        var openSuccessContact = function openSuccessContact(result) {
+            //Report whether we succeeded in opening the subtab
+            if (result.success == true) {
+                //sforce.console.openSubtabByPrimaryTabName( parentTabName, "/" + recId, true, recName, null, openSuccess, recName);    
+            } else {
+                alert('The tab cannot be opened. You may be facing this issue since a parent tab is already open. Please close the parent tab and try again.');
+            }
+        };
+        
+        function replaceLinkHrefs() {
+            $(".data-span").each(function(index, domEle){
+                  $(domEle).parents(".large-text").find("a").attr("href","#");
+                  var recName = $(domEle).parents(".large-text").find("a").text();
+                  var recId = $(domEle).find('.rec-id').text();
+                  
+                  if( openContactAsSubtab && $(domEle).find(".rec-parent-name").text().length > 0 ) {
+                    var parentTabName = $(domEle).find(".rec-parent-name").text();
+                    var parentId = $(domEle).find(".rec-parent-id").text();
+                    $(domEle).parents(".large-text").find("a").attr("href","javascript:openSubTab('"+recId+"', '"+ recName+"', '"+ parentTabName+"', '"+ parentId+"')");
+                  }
+                  else {
+                    $(domEle).parents(".large-text").find("a").attr("href","javascript:openCasePrimaryTab('"+recId+"', '"+ recName+"')");
+                  }
+            })      
+        }
+    </script>
+    
+    
+
+    
+    <apex:form >
+        <apex:pageMessages id="pgMessages"/>
+        <apex:actionFunction name="populateCaseListsAF" action="{!populateCaseLists}" reRender="containerPanel, pgMessages" onComplete="initDataTable();"/>
+        
+        <div id="loadingPanel" style="text-align:center;width:100%; margin-top:20px;"><apex:outputLabel value="{!$Label.Loading_Message}"/></div>
+        
+        
+        
+        <apex:outputPanel id="containerPanel" style="display:none;">
+            <script>
+                replaceLinkHrefs();
+            </script>
+            
+            <apex:outputPanel rendered="{!IF(casesAssignedToMe.size > 0, true, false)}">
+                <a id="upDownNavigator" class="up-down-navigator downFlowEnabled" onClick="scrollToSection();" title="Go to {!$Label.Cases_Assigned_to_Me} section">
+                    <span class="navigator-section navigator-section-left">
+                        <img src="{!URLFOR($Resource.Gauge, 'img/down119.png')}" id="downArrow" class="up-down-navigator-arrow"/>
+                        <img src="{!URLFOR($Resource.Gauge, 'img/up156.png')}" id="upArrow" class="up-down-navigator-arrow" style="display:none;"/>
+                    </span>
+                    <span id="sectionLabelNavigator" class="navigator-section navigator-section-right"><apex:outputLabel value="{!$Label.Cases_Assigned_to_Me}" /></span>
+                </a>
+            </apex:outputPanel>
+            
+            <div class="main-container">
+                
+                <div  class="cases-table" id="casesIOwn">
+                    <div class="section-title"><apex:outputLabel value="{!$Label.Cases_I_Own}"/></div>
+                    
+                    <apex:outputPanel rendered="{!IF(ListOfCases.size > 0, true, false)}"> 
+                        <table class="my-cases-table recordsTable">
+                            
+                            <thead>
+                                <tr bgcolor = "#F7F7F7">
+                                    <th ><div class="small-text"><apex:outputLabel value="{!$ObjectType.Case.fields.CaseNumber.Label}"/></div></th>
+                                    <apex:repeat var="f" value="{!$ObjectType.Case.FieldSets.TakeACase}">
+                                        <th ><div class="small-text"><apex:outputLabel value="{!CASE(f.label,'Group Account Number','Group Number', 'Contact ID', 'Contact Name', 'Account ID', 'Account Name', f.label)}"/></div></th>
+                                    </apex:repeat>
+                                    
+                                </tr>
+                            </thead>
+                            
+                            <tbody>
+                                <apex:repeat value="{!ListOfCases}" var="CaseObj">
+                                    
+                                    <tr>
+                                        <td>
+                                            <div class="large-text" >
+                                                <span href="#" onClick="storeCaseId('{!CaseObj.Id}','{!CaseObj.CaseNumber}');" class="info-links" style="Cursor:Pointer;text-decoration:underline">{!CaseObj.CaseNumber}</span>
+                                                &nbsp;
+                                                <apex:outputPanel rendered="{!IF(CaseObj.IsEscalated , true, false)}"><img src="{!URLFOR($Resource.Gauge, '/img/escalation12.gif')}" /></apex:outputPanel>
+                                            </div>
+                                        </td>
+                                        <apex:repeat var="f" value="{!$ObjectType.Case.FieldSets.TakeACase}">
+                                            <td>
+                                                <div class="large-text" >
+                                                    <apex:outputPanel rendered="{!IF(f.Type == 'reference' || f.Type=='datetime' || f.Type=='email', true, false)}">
+                                                        <apex:outputField value="{!CaseObj[f]}"/>
+                                                    </apex:outputPanel>
+                                                    
+                                                    <apex:outputPanel rendered="{!IF(f.Type != 'reference' && f.Type !='datetime' && f.Type != 'email', true, false)}">
+                                                        <apex:outputText value="{!CaseObj[f]}"/>
+                                                    </apex:outputPanel>
+                                                    
+                                                    <apex:outputPanel rendered="{!IF(f.Type == 'reference', true, false)}" styleClass="data-span" style="display:none" >
+                                                        <span class="rec-id">{!CaseObj[f]}</span>
+                                                        <apex:outputPanel rendered="{!IF(f == 'ContactId', true, false)}">
+                                                            <span class="rec-parent-name">{!CaseObj.Contact_s_Account_Name__c}</span>
+                                                            <span class="rec-parent-id">{!CaseObj.Contact_s_Account_Id__c}</span>
+                                                        </apex:outputPanel>
+                                                    </apex:outputPanel>
+                                                </div>
+                                            </td>
+                                        </apex:repeat>
+                                    </tr>
+                                </apex:repeat>
+                            </tbody>
+                        </table>
+                    </apex:outputPanel>
+                    
+                    <apex:outputPanel rendered="{!IF(ListOfCases.size == 0, true, false)}">
+                        <apex:outputLabel value="{!$Label.No_Records_Message}"/>
+                    </apex:outputPanel>
+                    
+                </div>
+                
+                <div id="AssignedToMe" class="cases-table" >
+                    <apex:outputPanel rendered="{!IF(casesAssignedToMe.size > 0, true, false)}">
+                        <div class="section-title"><apex:outputLabel value="{!$Label.Cases_Assigned_to_Me}" /></div>
+                        
+                        <table class="assigned-cases-table recordsTable">
+                            
+                            <thead>
+                                <tr bgcolor = "#F7F7F7">
+                                    <th ><div class="small-text"><apex:outputLabel value="{!$ObjectType.Case.fields.CaseNumber.Label}"/></div></th>
+                                    <apex:repeat var="f" value="{!$ObjectType.Case.FieldSets.TakeACaseAssignedToMe}">
+                                        <th ><div class="small-text"><apex:outputLabel value="{!CASE(f.label,'Group Account Number','Group Number','Contact ID', 'Contact Name', 'Account ID', 'Account Name', f.label)}"/></div></th>
+                                    </apex:repeat>
+                                    
+                                </tr>
+                            </thead>
+                            
+                            <tbody>
+                                <apex:repeat value="{!casesAssignedToMe}" var="CaseObj" id="theRepeat">
+                                    
+                                    <tr>
+                                        <td>
+                                            <div class="large-text" >
+                                                <span onClick="storeCaseId('{!CaseObj.Id}','{!CaseObj.CaseNumber}');" class="info-links" style="Cursor:Pointer;text-decoration:underline">{!CaseObj.CaseNumber}</span>
+                                                &nbsp;
+                                                <apex:outputPanel rendered="{!IF(CaseObj.IsEscalated , true, false)}"><img src="{!URLFOR($Resource.Gauge, '/img/escalation12.gif')}" /></apex:outputPanel>
+                                            </div>
+                                        </td>
+                                        <apex:repeat var="f" value="{!$ObjectType.Case.FieldSets.TakeACaseAssignedToMe}">
+                                            <td>
+                                                <div class="large-text" >
+                                                    
+                                                    <apex:outputPanel rendered="{!IF(f.Type == 'reference' || f.Type=='datetime' || f.Type=='email', true, false)}">
+                                                        <apex:outputField value="{!CaseObj[f]}"/>
+                                                    </apex:outputPanel>
+                                                    
+                                                    <apex:outputPanel rendered="{!IF(f.Type != 'reference' && f.Type !='datetime' && f.Type != 'email', true, false)}">
+                                                        <apex:outputText value="{!CaseObj[f]}"/>
+                                                    </apex:outputPanel>                                                 
+
+                                                    <apex:outputPanel rendered="{!IF(f.Type == 'reference', true, false)}" styleClass="data-span" style="display:none" >
+                                                        <span class="rec-id">{!CaseObj[f]}</span>
+                                                        <apex:outputPanel rendered="{!IF(f == 'ContactId', true, false)}">
+                                                            <span class="rec-parent-name">{!CaseObj.Contact_s_Account_Name__c}</span>
+                                                            <span class="rec-parent-id">{!CaseObj.Contact_s_Account_Id__c}</span>
+                                                        </apex:outputPanel>
+                                                    </apex:outputPanel>
+                                                </div>
+                                            </td>
+                                        </apex:repeat>
+                                    </tr>
+                                </apex:repeat>
+                            </tbody>
+                        </table>
+                    </apex:outputPanel>
+                    
+                    
+                </div>
+
+            </div>
+        </apex:outputPanel>
+    </apex:form>
+</apex:page>

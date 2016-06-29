@@ -1,0 +1,81 @@
+<apex:page controller="HPS_HomePageSliderPreferencesController" >
+    <style>
+        .preferences-container{
+            width:49%;
+            height:360px;
+            overflow-y:auto;
+            display:inline-block;
+        }
+        .preference-table td{
+            padding:5px 10px;
+        }
+        .preference-title{
+            font-size:16px;
+            font-weight:bold;
+            margin-bottom:5px;
+        }
+        .save-button{
+            margin-left:10px !important;
+            background: none repeat scroll 0 0 #1797c0 !important;
+            border: medium none !important;
+            color: #fff !important;
+            padding: 6px !important;
+            
+        }
+        .buttons-panel{
+        	margin-bottom:20px;
+        }
+    </style>
+    
+    <apex:form >
+        
+        <apex:pageMessages />
+        
+       	<apex:outputPanel styleClass="preferences-container" id="myPreferencesPanel">
+            <div class="preference-title">My Preferences</div>
+                        
+            <c:MultiselectPicklist leftLabel="Available Preferences"
+                leftOption="{!allPreferences}"
+                rightLabel="Selected Preferences"
+                rightOption="{!selectedPreferences}"
+                size="14"
+                width="250px"/>
+            
+            <div class="buttons-panel">
+	            <apex:commandButton action="{!savePreferences}" value="Save Preferences" styleClass="save-button" />
+	            <apex:commandButton action="{!goToHomePageSlider}" value="Cancel" styleClass="save-button" />
+            </div>
+        </apex:outputPanel>
+        
+       	<apex:outputPanel styleClass="preferences-container" id="profilePreferencesPanel" rendered="{!IF(profiles.size > 0, true, false)}">
+            <div class="preference-title">Configure Profile Preferences</div>
+            
+            <apex:selectList value="{!selectedProfile}" multiselect="false" size="1" label="Profile">
+	            <apex:selectOptions value="{!profiles}"/>
+	            <apex:actionSupport event="onchange" 
+                                action="{!populateProfilePreferences}" 
+                                rerender="profilePreferencesPanel, myPreferencesPanel" status="loadingStatus"/>
+				<apex:actionStatus startText=" Loading..."
+            						stopText="" id="loadingStatus"/>                                
+	        </apex:selectList>
+			
+			<apex:outputPanel rendered="{!IF( allProfilePreferences.size > 0 || selectedProfilePreferences.size > 0, true, false )}">
+            
+	            <c:MultiselectPicklist leftLabel="Available Preferences"
+	                leftOption="{!allProfilePreferences}"
+	                rightLabel="Selected Preferences"
+	                rightOption="{!selectedProfilePreferences}"
+	                size="14"
+	                width="250px"/>
+
+	            <div class="buttons-panel">
+		            <apex:commandButton action="{!saveProfilePreferences}" value="Save Preferences" styleClass="save-button" />
+		            <apex:commandButton action="{!goToHomePageSlider}" value="Cancel" styleClass="save-button" />
+	            </div>
+	            
+            </apex:outputPanel>
+            
+
+        </apex:outputPanel>
+    </apex:form>
+</apex:page>

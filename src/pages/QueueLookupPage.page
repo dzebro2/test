@@ -1,0 +1,122 @@
+<apex:page controller="QueueLookupController" title="Search" showheader="false" sidebar="false" tabStyle="Group" id="pg">
+    <script type='text/javascript'>
+	    function noenter(ev)  {
+	   	    if (window.event && window.event.keyCode == 13 || ev.which == 13) {
+	   		    Search();
+	       	    return false;
+	         } else {
+	              return true;
+	         }
+	     }
+    </script>
+    <apex:form >
+        <apex:actionregion >
+            <!-- Panel for displaying lookup results -->
+            <apex:outputpanel id="pnlResults" style="margin:10px;height:100%;overflow-Y:auto;padding-bottom:20px" layout="block">
+                <apex:outputpanel id="groupSection" rendered="{!isGroup}">
+                    <!-- Pageblock containing group results, displayed when groupResults.size > 0 -->
+                    <apex:pageblock id="groupResults" rendered="{!groupResults.size > 0}">
+                        <apex:pageblocksection ><h2>{!groupMessage}</h2></apex:pageblocksection>
+                        <apex:pageblocktable value="{!groupResults}" var="g" id="grpResults">
+                            <apex:column >
+                                <apex:facet name="header">
+                                    <apex:outputpanel > Name </apex:outputpanel>
+                                </apex:facet>
+                                <apex:outputlink value="javascript:top.window.opener.lookupPick2('{!FormTag}','{!TextBox}_lkid','{!TextBox}','{!g.Id}','{!g.Name}', false)" rendered="{!NOT(ISNULL(g.Id))}">{!g.Name}</apex:outputlink>
+                            </apex:column>
+                        </apex:pageblocktable>
+                    </apex:pageblock>
+                    <apex:pageblock id="noGroupResults" rendered="{!groupResults.size == 0}">
+                        <apex:pagemessages />
+                    </apex:pageblock>
+                </apex:outputpanel>
+                <!-- Pageblock containing user results, displayed when userResults.size > 0 -->
+                <apex:pageblock id="userResults" rendered="{!userResults.size > 0}">
+                    <apex:pageblocksection ><h2>{!userPageMessage}</h2></apex:pageblocksection>
+                    <apex:outputlabel value="Search" for="txtSearch" />
+                    <apex:inputtext id="txtSearch" value="{!searchString}" onkeypress="return noenter(event);"/>
+                    <span style="padding-left:5px">
+                        <apex:commandbutton id="btnGo" value="Go" action="{!Search}" rerender="userResults"></apex:commandbutton>
+                    </span>
+                    <apex:actionfunction action="{!Search}" name="Search" />
+                    <apex:pageblocktable value="{!userResults}" var="u" id="usrResults">
+                        <apex:column >
+                            <apex:facet name="header">
+                                <apex:outputpanel > Full Name </apex:outputpanel>
+                            </apex:facet>
+                            <!-- Clicked on value populates the original lookup field on CaseQueueSelection page -->
+                            <apex:outputlink value="javascript:top.window.opener.lookupPick2('{!FormTag}','{!TextBox}_lkid','{!TextBox}','{!u.Id}','{!u.Name}', false)" rendered="{!NOT(ISNULL(u.Id))}">{!u.Name}</apex:outputlink>
+                        </apex:column>
+                        <apex:column >
+                            <apex:facet name="header">
+                                <apex:outputpanel > Title </apex:outputpanel>
+                            </apex:facet>
+                            <apex:outputtext >{!u.Title}</apex:outputtext>
+                        </apex:column>
+                        <apex:column >
+                            <apex:facet name="header">
+                                <apex:outputpanel > Phone </apex:outputpanel>
+                            </apex:facet>
+                            <apex:outputtext >{!u.Phone}</apex:outputtext>
+                        </apex:column>
+                        <apex:column >
+                            <apex:facet name="header">
+                                <apex:outputpanel > Email </apex:outputpanel>
+                            </apex:facet>
+                            <apex:outputtext >{!u.Email}</apex:outputtext>
+                        </apex:column>
+                    </apex:pageblocktable>
+                    <!-- Code for pagination -->
+                    <!-- Buttons refer to previous and next in the controller -->
+                    <!-- Calls rerenders on itself and on the userResults pageBlock -->
+                    <apex:pageblocksection id="pagination">
+                        <apex:outputpanel style="text-align:center;horizontal-align:center;">
+                            <apex:commandbutton disabled="{!(pageNumber == 0 || totalNumberOfRecords == 0)}" rerender="userResults,pagination" value="Prev" action="{!previous}" title="Previous Page" />
+                            <apex:commandbutton disabled="{!(pageNumber == numberOfPages -1 || totalNumberOfRecords == 0)}" rerender="userResults,pagination" value="Next" action="{!next}" title="Next Page" />
+                            <apex:outputtext >
+                                {!IF(totalNumberOfRecords < 1, totalNumberOfRecords, ((pageNumber+1) * pageSize)+1-pageSize)} - {!IF(totalNumberOfRecords < 1, totalNumberOfRecords, IF(((pageNumber+1) * pageSize)>totalNumberOfRecords, totalNumberOfRecords,((pageNumber+1) * pageSize)))} of {!totalNumberOfRecords}
+                            </apex:outputtext>
+                        </apex:outputpanel>
+                    </apex:pageblocksection>
+                </apex:pageblock>
+                <apex:pageblock id="noUserResults" rendered="{!AND(userResults.size == 0, NOT(isGroup))}">
+                    <apex:pagemessage summary="Search did not return any results" severity="warning" strength="3" />
+                    <apex:pagemessages />
+                    <apex:pageblocksection ><h2>Users</h2></apex:pageblocksection>
+                    <apex:outputlabel value="Search" for="txtSearch" />
+                    <apex:inputtext id="txtSearch" value="{!searchString}" onkeypress="return noenter(event);" />
+                    <span style="padding-left:5px">
+                        <apex:commandbutton id="btnGo" value="Go" onclick="Search(); return false;" rerender="usrResults"></apex:commandbutton>
+                    </span>
+                    <apex:actionfunction action="{!Search}" name="Search" />
+                    <apex:pageblocktable value="{!userResults}" var="u" id="usrResults">
+                        <apex:column >
+                            <apex:facet name="header">
+                                <apex:outputpanel > User </apex:outputpanel>
+                            </apex:facet>
+                            <apex:outputlink value="javascript:top.window.opener.lookupPick2('{!FormTag}','{!TextBox}_lkid','{!TextBox}','{!u.Id}','{!u.Name}', false)" rendered="{!NOT(ISNULL(u.Id))}">{!u.Name}</apex:outputlink>
+                        </apex:column>
+                        <apex:column >
+                            <apex:facet name="header">
+                                <apex:outputpanel > Title </apex:outputpanel>
+                            </apex:facet>
+                            <apex:outputtext >{!u.Title}</apex:outputtext>
+                        </apex:column>
+                        <apex:column >
+                            <apex:facet name="header">
+                                <apex:outputpanel > Phone </apex:outputpanel>
+                            </apex:facet>
+                            <apex:outputtext >{!u.Phone}</apex:outputtext>
+                        </apex:column>
+                        <apex:column >
+                            <apex:facet name="header">
+                                <apex:outputpanel > Email </apex:outputpanel>
+                            </apex:facet>
+                            <apex:outputtext >{!u.Email}</apex:outputtext>
+                        </apex:column>
+                    </apex:pageblocktable>
+                </apex:pageblock>
+            </apex:outputpanel>
+        </apex:actionregion>
+    </apex:form>
+</apex:page>

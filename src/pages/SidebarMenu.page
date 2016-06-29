@@ -1,0 +1,19 @@
+<apex:page showHeader="false" sideBar="false" controller="SidebarMenuController">
+
+    <style>
+    .menu-container{height:300px;overflow:auto;width:100%; word-wrap: break-word;font-size:12px;text-align:left;background-color:#CFEEF8;}
+    .menu-item{ padding:5px;cursor:pointer !important; color:#000000;text-decoration:underline;display:block}
+    .menu-item:hover{ background-color:#E3F3FF;padding:5px;cursor:pointer !important; color:#000000;text-decoration:underline;display:block}
+    
+    </style>
+    <apex:includeScript value="{!$Resource.jquery_1_11_1}" />
+
+    <div class="menu-container">
+        <apex:repeat value="{!menuItems}" var="menuItem">
+            <a class="menu-item" target="{!IF(menuItem.Target__c == 'New Tab', '_blank', '_self')}" href="{!menuItem.URL__c}">
+                <apex:outputLabel value="{!menuItem.Display_Name__c}" />
+            </a>
+        </apex:repeat>
+    </div>
+
+</apex:page>

@@ -1,0 +1,310 @@
+<apex:page standardController="Account" extensions="BlueStarAccountReservationController" showHeader="true" sidebar="true">
+
+    <apex:stylesheet value="{!URLFOR($Resource.Bootstrap, 'bootstrap-3.3.4-dist/css/bootstrap.min.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.DataTables_1_10_2, '/css/jquery.dataTables.min.css')}" />
+    <apex:includeScript value="{!$Resource.jquery_1_11_1}" />
+    <apex:includeScript value="{!URLFOR($Resource.DataTables_1_10_2, '/js/jquery.dataTables.min.js')}"/>
+    <script type="text/javascript">
+           $(document).ready(function(){
+                 $("#SuccessMsgPanel").hide();
+           });
+    </script>
+    <script>
+        function BackToAccount(){
+            window.open("/" + "{!accountid}", "_top");
+        }
+        
+        function showDisplayMessage(){
+               $("#SuccessMsgPanel").show();
+               $("#PopUpMesg").hide();
+               setTimeout(function(){ 
+                    $("#SuccessMsgPanel").hide();
+               }, 5000);
+               window.open("/" + "{!accountid}", "_top");
+          }
+    </script>
+    
+    <style>
+        .bPageBlock {
+            border : 3px solid #1797c0 !important;
+        }
+        .InfoMessage {
+            min-height : 26px;
+            overflow : hidden;
+            width : 100%;
+            background-color : #1797c0;
+            padding : 3px;
+            font-size : 14px;
+            border: 1px solid #1797c0;
+            border-radius: 3px;
+            font-weight : bold;
+            color : #FFFFFF;
+            //text-align : center;
+        }
+        .RedColor{
+            
+            margin-top: 5px;
+            margin-bottom: 5px;
+            margin-left: 5px;
+            width : 98% !important;
+        }
+        
+        .SuccessMessageOuterCls{
+            background-color:black;
+            opacity: 0.20;
+            filter: alpha(opacity = 70);
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 9998;
+            color : #1797c0 !important;
+            border: 1px solid #1797c0 !important;
+            border-radius: 3px !important;
+        }
+        
+        .SuccessMessageInnerCls{
+            background-color: white;
+            border-width: 2px;
+            border-style: solid;
+            z-index: 9999;
+            left: 50%;
+            padding:15px;
+            position: absolute;
+            width: 500px;
+            height: 100px;
+            margin-left: -250px;
+            top:80px;
+            color : #1797c0 !important;
+            border: 1px solid #1797c0 !important;
+            border-radius: 3px !important;
+        }
+        
+        body .bPageBlock .pbBody .pbSubheader {
+            background-color : #1797c0 !important;
+            font-weight : bold !important;
+            font-size : 14px;
+            
+        }
+        .wrap {
+            width: 100%;
+        }
+        
+        .wrap table {
+            width: 100%;
+            table-layout: fixed;
+        }
+        
+        table tr td {
+            padding: 5px;
+            border: 1px solid #eee;
+            
+            word-wrap: break-word;
+        }
+        
+        table.head tr td {
+            background: #b2cdff;
+            width:Auto;
+            text-align : center;
+        }
+        
+        .inner_table {
+            height: 100px;
+            overflow-y: auto;
+            width:101%;
+        }
+        
+        .popup
+        {
+        
+            background-color: white;
+            border-width: 2px;
+            border-style: solid;
+            z-index: 9999;
+            left: 50%;
+            padding:15px;
+            position: absolute;
+            width: 500px;
+            margin-left: -250px;
+            top:80px;
+            color : #1797c0 !important;
+            border: 1px solid #1797c0 !important;
+            border-radius: 3px !important;
+            //text-align: center !important;
+            //font-weight: bold;
+           
+        }
+
+        .popupBg
+        {
+            background-color:black;
+            opacity: 0.20;
+            filter: alpha(opacity = 70);
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 9998;
+            color : #1797c0 !important;
+            border: 1px solid #1797c0 !important;
+            border-radius: 3px !important;
+        }
+        
+        .PopUpTableCss{
+           // border: 1px solid #000000 !important;
+           // text-align: center !important;
+        
+        }
+        
+        .callDiv{
+            width: 20px;
+            height: 20px;
+            display: inline-table;
+           
+        }
+        .inboundCall{
+            background-position: -0px -20px;
+        }
+    </style>
+    <apex:outputPanel id="BlueStarReservation" rendered="{!NOT(DiplayError)}">
+    <apex:form >
+    <div class="container-fluid">
+    <div class="row">
+    <div class="col-sm-12">
+        
+        <apex:pageBlock >
+        <apex:pagemessages />
+        <apex:outputPanel rendered="{!if(Hcsc_division == 'IL',true,false)}" >
+        <div class="InfoMessage">
+            {!$Label.BlueStarAccountReservationMsg1}
+        </div>
+        </apex:outputPanel>
+        <apex:outputPanel rendered="{!if(Hcsc_division == 'IL',false,true)}">
+        <div class="InfoMessage">
+            {!$Label.BlueStarAccountReservationMsg2}
+        </div>
+        </apex:outputPanel>
+        <br/>
+        <apex:outputPanel rendered="{!if(Hcsc_division == 'IL',true,false)}">
+        <apex:pageBlockSection columns="" title="Account/Grp # reservation Page" collapsible="false" >
+         <apex:repeat value="{!ProdGrpWrapperList}" var="rec">
+             <apex:outputPanel >
+             <apex:selectList size="1" value="{!rec.Selected}" >                 
+                 <apex:selectOptions value="{!rec.GroupNos}" />                    
+             </apex:selectList>
+             &nbsp;
+             <apex:outputlabel value="{!rec.entry} " />({!rec.DisplayPrefix})
+             </apex:outputPanel>
+         </apex:repeat>
+        </apex:pageBlockSection>
+        
+        <span>
+            &nbsp; &nbsp; {!$Label.BlueStarAccountReservationMsg3}
+        </span>
+        </apex:outputPanel>
+        <apex:outputPanel rendered="{!if(Hcsc_division == 'IL',false,true)}">
+            <apex:pageBlockSection columns="1" title="Account/Grp # reservation Page" collapsible="false" >
+            <apex:outputPanel >
+            {!$Label.BlueStarAccountReservationMsg4}&nbsp;
+             <apex:repeat value="{!ProdGrpWrapperList}" var="rec" rows="3">
+            
+             <apex:selectList size="1" value="{!rec.Selected}"  rendered="{!if(rec.Prefix=='Zero_Prefix',true,false)}">                 
+                 <apex:selectOptions value="{!rec.GroupNos}" />                    
+             </apex:selectList>             
+           
+         </apex:repeat>
+             
+             {!$Label.BlueStarAccountReservationMsg5}
+             </apex:outputPanel>
+            </apex:pageBlockSection>
+        </apex:outputPanel>
+        <br/><br/>
+      <!--  <div class="InfoMessage RedColor">
+            Please review the selections above, and update as needed before selecting 'Reserve Account/Group #s' or 'Cancel' below.
+        </div> -->
+        <apex:pageBlockButtons location="bottom">
+            <apex:commandButton value="Reserve Account/Group #s" action="{!setShowPopup}"  />
+          <!--   <apex:commandButton value="Reserve Account/Group #s" action="{!ReserveAcctCallout}"  rendered="{!if(Hcsc_division != 'IL',true,false)}" oncomplete="Closewindow();"/>-->
+            <apex:commandButton value="Cancel" onclick="BackToAccount(); return false;"/>
+        </apex:pageBlockButtons>
+        </apex:pageBlock>
+    </div>        
+    </div>
+    </div>    
+    </apex:form> 
+     <apex:outputPanel id="ReviewPAge" rendered="{!if(ShowPopup ,true,false )}" >
+     <apex:form >
+            <div id="PopUpMesg" >
+            <apex:outputPanel styleClass="popupBg"  layout="block"  rendered="{!NoTable}"/>
+            <apex:outputPanel styleClass="popup" layout="block" rendered="{!NoTable}">
+            <apex:pageblock title="Review Account Reservation/Group Number" mode="edit">
+            <div class="InfoMessage RedColor">
+                {!$Label.BlueStarAccountReservationMsg6}
+            </div>
+            <br/>
+               <table class="Review-Reservation data-table PopUpTableCss"  style="width:100%">
+                  <thead>
+                      <tr>
+                        <th>&nbsp;Product</th>
+                        <th>&nbsp;Group No.</th>
+                        
+                      </tr>                      
+                  </thead>
+                  <tbody>
+                    
+                      <apex:repeat value="{!ProdGrpWrapperList}" var="grpsec">
+                         <tr style="display:{!if(grpsec.selected=='00','none','table-row'  )}">
+                              <td>                                  
+                                {! if(Hcsc_division == 'IL',grpsec.entry,'') } ({!grpsec.Prefix})
+                              </td> 
+                              <td>                                  
+                                  {!grpsec.selected}                                  
+                              </td>                              
+                          </tr>
+                      </apex:repeat>
+                  </tbody>
+              </table> 
+            <apex:pageBlockButtons > 
+                <apex:commandLink value="Confirm Selections"  action="{!ReserveAcctCallout}" oncomplete="showDisplayMessage();" target="_self" styleclass="btn"/>
+                <apex:actionregion >
+                    <apex:commandLink styleClass="btn" value="Close" action="{!ClosePopUp}" />
+                </apex:actionregion>
+            </apex:pageBlockButtons>
+            </apex:pageblock>    
+            </apex:outputPanel>
+            
+            <apex:outputPanel styleClass="popupBg"  layout="block" rendered="{!!NoTable}" />
+            <apex:outputPanel styleClass="popup" layout="block" rendered="{!!NoTable}">
+               <div class="InfoMessage">
+               {!$Label.BlueStarAccountReservationMsg7} 
+               </div>
+               <br/>
+               <div align="Center">
+               <apex:commandLink value="Confirm Selections"  action="{!ReserveAcctCallout}" oncomplete="showDisplayMessage();" target="_self" styleclass="btn"/>
+               <apex:actionregion >
+                    <apex:commandLink styleClass="btn" value="Close" action="{!ClosePopUp}" />
+                </apex:actionregion>
+               </div >
+            </apex:outputPanel>
+            </div>
+            <div id="SuccessMsgPanel">
+                <apex:outputPanel styleClass="SuccessMessageOuterCls"  layout="block" />
+                <apex:outputPanel styleClass="SuccessMessageInnerCls" layout="block" >
+                   <div class="InfoMessage">
+                        {!$Label.BlueStar_success_message} 
+                   </div>
+                </apex:outputPanel>
+            </div>
+    </apex:form>            
+    </apex:outputPanel> 
+    </apex:outputPanel> 
+    <apex:outputPanel rendered="{!DiplayError}">
+    <apex:form >
+         <apex:pagemessages />
+        <a href="/{!account.Id}"><apex:outputText value="<< Back to Account" /></a>
+     </apex:form>
+    </apex:outputPanel>
+    
+</apex:page>

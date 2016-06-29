@@ -1,0 +1,367 @@
+<apex:page standardController="Account" extensions="ProductLandscapeController" title="Product Landscape" >
+
+
+<apex:stylesheet value="{!URLFOR($Resource.jQueryUI,'jquery-ui-1.11.4.custom/jquery-ui.min.css')}" />
+<apex:stylesheet value="{!URLFOR($Resource.DataTables_1_10_2, '/css/jquery.dataTables.min.css')}" />
+
+<style>
+    .tab-title{
+        margin:10px 0;
+        font-size:18px; 
+    }  
+    .data-table thead th {
+        background-color:#72A9D3 !important;
+        color:#fff;
+        font-weight:bold;
+    }
+    .accordion-row {
+        background-color:#EAF5FE !important;
+        cursor:pointer;
+        font-weight:bold;   
+    }
+    table.dataTable tbody th, table.dataTable tbody td {
+      
+      border-bottom: 1px solid #CFEEF8 !important;
+      padding: 10px !important;
+    }
+    .additional-info{
+        
+    }
+    .additional-info:hover{
+        background-color:#e5f5f9;
+    }
+</style>
+<script>
+function PrintPageFunction(){
+    window.open("/apex/ProductLandscapePrintView?Id={!Account.Id}", "_blank");
+}
+</script>
+
+<apex:includeScript value="{!URLFOR($Resource.jQueryUI,'jquery-ui-1.11.4.custom/external/jquery/jquery.js')}" />
+<apex:includeScript value="{!URLFOR($Resource.jQueryUI,'jquery-ui-1.11.4.custom/jquery-ui.min.js')}" /> 
+<apex:includeScript value="{!URLFOR($Resource.DataTables_1_10_2, '/js/jquery.dataTables.min.js')}"/>
+
+<div align="right">
+    <apex:outputLink onclick="PrintPageFunction()">Printable View</apex:outputLink>    
+</div>
+<apex:sectionHeader title="{!account.Name}" subtitle="Product Landscape"/>
+
+    <script>
+    $(document).ready(function(){
+        //$.fn.dataTable.ext.errMode = 'none';
+        $( "#tabs" ).tabs();
+        $('#activelyPurchasingProductsTable').DataTable({
+            columnDefs: [
+                {
+                    type: 'datetime-us-flex', targets: [5]
+                }
+            ]
+        });
+
+
+        $('#currentProductsTable').DataTable({
+            columnDefs: [
+                {
+                    type: 'datetime-us-flex', targets: [5]
+                }
+            ]
+        });
+
+
+        $('#implementingProductsTable').DataTable();
+
+            jQuery.extend( jQuery.fn.dataTableExt.oSort, {
+                "datetime-us-flex-pre": function ( a ) {
+                    // If there's no slash, then it's not an actual date, so return zero for sorting
+                    if(a.indexOf('/') === -1) {
+                        return '0';
+                    }
+                    else {
+                        // Set optional items to zero
+                        var hour = 0,
+                        min = 0,
+                        ap = 0;
+                        // Execute match. Requires month, day, year. Can be mm/dd or m/d. Can be yy or yyyy
+                        // Time is optional. am/pm is optional
+                        // TODO - remove extra time column from array
+                        var b = a.match(/(\d{1,2})\/(\d{1,2})\/(\d{2,4})( (\d{1,2}):(\d{1,2}))? ?(am|pm|AM|PM|Am|Pm)?/),
+                        month = b[1],
+                        day = b[2],
+                        year = b[3];
+                        // If time exists then output hours and minutes
+                        if (b[4] != undefined) {
+                            hour = b[5];
+                            min = b[6];
+                        }
+                        // if using am/pm then change the hour to 24 hour format for sorting
+                        if (b[7] != undefined) {
+                            ap = b[7];
+                            if(hour == '12')
+                                hour = '0';
+                                if(ap == 'PM')
+                                    hour = parseInt(hour, 10)+12;
+                        }
+
+                        // for 2 digit years, changes to 20__ if less than 70
+                        if(year.length == 2){
+                            if(parseInt(year, 10) < 70)
+                                year = '20'+year;
+                            else
+                                year = '19'+year;
+                        }
+                        // Converts single digits
+                        if(month.length == 1)
+                            month = '0'+month;
+                        if(day.length == 1)
+                            day = '0'+day;
+                        if(hour.length == 1)
+                            hour = '0'+hour;
+                        if(min.length == 1)
+                            min = '0'+min;
+                        var tt = year+month+day+hour+min;
+                        return tt;
+                    }
+                },
+                "datetime-us-flex-asc": function ( a, b ) {
+                return a - b;
+                },
+                "datetime-us-flex-desc": function ( a, b ) {
+                return b - a;
+                }
+            });
+
+
+    });
+
+
+
+</script>
+
+ 
+<div id="tabs">
+    <ul>
+        <li><a href="#tabs-1">Actively Purchasing Products</a></li>
+        <li><a href="#tabs-2">Implementing Products</a></li>
+        <li><a href="#tabs-3">Current Products</a></li>
+        <li><a href="#tabs-4">Lost Products</a></li>
+        <li><a href="#tabs-5">Other HCSC Products</a></li>
+    </ul>
+    <div id="tabs-1">
+        <div class="tab-title">Actively Purchasing Products</div>
+    
+        <table id="activelyPurchasingProductsTable" class="data-table">
+            <thead>
+                <tr>
+                    <th>Product Family</th>
+                    <th>Product Category</th>
+                    <th>Proposed Product</th>
+                    <th>Funding Type</th>
+                    <th>Competitors</th>
+               
+                    <th>Due Date</th>
+                    <th>Projected Members</th>
+                    <th>Associated Opportunity</th>
+                </tr>
+            </thead>
+            <tbody>
+                <apex:repeat value="{!activelyPurchasingProductsList}" var="activelyPurchasingProd">
+                    <tr>
+                        <td>{!activelyPurchasingProd.productFamily}</td>
+                        <td>{!activelyPurchasingProd.productCategory}</td>
+                        <td><a href="/{!activelyPurchasingProd.productId}" target="_blank">{!activelyPurchasingProd.productName}</a></td>
+                        <td>{!activelyPurchasingProd.funding}</td>
+                        <td style="text-align:center">{!activelyPurchasingProd.numberOfCompetitors}</td>
+                     
+                        <td>{!activelyPurchasingProd.dueDate}</td>
+                        <td  style="text-align:center">{!activelyPurchasingProd.numberOfProjectedMembers}</td>
+                        <td><a href="/{!activelyPurchasingProd.associatedOpportunityId}" target="_blank">{!activelyPurchasingProd.associatedOpportunityName}</a></td>               
+                    </tr>
+                </apex:repeat>
+            </tbody>
+            
+        </table>
+    </div>
+   
+    <div id="tabs-2">
+        <div class="tab-title">Implementing Products</div>
+    
+        <table id="implementingProductsTable" class="data-table">
+            <thead>
+                <tr>              
+                    <th>Opportunity</th>
+                    <th>Product</th>
+                    <th>Projected Members</th>             
+                    <th>Funding Type</th>    
+                    <th>Opportunity Team Member</th>               
+                    <th>Opportunity Effective Date</th> 
+                </tr>
+            </thead>
+            <tbody>
+                <apex:repeat value="{!impb}" var="impProd">  
+                        <tr>
+                            <td><a href="/{!impProd.oppId}" target="_parent">{!impProd.oppName}</a></td>
+                            <td><a href="/{!impProd.productId}" target="_parent">{!impProd.productName}</a></td>
+                            <td>{!impProd.members}</td>
+                            <td>{!impProd.funding}</td>
+                            <td>                             
+                                <apex:outputpanel rendered="{!IF(CONTAINS(ChkMapKeyI,impProd.oppId),true,false)}">
+                                    <apex:repeat value="{!teamMemberMapI[impProd.oppId]}" var="key">
+                                        {!key} <br />
+                                    </apex:repeat>
+                                </apex:outputpanel>
+                            </td>                                                                                      
+                            <td>{!impProd.effectiveDate}</td>                                                         
+                            </tr>                                                              
+                </apex:repeat>
+            </tbody>
+            
+        </table>
+    </div>
+    
+    <div id="tabs-3">
+        <div class="tab-title">Current Products</div>
+
+        <table id="currentProductsTable" class="data-table">
+            <thead>
+                <tr>
+                    <th>Product Family</th>
+                    <th>Product Category</th>
+                    <th>Active Product</th>
+                    <th>Funding Type</th>
+                    <th>Competitor / 3rd Party Vendor</th>
+                  
+                    <th>Renewal Date</th>
+                    <th>Members</th>
+                    <th>Projected Members</th>
+                    <th>Associated Renewal</th>
+                    <th>Number of BAs</th>
+                </tr>
+            </thead>
+            <tbody>
+                <apex:repeat value="{!currentProductsList}" var="currentProd">
+                    <tr >
+                        <td>{!currentProd.productFamily}</td>
+                        <td>{!currentProd.productCategory}</td>
+                        <td><a href="/{!currentProd.productId}" target="_blank">{!currentProd.productName}</a></td>
+                        <td>{!currentProd.funding}</td>
+                        <td>
+                            <apex:outputPanel rendered="{!IF( currentProd.carrierId == null, true, false )}">
+                                {!currentProd.carrierName}
+                            </apex:outputPanel>
+                            <apex:outputPanel rendered="{!IF( currentProd.carrierId == null, false, true)}">
+                                <a href="/{!currentProd.carrierId}" target="_blank">{!currentProd.carrierName}</a>
+                            </apex:outputPanel>
+                        </td>
+                       
+                        <td>{!currentProd.renewalDate}</td>
+                        <td>{!currentProd.numberOfMembers}</td>
+                        <td>{!currentProd.numberOfProjectedMembers}</td>
+                        <td><a href="/{!currentProd.associatedOpportunityId}" target="_blank">{!currentProd.associatedOpportunityName}</a></td>   
+                        <td><a href="/{!currentProd.ReportURL} "  target="_blank">{!currentProd.NumberOfBAs}</a></td> 
+                    </tr>
+                </apex:repeat>
+            </tbody>
+        </table>
+        
+    </div>
+
+    <div id="tabs-4">
+        <div class="tab-title">Lost Products</div>
+    
+        <table id="lostProductsTable" class="data-table">
+            <thead>
+                <tr>
+                    <th>Opportunity</th>
+                    <th>Product</th>
+                    <th>Projected Members</th>             
+                    <th>Funding Type</th>              
+                    <th>Opportunity Team Member</th>
+                    <th>Opportunity Effective Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                <apex:repeat value="{!lostp}" var="lostProd">
+                    <tr>
+                        <td><a href="/{!lostProd.oppId}" target="_parent">{!lostProd.oppName}</a></td>
+                        <td><a href="/{!lostProd.productId}" target="_parent">{!lostProd.productName}</a></td>
+                        <td>{!lostProd.members}</td>
+                        <td>{!lostProd.funding}</td>
+                        <td>
+                            <apex:outputpanel rendered="{!IF(CONTAINS(ChkMapKeyL,lostProd.oppId),true,false)}">
+                                <apex:repeat value="{!teamMemberMapL[lostProd.oppId]}" var="key">
+                                    {!key} <br />
+                                </apex:repeat>
+                            </apex:outputpanel>
+                        </td>       
+                        <td>{!lostProd.effectiveDate}</td>
+                    </tr>
+                </apex:repeat>
+            </tbody>
+            
+        </table>
+    </div>
+    <script>
+          $('#lostProductsTable').DataTable();
+    </script>   
+    <div id="tabs-5">
+        <div class="tab-title">Other HCSC Products</div>
+
+        <apex:form >
+            <apex:outputPanel id="otherHCSCProductsPanel">
+                <table id="otherHCSCProductsTable" class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Product Family</th>
+                            <th>Product Category</th>
+                            <th>Product</th>
+                            <th>Additional Information</th>
+                            
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <apex:repeat value="{!otherProductsList}" var="prod">
+                            <tr>
+                                <td>{!prod.productFamily}</td>
+                                <td>{!prod.productCategory}</td>
+                                <td><a href="/{!prod.productId}" target="_blank">{!prod.productName}</a></td>
+                                <td class="additional-info" title="Double click to edit Additional Information.">
+                                    
+                                    <apex:outputField value="{!prod.accoutProductInfo.Additional_Information__c}" title="Double click to edit Additional Information.">
+                                        <apex:inlineEditSupport showOnEdit="saveButton, cancelButton" event="ondblclick" 
+                                            changedStyleClass="myBoldClass" resetFunction="resetInlineEdit"/>                                   
+                                    </apex:outputField>
+                                
+                                    
+                                </td>    
+                                            
+                            </tr>
+                        </apex:repeat>
+                    </tbody>
+                    
+                </table>
+                
+                <div style="width:95%;text-align:right;padding:20px;">
+                    <apex:commandButton value="Save" action="{!saveAdditionalInformation}" id="saveButton" 
+                        style="display:none; background-color: #6FA8D2 !important;background-image: none; padding: 5px 20px; color: #fff;" 
+                        reRender="otherHCSCProductsPanel"/ >
+                        
+                    <apex:commandButton value="Cancel" action="{!cancelAdditionalInformation}" id="cancelButton" 
+                        style="display:none; background-color: #6FA8D2 !important;background-image: none; padding: 5px 20px; color: #fff;margin-left:20px" 
+                        reRender="otherHCSCProductsPanel"/ >
+                        
+                </div>
+                <script>
+                     $('#otherHCSCProductsTable').DataTable();
+                </script>
+            </apex:outputPanel>
+        </apex:form>
+    
+    </div>
+    
+        <div style="padding-left:19px;" class="back-to-previous-link">
+            <apex:outputLink value="/{!accountId}" style="color: #015BA7;"> &lt; &lt; Back to Previous Page </apex:outputLink>
+        </div>
+</div>
+ 
+<c:LinkOverrideScript />
+</apex:page>

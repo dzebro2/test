@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Report xmlns="http://soap.sforce.com/2006/04/metadata">
+    <columns>
+        <field>KnowledgeableUser$User</field>
+    </columns>
+    <description>Knowledgeable people per topic.</description>
+    <format>Summary</format>
+    <groupingsDown>
+        <dateGranularity>Day</dateGranularity>
+        <field>KnowledgeableUser$Topic</field>
+        <sortOrder>Desc</sortOrder>
+    </groupingsDown>
+    <name>CH T - Knowledgeable People Per Topic</name>
+    <params>
+        <name>co</name>
+        <value>1</value>
+    </params>
+    <reportType>Chatter_Knowledgeable_Users_1_0__c</reportType>
+    <scope>organization</scope>
+    <showDetails>true</showDetails>
+</Report>

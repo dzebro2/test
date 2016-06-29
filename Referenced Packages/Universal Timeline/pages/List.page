@@ -1,0 +1,164 @@
+<!-- 
+// Copyright 2013, Daron Kallan - Sales Engineering, Salesforce.com Inc.
+// All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are met:
+//
+// - Redistributions of source code must retain the above copyright notice,
+//   this list of conditions and the following disclaimer.
+// - Redistributions in binary form must reproduce the above copyright notice,
+//   this list of conditions and the following disclaimer in the documentation
+//   and/or other materials provided with the distribution.
+// - Neither the name of the salesforce.com nor the names of its contributors
+//   may be used to endorse or promote products derived from this software
+//   without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+// DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+// SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+// CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+// OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ -->
+
+<apex:page standardController="slt__EIT__c" extensions="slt.Config" standardStylesheets="true">
+	<apex:form id="eitsform">
+		<apex:pageMessages />
+		<apex:variable var="ListURL" value="{!$Page.slt__List+'?l=1'+IF(ISBLANK(TimelineObject),'','&timeline='+TimelineObject)+IF(ISBLANK($CurrentPage.Parameters.isdtp),'','&isdtp=vw')}" />
+		<apex:variable var="EditURL" value="{!$Page.slt__Edit+'?l=1'+IF(ISBLANK(TimelineObject),'','&timeline='+TimelineObject)+IF(ISBLANK($CurrentPage.Parameters.isdtp),'','&isdtp=vw')}" />
+		<apex:actionFunction name="doDelete" action="{!remove}" rerender="eitsform" />
+		<apex:actionFunction name="doMove" action="{!reorder}" rerender="eitsform" />
+		<apex:actionFunction name="openTimeline" action="{!openTimeline}" rerender="eitsform" />
+		<apex:actionFunction name="addCategory" action="{!addCategory}" rerender="categories" focus="CategoryName" />
+		<apex:actionFunction name="toggleCategory" action="{!toggleCategoryVisibility}" rerender="categories" />
+		<apex:inputHidden id="eit" value="{!eitID}" />
+		<apex:inputHidden id="eitorder" value="{!order}" />
+		<apex:inputHidden id="catid" value="{!catID}" />
+		<apex:pageBlock id="timelines" title="Timeline Configuration">
+			<apex:pageBlockButtons location="top">
+				<apex:commandButton reRender="none" value="Display Preferences" onclick="window.open('/setup/ui/listCustomSettingsData.apexp?id={!$ObjectType.slt__Timeline_Display__c.keyPrefix}','displaySettings');return false;" />
+			</apex:pageBlockButtons>
+			<apex:pageBlockSection id="TimelineSelector" columns="1">
+				<apex:pageBlockSectionItem helptext="Select Timeline to configure">
+					<apex:outputLabel value="Timeline" for="TimelineChooser" />
+					<apex:selectList id="Timeline" value="{!TimelineObject}" size="1" onchange="timelineChange(this.value);">
+						<apex:selectOptions value="{!Timelines}"></apex:selectOptions>
+					</apex:selectList>
+				</apex:pageBlockSectionItem>
+				<apex:pageBlockSectionItem id="NewTimelineChooser" rendered="{!IF(TimelineObject='+', true, false)}" helptext="Choose a base object for the new Timeline">
+					<apex:outputLabel value="Base Object" for="NewTimelineBaseObject" />
+					<apex:panelGrid columns="2">
+						<apex:selectList id="NewTimelineBaseObject" value="{!TimelineObject}" size="1" onchange="timelineChange(this.value);">
+							<apex:selectoptions value="{!TimelineObjects}" />
+						</apex:selectList>
+						<!-- <apex:commandButton action="{!openTimeline}" value="Create" /> -->
+					</apex:panelGrid>
+				</apex:pageBlockSectionItem>
+			</apex:pageBlockSection>
+		</apex:pageBlock>
+		<apex:pageBlock id="eits" title="{!$ObjectType.slt__EIT__c.LabelPlural}" rendered="{!IF(TimelineObject='+', false, true)}">
+			<apex:pageBlockButtons >
+				<apex:commandButton action="{!URLFOR($Action.EIT__c.New, $ObjectType.EIT__c, [timeline=TimelineObject,retURL=ListURL,saveURL=ListURL,cancelURL=ListURL])}" value="New" />
+				<apex:commandButton action="{!setupSamples}" value="Configure Sample Timeline Events" rendered="{!IF(AND(categorycount == 0, eitcount == 0, TimelineCount == 0, ISBLANK(TimelineObject)), true, false)}" rerender="eitsform" />
+			</apex:pageBlockButtons>
+			<apex:pageBlockTable value="{!eitwrappers}" var="t">
+				<apex:column headerValue="Action" width="190px" style="vertical-align:middle;line-height:20px;">
+				    <a href="{!EditURL}&id={!t.eit.Id}&retURL={!URLENCODE(ListURL)}&cancelURL={!URLENCODE(ListURL)}&saveURL={!URLENCODE(ListURL)}" title="Edit this {!$ObjectType.EIT__c.Label}">Edit</a> | 
+			    	<a href="#" onclick="del('{!t.eit.Id}');" title="Delete this {!$ObjectType.EIT__c.Label}">Del</a> | 
+				    <a href="{!EditURL}&order={!t.eit.Order__c}&retURL={!URLENCODE(ListURL)}&cancelURL={!URLENCODE(ListURL)}&saveURL={!URLENCODE(ListURL)}" title="Create and insert new {!$ObjectType.EIT__c.Label} at this location">Ins<!--<img src="/img/arrow2_picklist_right.gif" border="0" alt="Ins" />--></a> |
+				    <a href="#" onclick="move('{!t.eit.Id}',1);" style="{!IF(t.eit.Order__c == 1, 'visibility:hidden;display:none', '')}" title="Move this {!$ObjectType.EIT__c.Label} to the top"><img src="/img/double_arrow_up.gif" border="0" alt="Top" /></a>
+			    	<a href="#" onclick="move('{!t.eit.Id}',{!t.eit.Order__c - 1});" style="{!IF(t.eit.Order__c == 1, 'visibility:hidden;display:none', '')}" title="Move this {!$ObjectType.EIT__c.Label} up"><img src="/img/arrow_up.gif" border="0" alt="Up" /></a>
+				    <a href="#" onclick="move('{!t.eit.Id}',{!t.eit.Order__c + 1});" style="{!IF(t.eit.Order__c == eitcount, 'visibility:hidden;display:none', '')}" title="Move this {!$ObjectType.EIT__c.Label} down"><img src="/img/arrow_dwn.gif" border="0" alt="Down" /></a>
+				    <a href="#" onclick="move('{!t.eit.Id}',{!eitcount});" style="{!IF(t.eit.Order__c == eitcount, 'visibility:hidden;display:none', '')}" title="Move this {!$ObjectType.EIT__c.Label} to the bottom"><img src="/img/double_arrow_dwn.gif" border="0" alt="Bottom" /></a>
+				</apex:column>
+				<apex:column value="{!t.eit.slt__Active__c}"/>
+				<apex:column headerValue="{!$ObjectType.slt__EIT__c.Fields.Name.Label}" title="{!t.eit.slt__Description__c}"><img src="{!IF(ISBLANK(t.eit.Icon__c),'/resource/slt__Resources/dull_blue_circle.png',IF(RIGHT(t.eit.Icon__c,3)='__c','/resource/slt__Resources/dynamic_icon.gif',t.eit.Icon__c))}" />&nbsp;&nbsp;<span style="{!IF(ISBLANK(t.eit.TextColor__c),IF(ISBLANK(t.eit.Color__c),'','color:'+t.eit.Color__c),'color:'+t.eit.TextColor__c)}">{!t.eit.Name}</span></apex:column> 
+				<apex:column headerValue="{!$ObjectType.slt__EIT__c.Fields.slt__ObjectType__c.Label}" value="{!t.objectLabel}"/>
+				<apex:column headerValue="{!$ObjectType.slt__EIT__c.Fields.slt__RecordTypes2__c.Label}" value="{!t.recordTypesLabel}"/>
+				<apex:column headerValue="{!$ObjectType.slt__EIT__c.Fields.slt__InclusionField__c.Label}">{!BLANKVALUE(t.eit.slt__InclusionField__c, '-')}</apex:column>
+				<apex:column headerValue="{!$ObjectType.slt__Category__c.Label}" value="{!t.eit.Category__r.Name}"/>
+			</apex:pageBlockTable>
+		</apex:pageBlock>
+		<apex:pageBlock id="categories" title="{!$ObjectType.slt__Category__c.LabelPlural}" rendered="{!IF(TimelineObject='+', false, true)}">
+			<apex:pageBlockButtons >
+				<apex:commandButton value="{!IF(showNewCat,'Done Adding','New')}" action="{!toggleNewCat}" rerender="categories">
+					<apex:actionSupport focus="CategoryName" event="oncomplete" />
+				</apex:commandButton> 
+			</apex:pageBlockButtons>
+			<apex:pageBlockSection id="NewCategory" columns="1" rendered="{!showNewCat}">
+				<apex:pageBlockSectionItem helptext="Enter a new Category Name and hit return">
+						<apex:outputLabel value="Add Category (hit Enter)" for="CategoryName" />
+						<apex:inputText value="{!categoryName}" id="CategoryName" onkeypress="addCat(event);" />
+				</apex:pageBlockSectionItem>
+			</apex:pageBlockSection>
+			<apex:pageBlockTable value="{!EIT_Categories}" var="cat">
+				<apex:column headerValue="Action" width="60px">
+					<apex:commandLink action="{!URLFOR($Action.Category__c.Edit, cat.Id, [timeline=TimelineObject,retURL=ListURL,saveURL=ListURL,cancelURL=ListURL])}" value="Edit" rerender="categories" /> | 
+					<apex:commandLink action="{!URLFOR($Action.Category__c.Delete, cat.Id, [timeline=TimelineObject,retURL=ListURL,saveURL=ListURL,cancelURL=ListURL])}" value="Del" rerender="categories" />
+				</apex:column>
+				<apex:column headerValue="{!$ObjectType.slt__Category__c.Fields.Name.Label}"><apex:commandLink action="{!URLFOR($Action.Category__c.View, cat.Id, [timeline=TimelineObject,retURL=ListURL,saveURL=ListURL,cancelURL=ListURL])}" value="{!cat.Name}" /></apex:column>
+				<apex:column headerValue="{!$ObjectType.slt__Category__c.Fields.slt__DefaultVisibility__c.Label}"><apex:inputCheckbox value="{!cat.slt__DefaultVisibility__c}" onchange="toggleCatVisibility('{!cat.Id}');" /></apex:column>
+			</apex:pageBlockTable>
+		</apex:pageBlock>
+		<div align="center">JavaScript timeline widget &copy; <a href="http://code.google.com/p/simile-widgets/" target="_simile">The SIMILE Project</a>, open source software under <a href="http://simile.mit.edu/license.html" target="_mit">BSD license</a></div>
+	</apex:form>
+	<script>
+		function del(id)
+		{
+			var r = confirm('Are you sure you want to delete this {!$ObjectType.EIT__c.Label}?');
+			if (r == true)
+			{
+				var eit = document.getElementById('{!$Component.eitsform.eit}');
+				eit.value = id;
+				doDelete();
+			}
+		}
+		function move(id, order)
+		{
+			var eit = document.getElementById('{!$Component.eitsform.eit}');
+			eit.value = id;
+			var eitorder = document.getElementById('{!$Component.eitsform.eitorder}');
+			eitorder.value = order;
+			doMove();
+		}
+		function timelineChange(timeline)
+		{
+			if (timeline == null || timeline == '') openTimeline();
+			else if (timeline == '+') openTimeline();
+			else openTimeline();
+		}
+		function addCat(event)
+		{
+			if (event && event.which)
+			{
+				if (event.which == 13)
+				{
+					event.preventDefault();
+					addCategory();
+					return false;
+				}
+			}
+			else if (event && event.keyCode)
+			{
+				if (event.keyCode == 13)
+				{
+					if (typeof event['preventDefault'] == 'function') event.preventDefault();
+					event.keyCode = null;
+					addCategory();
+					return false;
+				}
+			}
+		}		
+		function toggleCatVisibility(catId)
+		{
+			var cid = document.getElementById('{!$Component.eitsform.catid}');
+			cid.value = catId;
+			toggleCategory();
+		}
+	</script>
+</apex:page>

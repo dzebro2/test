@@ -1,0 +1,178 @@
+<apex:page sidebar="false" showheader="false" standardController="Account" extensions="RSSNewsTickerController">
+<html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<head>
+       <apex:stylesheet value="{!URLFOR($Resource.salesforce_lightning,'assets/styles/salesforce-lightning-design-system-vf.min.css')}" />
+        <apex:stylesheet value="{!URLFOR($Resource.TodayViewFiles,'css/bootstrap.min.css')}" />
+
+    <apex:stylesheet value="{!URLFOR($Resource.TodayViewFiles,'css/jquery-ui.css')}" />
+      <apex:stylesheet value="{!URLFOR($Resource.TodayViewFiles,'css/vscroller.css')}" />
+
+
+    <apex:includeScript value="{!URLFOR($Resource.AccountMap,'AccountMapFiles/jquery-1.11.1.min.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.TodayViewFiles,'js/bootstrap.min.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.TodayViewFiles,'js/vscroller.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.TodayViewFiles,'js/jquery-ui.js')}"/>
+ <apex:includeScript value="{!URLFOR($Resource.TodayViewFiles,'js/commonDD.js')}"/>
+     <apex:includeScript value="{!URLFOR($Resource.TodayViewFiles,'js/moment.min.js')}"/>
+    <script src="/soap/ajax/33.0/connection.js" type="text/javascript"></script> 
+
+    <script type="text/javascript">
+    var arrayOfId = [];
+    var arrayOfAccountNames= [];
+
+    $(document).ready(function()
+    {
+               loadNews();
+    });
+
+    function loadNews(){
+        
+        $(function(){
+                     sforce.connection.sessionId = '{!$Api.Session_ID}'; 
+                    var query = "Select Id,ActivityDate, OwnerId, Owner.Name, AccountId, ActivityDateTime, WhatId,What.Name,Subject,Type from Event where OwnerId='{!$User.Id}' and ActivityDate = TODAY Order By ActivityDateTime Asc";
+                    var result = sforce.connection.query(query);
+                    var records = result.getArray("records");
+                    for (var i=0; i< records.length; i++) {
+                        var record = records[i];
+                    
+                        var iconLink = "{!URLFOR($Resource.salesforce_lightning,'/assets/icons/action-sprite/svg/symbols.svg#log_event')}";
+                        var recordtoNavigate ="'" + record.Id + "'";
+                        var recordtoNavigate2DayAccount ="'" + record.WhatId + "'";
+                        //console.log(recordtoNavigate);
+                      
+                       //console.log(record.What.Name);
+                       if (record.WhatId!=null){
+                         arrayOfId.push("'" + record.WhatId + "'");
+                         arrayOfAccountNames.push(record.What.Name); 
+                        }
+                      }
+                console.log('@@@@@@@@@@'+arrayOfAccountNames);
+                url = 'https://news.google.com/?output=rss&q='+returnStringFromArray({arrayOfAccountNames})+'&num=6';
+                //console.log(url);
+                $.ajax({
+                type: "GET",
+                url: document.location.protocol + '//ajax.googleapis.com/ajax/services/feed/load?v=1.0&num=100&callback=?&q=' + encodeURIComponent(url),
+                dataType: 'json',
+                error: function(){
+                    $('#container').waitMe('hide'); 
+                    alert('Unable to load feed, Incorrect path or invalid feed');
+                },
+                success: function(xml){
+                    var newsXMl = '<?xml version="1.0" encoding="utf-8" ?><newslist title="News">';
+                    if({!useFeedAPI} && xml.responseData != null && xml.responseData != ''){
+	                    values = xml.responseData.feed.entries;
+	                    $("#numberOfNews").text(values.length);
+	                    for (x=0;x<values.length;x++){
+	                        var datefromnews = moment(values[x].publishedDate,'ddd, DD MMM YYYY HH:mm:ss ZZ').fromNow();
+	                        console.log(datefromnews);
+	                        var sourceNewstitle = values[x].title.substring(values[x].title.indexOf('-')+1,values[x].title.length);
+	                        console.log(sourceNewstitle);
+	                        $("#innerNewsli").append('<li class="slds-list__item makeWhite"> <div class="slds-tile slds-tile--board"> <p class="slds-tile__title"><a href="'+values[x].link+'">'+values[x].title+'</a></p><div class="slds-tile__detail"> <p class="slds-text-heading--medium"></p><br/><p class="slds-wrap">'+values[x].contentSnippet+'</p> <div class="slds-tile__detail slds-text-body--small"><p class="slds-truncate">'+ sourceNewstitle + " " + datefromnews +'</p></div></div></div></li>');
+	                        newsXMl+= '<news category="red" url="'+ values[x].link+'"" date="'+values[x].publishedDate+'"><headline>'+values[x].title+'</headline><detail>'+ values[x].contentSnippet+'</detail></news>';
+	                    }
+	                }
+	                else{
+	                	var feedURL = 'https://news.google.com/?output=rss&q='+encodeURIComponent(returnStringFromArray({arrayOfAccountNames}))+'&num=6';
+	                	Visualforce.remoting.Manager.invokeAction(
+				            '{!$RemoteAction.RSSNewsTickerController.getRSSData}',
+				            feedURL,'true',
+				            function(result, event){
+				                if (event.status) {
+				                	var s='';
+				                	var str_array  = result.split('-----');
+				                	var innerNewsLiHtml = '';
+				                	var newsXMLHTML = '';
+				                	
+				                	for(var i = 0; i < str_array.length; i++) {
+				                		if(str_array[i].search('<li class=') != -1)
+				                			innerNewsLiHtml += str_array[i];
+				                		else if(str_array[i].search('<news category=') != -1){
+				                			newsXMl+= str_array[i];
+				                		}
+				                	}
+				                	$("#innerNewsli").append(innerNewsLiHtml);
+				                }},{escape:false});
+	                }
+                    
+                    
+                    
+
+                    var bringHotTopics = "Select Id,Name, TalkingAbout,Description,CreatedDate from Topic where TalkingAbout>0 order by TalkingAbout desc LIMIT 5";
+                    var resultHotTopic = sforce.connection.query(bringHotTopics);
+                    var recordsHotTopic = resultHotTopic.getArray("records");
+                    // console.log(recordsSub);
+                    var today = new Date();
+                    //console.log(recordsHotTopic);
+                    for (var h=0; h< recordsHotTopic.length; h++) {
+                       var recordHotTopic = recordsHotTopic[h];
+                       var recordtoNavigateHT =recordHotTopic.Id;
+
+                       var topicDescription = ''
+                       if (recordHotTopic.Description != null){
+                          topicDescription = recordHotTopic.Description;
+                       }
+                       //console.log(recordtoNavigateHT);
+                       newsXMl+= '<news category="blue" url="'+ recordtoNavigateHT +'"" date="'+convert2MDY(recordHotTopic.CreatedDate)+'"><headline>'+ recordHotTopic.Name+'</headline><detail>'+ topicDescription +'</detail></news>';
+                    }   
+                    $('#vscroller').vscroller({ newsfeed: newsXMl });
+                    //console.log(values);
+               	}
+              	 
+            });
+            });
+}
+
+    </script>
+    <style type="text/css">
+        .makeWhite {
+     
+          background-color: white;
+          border-top: 1px solid #ffffff;
+          border-color: #ffffff;
+        }
+
+        .slds .slds-card{
+                border: 1px solid #f4f6f9;
+        }
+        
+    </style>
+
+</head>
+<body style="background-color:#F4F6F9;">
+  <div class="container">
+    <div class="slds">
+     <div class="slds-card">
+                <div class="slds-card__header slds-grid">
+                  <div class="slds-media slds-media--center slds-has-flexi-truncate">
+                    <div class="slds-media__figure">
+                      <svg aria-hidden="true" class="slds-icon slds-icon-standard-contact slds-icon--small">
+                        <use xlink:href="{!URLFOR($Resource.salesforce_lightning,'/assets/icons/standard-sprite/svg/symbols.svg#news')}"></use>
+                      </svg>
+                    </div>
+                    <div class="slds-media__body ">
+                      <h2 class="slds-text-heading--small slds-truncate">Account News (<span id="numberOfNews">0</span>)</h2>
+                    </div>
+                  </div>
+                  <div class="slds-no-flex ">
+                    <div class="slds-button-group">
+                     
+                    </div>
+                  </div>
+                </div>
+                <div class="slds-card__body">
+
+                   <div  id="innterEvents" class="">
+                    <ul  class="slds-list--vertical slds-has-cards">
+                    <div id="innerNewsli">
+                     </div>
+                    </ul>
+                   
+                    </div>
+                </div>
+               
+              </div>
+    </div>
+    </div>
+</body>
+</html>
+</apex:page>

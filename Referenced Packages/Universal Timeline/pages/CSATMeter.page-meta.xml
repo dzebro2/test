@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ApexPage xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>30.0</apiVersion>
+    <availableInTouch>true</availableInTouch>
+    <confirmationTokenRequired>false</confirmationTokenRequired>
+    <description>Standalone horizontal customer satisfaction meter, intended as a Sales/Service Cloud Console top or bottom custom component for page layouts (fixed height of 14 pixels, requires Timeline component to exist in another panel)</description>
+    <label>CSAT Meter for Console (14px high)</label>
+</ApexPage>

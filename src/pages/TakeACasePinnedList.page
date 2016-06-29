@@ -1,0 +1,415 @@
+<apex:page id="takeACasePinnedList" sideBar="false" showHeader="false" controller="TakeACasePinnedListController" cache="true">
+
+    
+    <apex:stylesheet value="{!URLFOR($Resource.Gauge, 'css/layout.css')}" />
+    
+    <style>
+    .knob-input{cursor:pointer;border:none !important}
+    .pinned-list-items-container {background-color:#f7f7f7;padding:5px;padding-bottom:30px;}
+    .menu-tile {margin:10px 5px; padding:5px;background: #ffffff;width: 280px;height:auto;box-shadow: 1px 1px 2px rgba(0,0,0,0.2);cursor:pointer;border-left:10px solid #c8c8c8;text-align: center;font-size:18px; }
+    
+    .menu-tile:hover {margin:10px 5px; padding:5px;background: #f7f7f7;width: 280px;height: auto;box-shadow: 1px 1px 2px rgba(0,0,0,0.2);cursor:pointer;border-left:10px solid #FFCC00;text-align: center;}
+    .my-cases-menu-tile{margin:10px 5px; padding:5px;background: #ffffff;width: 280px;height:auto;box-shadow: 1px 1px 1px 2px rgba(0,0,0,0.2);cursor:pointer;border-left:10px solid #c8c8c8;text-align: center;font-size:11px; }
+    .my-view-menu .title-section{width:130px;display: inline-block;}
+    .menu-tile div {display:inline-block;}
+    .title-section{font-weight:bold;margin-left:10px;width:150px;word-wrap: break-word;color:#666666;}
+    .hover-title-text {font-size:12px;display:none;color:#999999;}
+    .block-display {display:block !important;}
+    .highlight-hovered-title {}
+    .title-text{font-size:14px; color: black}
+    .blurred-image {opacity: 0.8;}
+    .clear-image{opacity: 1;}
+    .not-allowed-cursor { cursor:not-allowed !important; }
+    .vertical-middle-aligned{vertical-align:middle;}
+    .alert-box {
+        border: 2px solid transparent;
+        border-radius: 4px;
+        left: 5px;
+        margin-bottom: 20px;
+        padding: 15px;
+        position: absolute;
+        top: 10px;
+        width: 275px;
+        word-wrap: break-word;
+        z-index: 1;
+        display:none;
+    }   
+    .alert-error {
+        background-color: #f2dede;
+        border-color: #ebccd1;
+        color: #a94442;
+    }
+    
+    .alert-success {
+        background-color: #99EB99;
+        border-color: #00B800;
+        color: #007200;
+    }
+    </style>    
+    
+    <apex:includeScript value="{!$Resource.jquery_1_11_1}" />
+    
+    <apex:includeScript value="{!URLFOR($Resource.Gauge, 'js/jquery.knob.js')}" />
+    <apex:includeScript value="/support/console/31.0/integration.js" />
+    
+    <apex:includeScript value="{!URLFOR($Resource.CometD, '/js/cometd.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.CometD, '/js/json2.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.CometD, '/js/jquery.cometd.js')}"/>
+   
+    <apex:form >
+    <script type="text/javascript">
+
+        $(document).ready(function() {
+
+            //createPushTopic();
+            $.cometd.init({
+                url: window.location.protocol+'//'+window.location.hostname+'/cometd/28.0/',
+                requestHeaders: { Authorization: 'OAuth {!$Api.Session_ID}'}
+            });
+    
+            $.cometd.subscribe('/topic/HCSCCaseNotifications', function(message) {
+                populateQueueCaseCounts();
+                
+            });
+            
+       });
+       
+   </script>        
+        <apex:outputPanel id="scriptVariables">
+            <script>
+                var caseNumber      = '{!JSENCODE(caseNumber)}';
+                var caseId          = '{!JSENCODE(caseId)}';
+                var assignStatus    = '{!JSENCODE(assignStatus)}';
+            </script>
+        </apex:outputPanel>
+        <script>
+            var primaryTabPage = null;
+            var primaryTabName = null; 
+
+            function assignToUserJS(queueName, primaryId, tabName, queueCount) {
+                primaryTabPage = primaryId;
+                primaryTabName = tabName;
+                if(queueName != '{!$Label.My_Cases}') {
+                    if( queueCount != 0 ) {
+                        assignCase( queueName );
+                    }
+                }
+                else {
+                    openMyCasesPrimaryTab();
+                }
+            }
+            
+            function openMyCasesPrimaryTab() {
+                
+                if(sforce.console.isInConsole()) {
+                    if(primaryTabPage != null && primaryTabPage != '') {
+                        sforce.console.openPrimaryTab( null, primaryTabPage, true, primaryTabName, null, primaryTabName );
+                    }
+                } else {
+                    window.open( primaryTabPage, '_blank' );
+                }
+                
+                
+                return true;
+            }
+            
+
+            
+            function showAlertMessages() {
+                if( assignStatus == 'success' ) {
+                    showSuccessMessage()
+                }
+                else if( assignStatus == 'error' ) {
+                    showErrorMessage()
+                }
+            }
+            
+            function showSuccessMessage() {
+    
+                var alertBox = $(".alert-success").clone();
+                var alertsLength = $('#alertMessageContainer').find(".alert-box").length;
+                if( alertsLength > 0 ) {
+                    var alertMargin = alertsLength * 90;
+                    $(alertBox).css("margin-top", alertMargin + "px");
+                }
+                
+                $('#alertMessageContainer').append(alertBox);
+                $(alertBox).find(".alert-message").html("Case <a style='cursor:pointer;font-weight:bold;text-decoration:underline;' onClick='openSelectedCasePrimaryTab(caseId, caseNumber)'>" + caseNumber + "</a> assigned to you.");
+                $(alertBox).fadeIn("slow");
+                
+                setInterval(function () {$(alertBox).fadeOut("slow");$(alertBox).remove();}, 5000);
+                
+            }
+            
+            function showErrorMessage() {
+    
+                var alertBox = $(".alert-error").clone();
+                var alertsLength = $('#alertMessageContainer').find(".alert-box").length;
+                if( alertsLength > 0 ) {
+                    var alertMargin = alertsLength * 90;
+                    $(alertBox).css("margin-top", alertMargin + "px");
+                }
+                
+                $('#alertMessageContainer').append(alertBox);
+                $(alertBox).find(".alert-message").text("{!$Label.Case_Queues_Error_Message_Text}");
+                $(alertBox).fadeIn("slow");
+                
+                setInterval(function () {$(alertBox).fadeOut("slow");$(alertBox).remove();}, 5000);
+                
+            }   
+
+            function openSelectedCasePrimaryTab(openCaseId, openCaseNumber) {
+                sforce.console.openPrimaryTab( null, '/'+openCaseId, true, openCaseNumber, null, openCaseNumber );
+            }
+            function OpenEmailCountReport(ReportId){
+                sforce.console.openPrimaryTab( null, ReportId, true, 'Reports', null, 'Reports' );
+            }
+            $(document).ready( function() {
+                createPushTopic();
+                if(sforce.console.isInConsole()) {
+                    assignToUserJS('{!$Label.My_Cases}', '/apex/TakeACasePrimaryTab', '{!$Label.My_Cases}',{!myCasesCount});
+                }
+            })
+                        
+        </script>
+        
+    
+    
+        <apex:actionFunction name="createPushTopic" action="{!createPushTopic}" reRender=""/>
+        <apex:actionFunction name="assignCase" action="{!assignCase}" reRender="scriptVariables" onComplete="showAlertMessages();">
+            <apex:param name="queueId" value="" />
+        </apex:actionFunction>
+
+        <apex:actionFunction name="callUnReadEmails" action="{!callUnReadEmails}" reRender="EmailCountPanel" status="emailRefreshStatus"/>
+        
+        <apex:actionStatus id="emailRefreshStatus"  onStart="$('#refreshIcon').css('display','none');$('#refreshIconAnimated').css('display','block');" 
+                                                    onStop="$('#refreshIconAnimated').css('display','none');$('#refreshIcon').css('display','block');" />
+        
+        <apex:actionFunction name="populateQueueCaseCounts" action="{!populateQueueCaseCounts}" reRender="containerPanel">
+        </apex:actionFunction>
+                
+<!--         <apex:actionPoller action="{!populateQueueCaseCounts}" reRender="containerPanel" interval="15"/> -->
+
+            <div class="alert-box alert-success">
+                <span class="alert-type-success">
+                    <img src="{!URLFOR($Resource.Gauge, 'img/cloud176.png')}" class="vertical-middle-aligned"/>
+                    <strong>Success!</strong>
+                </span>
+                <span class="alert-message"></span>
+            </div>
+            
+            <div class="alert-box alert-error">
+                <span class="alert-type-error">
+                    <img src="{!URLFOR($Resource.Gauge, 'img/cloud263.png')}" class="vertical-middle-aligned"/>
+                    <strong>Error!</strong>
+                </span>
+                <span class="alert-message"></span>
+            </div>
+                        
+            <div id="alertMessageContainer">
+            </div>        
+        <apex:outputPanel id="containerPanel">
+                
+                    <div class="pinned-list-items-container">
+                        <div class="my-cases-menu-tile" onclick="assignToUserJS('{!$Label.My_Cases}', '/apex/TakeACasePrimaryTab', '{!$Label.My_Cases}', {!myCasesCount});" title="{!$Label.My_Cases}"
+                            style="border:none;width:290px;">
+                            <div class="my-view-menu">
+                                
+                                <div class="title-section" style="margin-left:0px;">
+                                    <input class="knob knob-input my-cases-knob" value="{!myCasesCount}" />
+        <!--                            <img src="{!URLFOR($Resource.Gauge, 'img/006766-3d-transparent-glass-icon-arrows-arrowhead2-right.png')}" style="height:82px;width:82px;" /><br/> -->
+                                    <br/><br/><apex:outputLabel value="{!$Label.Cases_I_Own}"/>
+                                </div>
+                                <script>
+                                        var zeroCountColor = '#{!JSENCODE(defaultQueueConfig.Zero_Count_Color__c)}';
+                                        var rangeOneStart = parseInt({!defaultQueueConfig.Count_Range_1_Start__c});
+                                        var rangeOneEnd = parseInt({!defaultQueueConfig.Count_Range_1_End__c});
+                                        var rangeOneColor = '#{!JSENCODE(defaultQueueConfig.Count_Range_1_Color__c)}';
+                                        var rangeTwoEnd = parseInt({!defaultQueueConfig.Count_Range_2_End__c});
+                                        var rangeTwoColor = '#{!JSENCODE(defaultQueueConfig.Count_Range_2_Color__c)}';
+                                        var rangeThreeColor = '#{!JSENCODE(defaultQueueConfig.Count_Range_3_Color__c)}';   
+                                                                    
+                                        var casesCount = parseInt({!myCasesCount});
+                                        var gaugeColor = rangeOneColor;
+                                        if(casesCount == 0 ) {
+                                            gaugeColor = zeroCountColor;
+                                        }
+                                        else if(casesCount >rangeOneStart && casesCount <= rangeOneEnd) {
+                                            gaugeColor = rangeOneColor;
+                                        }
+                                        else if(casesCount >rangeOneEnd && casesCount <= rangeTwoEnd) {
+                                            gaugeColor = rangeTwoColor;
+                                        }
+                                        else if(casesCount >rangeTwoEnd ) {
+                                            gaugeColor = rangeThreeColor;
+                                        }
+                                        
+                                        var gaugeMaxRange = 100;
+                                        if(casesCount > gaugeMaxRange) {
+                                            gaugeMaxRange = casesCount; 
+                                        }
+                                        $(".my-cases-knob").knob({"width":100, "readOnly":true,"angleArc" :360,"fgColor" :gaugeColor,"displayPrevious":true,"inputColor":gaugeColor,"min":0,"max":gaugeMaxRange,"lineCap":"round","thickness":0.25,"height":100,"bgColor":"#e1e1e1"  });
+                                </script>
+                                
+                                <apex:outputPanel rendered="{!IF(NOT(ISNULL(assignedCasesCount)) && assignedCasesCount > 0, true, false)}">
+                                    <div class="title-section" style="margin-left:0px;">
+                                        <input class="knob knob-input assigned-cases-knob" value="{!assignedCasesCount}" />
+            <!--                            <img src="{!URLFOR($Resource.Gauge, 'img/006766-3d-transparent-glass-icon-arrows-arrowhead2-right.png')}" style="height:82px;width:82px;" /><br/> -->
+                                        <br/><br/><apex:outputLabel value="{!$Label.Cases_Assigned_to_Me}" />
+                                    </div>                          
+                                    
+                                    <script>
+                                        var zeroCountColor = '#{!JSENCODE(defaultQueueConfig.Zero_Count_Color__c)}';
+                                        var rangeOneStart = parseInt({!defaultQueueConfig.Count_Range_1_Start__c});
+                                        var rangeOneEnd = parseInt({!defaultQueueConfig.Count_Range_1_End__c});
+                                        var rangeOneColor = '#{!JSENCODE(defaultQueueConfig.Count_Range_1_Color__c)}';
+                                        var rangeTwoEnd = parseInt({!defaultQueueConfig.Count_Range_2_End__c});
+                                        var rangeTwoColor = '#{!JSENCODE(defaultQueueConfig.Count_Range_2_Color__c)}';
+                                        var rangeThreeColor = '#{!JSENCODE(defaultQueueConfig.Count_Range_3_Color__c)}';   
+                                                                    
+                                        var casesCount = parseInt({!assignedCasesCount});
+                                        var gaugeColor = rangeOneColor;
+                                        if(casesCount == 0 ) {
+                                            gaugeColor = zeroCountColor;
+                                        }
+                                        else if(casesCount >rangeOneStart && casesCount <= rangeOneEnd) {
+                                            gaugeColor = rangeOneColor;
+                                        }
+                                        else if(casesCount >rangeOneEnd && casesCount <= rangeTwoEnd) {
+                                            gaugeColor = rangeTwoColor;
+                                        }
+                                        else if(casesCount >rangeTwoEnd ) {
+                                            gaugeColor = rangeThreeColor;
+                                        }                                   
+
+                                            
+                                        var gaugeMaxRange = 100;
+                                        if(casesCount > gaugeMaxRange) {
+                                            gaugeMaxRange = casesCount; 
+                                        }
+                                        $(".assigned-cases-knob").knob({"width":100, "readOnly":true,"angleArc" :360,"fgColor" :gaugeColor,"displayPrevious":true,"inputColor":gaugeColor,"min":0,"max":gaugeMaxRange,"lineCap":"round","thickness":0.25,"height":100,"bgColor":"#e1e1e1"  });
+                                            
+                                    </script>
+                                </apex:outputPanel> 
+                            </div>
+                        </div>
+    
+                        <apex:repeat value="{!queuesNamesList}" var="rq">
+                            <div class="menu-tile queue-menu-tile {!IF(queueCounts[rq.Title__c] == 0, 'not-allowed-cursor','')}" onclick="assignToUserJS('{!JSENCODE(QueueNameAndIdMap[rq.Title__c])}', '/apex/TakeACasePrimaryTab', '{!$Label.My_Cases}', {!queueCounts[rq.Title__c]});" title="{!rq.Title__c}">
+                                <input  value="{!queueCounts[rq.Title__c]}" class="{!SUBSTITUTE(rq.Title__c,' ', '')} knob-input {!IF(queueCounts[rq.Title__c] == 0, 'not-allowed-cursor','')}" />
+                                
+                                <div class="title-section">
+                                    <img src="{!URLFOR($Resource.Gauge, 'img/detectives1.png')}" alt="Take a Case" class="blurred-image"/><br/>
+                                    <span class="hover-title-text take-case"><apex:outputLabel value="{!$Label.Case_Queue_Available_Text}" />&nbsp;</span>
+                                    <span class="hover-title-text no-cases"><apex:outputLabel value="{!$Label.Case_Queue_Not_Available_Text}" />&nbsp;</span>
+                                    <span class="hover-title-text hover-text-paceholder block-display">&nbsp;</span> 
+                                    <span class="title-text"><apex:outputLabel value="{!rq.Title__c} "  /></span><br/>
+                                   <span class= "hover-title-text hover-text-paceholder block-display"> <apex:outputLabel value="{!QueueMinTimeAndName[rq.Title__c]}" /></span> <br/>
+                
+                                    <br/>
+                                </div>
+                                <script>
+                                    var zeroCountColor = '#{!JSENCODE(rq.Zero_Count_Color__c)}';
+                                    if( zeroCountColor == '#' ) {
+                                        zeroCountColor = '#{!JSENCODE(defaultQueueConfig.Zero_Count_Color__c)}';
+                                    }
+                                    
+                                    var rangeOneStart = parseInt({!rq.Count_Range_1_Start__c});
+                                    if( rangeOneStart.length == 0 ) {
+                                        rangeOneStart = parseInt({!defaultQueueConfig.Count_Range_1_Start__c});
+                                    }
+                                    
+                                    var rangeOneEnd = parseInt({!rq.Count_Range_1_End__c});
+                                    if( rangeOneEnd.length == 0 ) {
+                                        rangeOneEnd = parseInt({!defaultQueueConfig.Count_Range_1_End__c});
+                                    }
+                                     
+                                    var rangeOneColor = '#{!JSENCODE(rq.Count_Range_1_Color__c)}';
+                                    if( rangeOneColor == '#' ) {
+                                        rangeOneColor = '#{!JSENCODE(defaultQueueConfig.Count_Range_1_Color__c)}';
+                                    }
+                                    
+                                    var rangeTwoEnd = parseInt({!rq.Count_Range_2_End__c});
+                                    if( rangeTwoEnd.length == 0 ) {
+                                        rangeTwoEnd = parseInt({!defaultQueueConfig.Count_Range_2_End__c});
+                                    }
+                                    
+                                    var rangeTwoColor = '#{!JSENCODE(rq.Count_Range_2_Color__c)}';
+                                    if( rangeTwoColor =='#' ) {
+                                        rangeTwoColor = '#{!JSENCODE(defaultQueueConfig.Count_Range_2_Color__c)}';
+                                    }
+                                    
+                                    var rangeThreeColor = '#{!JSENCODE(rq.Count_Range_3_Color__c)}';   
+                                    if( rangeThreeColor == '#' ) {
+                                        rangeThreeColor = '#{!JSENCODE(defaultQueueConfig.Count_Range_3_Color__c)}';
+                                    }
+                                                                                                    
+                                    var casesCount = parseInt({!queueCounts[rq.Title__c]});
+                                    var gaugeColor = rangeOneColor;
+                                    if(casesCount == 0 ) {
+                                        gaugeColor = zeroCountColor;
+                                    }
+                                    else if(casesCount >rangeOneStart && casesCount <= rangeOneEnd) {
+                                        gaugeColor = rangeOneColor;
+                                    }
+                                    else if(casesCount >rangeOneEnd && casesCount <= rangeTwoEnd) {
+                                        gaugeColor = rangeTwoColor;
+                                    }
+                                    else if(casesCount >rangeTwoEnd ) {
+                                        gaugeColor = rangeThreeColor;
+                                    }   
+                                    
+                                    
+                                    gaugeMaxRange = 100;
+                                    if(casesCount > gaugeMaxRange) {
+                                        gaugeMaxRange = casesCount; 
+                                    }
+                                    $(".{!SUBSTITUTE(rq.Title__c,' ', '')}").knob({"width":100, "readOnly":true, "angleArc" :360,"fgColor" :gaugeColor,"displayPrevious":true,"inputColor":gaugeColor,"min":0,"max":gaugeMaxRange,"lineCap":"round","thickness":0.25,"height":100,"bgColor":"#e1e1e1"  });
+                                </script>
+                            </div>                        
+                        </apex:repeat>
+                        
+                        <div id="EmailSectionPanel" style="text-align:center;position: fixed;width: 100%;height: 24px;bottom: 0;padding-top: 10px;background-color:#e1e1e1;border-top: 1px solid #999999;" class="unread-email">
+                            <apex:actionPoller action="{!callUnReadEmails}" reRender="EmailCountPanel" interval="{!RefereshInterval}"/>
+                            <a href="#" onClick = "OpenEmailCountReport('{!JSENCODE(ReportId)}');" class="info-links" style="Cursor:Pointer">
+                                <apex:outputPanel id="EmailCountPanel" style="margin-right:10px;font-size:12px;font-weight:bold;" >
+                                    <apex:outputPanel style="font-size:11px;margin-right:5px;display:inline-block;height:16px;width:16px;color:#fff;background-repeat: no-repeat;vertical-align: middle;background-image:url({!URLFOR($Resource.Gauge, 'img/close13.png')});" >
+    <!--                                    <span style=""><apex:outputText value="{!UnreadEmailCount}"/></span> -->
+                                    </apex:outputPanel>
+                                    <apex:outputText value="Unread Emails : {!UnreadEmailCount}"/>
+                                </apex:outputPanel>
+                            </a>
+                            <apex:outputPanel id="RefreshPanel" style="display:inline-block;vertical-align: middle;" >
+                                <a style="Cursor:Pointer" onClick="callUnReadEmails();" title="Refresh" id="refreshIcon"><img src="{!URLFOR($Resource.Gauge, 'img/two83.png')}"  alt="Refresh"/></a>
+                                <img src="{!URLFOR($Resource.Gauge, 'img/ajax-loader.gif')}"  id="refreshIconAnimated" alt="Refreshing" style="display:none"/>
+                            </apex:outputPanel>
+                        </div>
+                    </div>
+            
+                <script>
+                    
+                    $( ".queue-menu-tile" ).hover(
+                      function() {
+                        if($(this).hasClass('not-allowed-cursor')) {
+                            $( this ).find(".no-cases").addClass("block-display");
+                        } else {
+                            $( this ).find(".take-case").addClass("block-display");
+                            $( this ).find(".blurred-image").attr("src","{!URLFOR($Resource.Gauge, 'img/detectives.png')}");
+                        }
+                        $( this ).find(".hover-text-paceholder").removeClass("block-display");
+                        
+                      }, function() {
+                        if($(this).hasClass('not-allowed-cursor')) {
+                            $( this ).find(".no-cases").removeClass("block-display");
+                        } else {
+                            $( this ).find(".take-case").removeClass("block-display");
+                            $( this ).find(".blurred-image").attr("src","{!URLFOR($Resource.Gauge, 'img/detectives1.png')}");
+                        }
+                        $( this ).find(".hover-text-paceholder").addClass("block-display");
+                        
+                      }
+                    );              
+                </script>
+            </apex:outputPanel>            
+    </apex:form>
+</apex:page>

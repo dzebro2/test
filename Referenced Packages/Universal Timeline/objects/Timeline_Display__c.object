@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <customSettingsType>Hierarchy</customSettingsType>
+    <description>Personalization settings for the behavior and display of the Timeline</description>
+    <enableFeeds>false</enableFeeds>
+    <fields>
+        <fullName>Default_Zoom__c</fullName>
+        <defaultValue>7</defaultValue>
+        <deprecated>false</deprecated>
+        <description>The initial zoom level when the timeline first opens, from 0 (hours) to 9 (years). Default is 7.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>The initial zoom level when the timeline first opens, from 0 (hours) to 9 (years). Default is 7.</inlineHelpText>
+        <label>Initial Zoom Level (0-9)</label>
+        <precision>1</precision>
+        <required>true</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Scrolling__c</fullName>
+        <defaultValue>false</defaultValue>
+        <deprecated>false</deprecated>
+        <description>Whether the mouse wheel and/or trackpad gestures should scroll the timeline horizontally when the cursor is positioned over the timeline component (if not, it will scroll the outer page/container)</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Whether the mouse wheel and/or trackpad gestures should scroll the timeline horizontally when the cursor is positioned over the timeline component (if not, it will scroll the outer page/container)</inlineHelpText>
+        <label>Mouse Wheel/Trackpad Scrolling</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Target__c</fullName>
+        <defaultValue>&quot;subtab&quot;</defaultValue>
+        <deprecated>false</deprecated>
+        <description>When viewing the Timeline in a standard (non-console) view, the HTML browser target window to use for opening links (can use a named window or standard values like &quot;_blank&quot;, &quot;_parent&quot;, &quot;_top&quot;, etc).</description>
+        <externalId>false</externalId>
+        <inlineHelpText>When viewing the Timeline in a standard (non-console) view, the HTML browser target window to use for opening links (can use a named window or standard values like &quot;_blank&quot;, &quot;_parent&quot;, &quot;_top&quot;, etc).</inlineHelpText>
+        <label>Link Target</label>
+        <length>64</length>
+        <required>false</required>
+        <trackTrending>false</trackTrending>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Zoom_Center__c</fullName>
+        <defaultValue>false</defaultValue>
+        <deprecated>false</deprecated>
+        <description>When clicking the Zoom buttons, whether to zoom based on left edge of timeline (unchecked) or the center of the timeline (checked)</description>
+        <externalId>false</externalId>
+        <inlineHelpText>When clicking the Zoom buttons, whether to zoom based on left edge of timeline (unchecked) or the center of the timeline (checked)</inlineHelpText>
+        <label>Zoom from Center</label>
+        <trackTrending>false</trackTrending>
+        <type>Checkbox</type>
+    </fields>
+    <label>Timeline Display Preferences</label>
+    <visibility>Public</visibility>
+</CustomObject>

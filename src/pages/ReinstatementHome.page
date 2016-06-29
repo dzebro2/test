@@ -1,0 +1,44 @@
+<apex:page standardController="Account" extensions="ReinstatementExtension" showHeader="true" sidebar="true" standardStylesheets="false">
+    <!-- <apex:stylesheet value="{!URLFOR($Resource.Bootstrap, 'bootstrap-3.3.4-dist/css/bootstrap.min.css')}"/>    -->
+    <style>
+    .container{
+        bgcolor:#F0F0F0;
+    }
+    </style>
+    <apex:form >  
+        <div class="container">
+          <div class="row">
+            <div class="col-sm-12"> 
+              <!--  <div align="left">
+                    <div class="headerPhotoContainer">
+                        <img class="socialProfilePhoto" src="/img/social/unknown_company_pic.png" alt="Account Profile Picture"/>
+                        <h3>{!accountRecord.Name} - Reinstatement</h3>
+                    </div>
+                </div> -->
+               <Apex:sectionHeader title="{!accountRecord.Name}" subtitle="Reinstatement" printUrl="/img/social/unknown_company_pic.png"/>
+                 <apex:pagemessages />
+                 <apex:outputPanel rendered="{!NOT(hasEditAccess)}">
+                    <a href="/{!account.Id}"><apex:outputText value="<< Back to Account" /></a>
+                </apex:outputPanel> 
+                <apex:pageBlock rendered="{!hasEditAccess}">
+                   
+                    <apex:pageBlockSection title="{!$Label.Reinstatement_Home_Section}" collapsible="false" columns="1">
+                        <apex:pageBlockSectionItem >
+                            <apex:selectRadio style="font-weight:normal;" value="{!reinstatementType}" layout="pageDirection">
+                                <span style="font-weight:normal;">
+                                    <apex:selectOptions value="{!reinstatementTypes}"/>
+                                </span>
+                            </apex:selectRadio>
+                        </apex:pageBlockSectionItem>   
+                    </apex:pageBlockSection>
+                    
+                    <apex:pageBlockButtons location="bottom">
+                        <apex:commandButton value="Cancel" action="{!cancel}"/>
+                        <apex:commandButton value="Next" action="{!NavigateToSelectedPage}"/>
+                    </apex:pageBlockButtons>
+                </apex:pageBlock>  
+            </div>
+          </div>
+        </div> 
+    </apex:form>  
+</apex:page>

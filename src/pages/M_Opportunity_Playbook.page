@@ -1,0 +1,432 @@
+<apex:page standardController="Opportunity" showHeader="false" sidebar="false" standardStylesheets="false"  docType="html-5.0" applyHtmlTag="false" applyBodyTag="false">
+<html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"> 
+ <head>
+    <apex:stylesheet value="{!URLFOR($Resource.salesforce_lightning,'assets/styles/salesforce-lightning-design-system-vf.min.css')}" />
+    <apex:stylesheet value="{!URLFOR($Resource.TodayViewFiles,'css/bootstrap.min.css')}" />
+    <apex:stylesheet value="{!URLFOR($Resource.TodayViewFiles,'css/vscroller.css')}" /> 
+    <apex:stylesheet value="{!URLFOR($Resource.TodayViewFiles,'css/waitMe.min.css')}" />
+    <apex:stylesheet value="{!URLFOR($Resource.TodayViewFiles,'css/bootstrap-datetimepicker.min.css')}" />
+    <apex:stylesheet value="{!URLFOR($Resource.TodayViewFiles,'css/zabuto_calendar.css')}" />
+
+
+    <apex:includeScript value="{!URLFOR($Resource.AccountMap,'AccountMapFiles/jquery-1.11.1.min.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.TodayViewFiles,'js/bootstrap.min.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.TodayViewFiles,'js/moment.min.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.TodayViewFiles,'js/knockout-2.1.0.js')}"/>
+    
+    <apex:includeScript value="{!URLFOR($Resource.TodayViewFiles,'js/vscroller.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.TodayViewFiles,'js/jquery-ui.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.TodayViewFiles,'js/bootstrap-datetimepicker.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.TodayViewFiles,'js/zabuto_calendar.js')}"/>
+    <!-- <apex:includeScript value="{!URLFOR($Resource.p2r,'/jquery-p2r.min.js')}"/> -->
+    <apex:includeScript value="{!URLFOR($Resource.TodayViewFiles,'js/jquery.p2r.min.js')}"/>
+    
+    <script src="/soap/ajax/33.0/connection.js" type="text/javascript"></script> 
+    <script src="/soap/ajax/15.0/apex.js" type="text/javascript"></script>
+
+    <script type="text/javascript">
+        
+        (function(){try{var a=navigator.userAgent; 
+        if((a.indexOf('Salesforce')!=-1)&&(a.indexOf('iPhone')!=-1||a.indexOf('iPad')!=-1)&&(a.indexOf('Safari')==-1)){ 
+        var s=document.createElement('style'); 
+        s.innerHTML="html,html body{overflow: auto;-webkit-overflow-scrolling:touch;}body{position:absolute;left:0;right:0;top:0;bottom:0;}"; 
+        document.getElementsByTagName('head')[0].appendChild(s);}}catch(e){}})(); 
+
+        
+        $(document).ready(function(){ 
+        
+        
+        sforce.connection.sessionId = '{!$Api.Session_ID}'; 
+        
+        
+        var opportunityId = '{!opportunity.id}';
+        
+               
+        // Opportunity query
+        var opptyQuery = "SELECT Id, Name, AccountId, Playbook__c, Playbook__r.Stage_Progression__c, Account.Name, Account.Open_Enrollment_Date__c, Expected_Decision_Date__c, "+
+                         "Probability, StageName, Primary_Closed_Reason__c, Closed_Comments__c,Owner.Name, Type, Finalist__c, CloseDate, "+ 
+                         "Account_Market_Segment__c, Account_Industry__c, HCSC_Division__c, Region__c, District__c, Clusters__c "+
+                         "FROM Opportunity WHERE Id='"+opportunityId+"'";
+                         //'0068A000001rKTT'";
+        var oppty = sforce.connection.query(opptyQuery).records;
+        //console.log(oppty);
+       
+        
+          
+        
+        // Stage and substage that belong to the playbook in opportunity
+        var stageQuery;
+        if(oppty.StageName == 'Lost' || oppty.StageName == 'Declined' || oppty.StageName == 'No Further Action'){
+            stageQuery = "SELECT Id, Name,Stage_Sort_Order__c, (Select Id, Name From Substages__r) FROM Stage__c WHERE Playbook__c ='"+oppty.Playbook__c+"' AND ((Closed_Lost_Stage__c = false AND Name != 'Won') OR (Name = '"+oppty.StageName+"')) ORDER BY Stage_Sort_Order__c ASC";
+        }else{
+            stageQuery = "SELECT Id, Name,Stage_Sort_Order__c, (Select Id, Name From Substages__r) FROM Stage__c WHERE Closed_Lost_Stage__c = false AND Playbook__c ='"+oppty.Playbook__c+"' ORDER BY Stage_Sort_Order__c ASC";
+        }
+        
+        var stageResult = sforce.connection.query(stageQuery);
+        var stages = stageResult.getArray("records");
+        //console.log('Stages -- >');
+        //console.log(stages);
+        // Creating a list of substage Ids based on query above 
+        var subStgArray = [];
+        $.each(stages, function (i, stg) {
+            if(stg.Substages__r != null){
+                 $.each(stg.Substages__r.getArray("records"), function (j, substg) {
+                     subStgArray.push("'"+substg.Id+"'");
+                 })
+            }
+        })
+        
+        //Querying all tasks related to substages 
+        var substageQuery = "SELECT Id, Name, (SELECT Id, Name, Task_Sort_Order__c,Action__c FROM Tasks__r ORDER BY Task_Sort_Order__c ASC) FROM Substage__c WHERE Id IN("+subStgArray+")";
+        var subStgResult = sforce.connection.query(substageQuery);
+        var subStgs = subStgResult.getArray("records");
+        //console.log('Substages and tasks -->');
+        //console.log(subStgs);
+        
+        var subStgActionMap = {};
+        $.each(subStgs, function (i, subStg) {
+            if(subStg.Tasks__r != null){
+                subStgActionMap[subStg.Id] = subStg.Tasks__r;
+            }
+        })
+        //console.log(subStgActionMap);
+        
+        // Create the stage with tasks in panels 
+        $.each(stages, function (i, stg) {
+            $('#opptyToDo').append('<div class="panel panel-default" id="Panel'+i+'"><div class="panel-heading todopanelhead text-center" id="'+stg.Id+'">'+stg.Name+'</div>'+
+            '<div class="panel-body todopanelbody" id="Panel'+i+'Body"></div><div class="panel-footer todopanelfooter clearfix" id="Panel'+i+'Foot">'+
+            '<button type="button" id="savebutton'+i+'" class="btn btn-success btn-sm pull-left savebutton" disabled>Save</button></div></div>');
+            if(stg.Substages__r != null){
+               $.each(stg.Substages__r.getArray("records"), function (j, substg) {
+                    if (subStgActionMap.hasOwnProperty(substg.Id)) {
+                        $.each(subStgActionMap[substg.Id].getArray("records"), function (k, tsk) {
+                            $('#Panel'+i+'Body').append('<div class="checkbox slds-wrap" id="chbox'+i+'-'+j+'-'+k+'"><label><input class="'+stg.Id+'" id="'+tsk.Id+'" type="checkbox">'+tsk.Action__c+'</label></div>');
+                        })
+                    }
+               })
+           }
+       })
+       
+        
+        // Querying Substage mapping, task mapping and stage mapping
+        var substageMappingQuery = "SELECT Id, Name, Completed__c,Stage_Mapping__r.Name, Stage_Mapping__r.Id, Stage_Mapping__r.Completed__c, Stage_Mapping__r.Stage__c, Substage__r.Id, Substage__r.Name, Started__c, "+
+                                   "Stage_Mapping__r.Started__c, (SELECT Id, Name, Completed__c, Task__r.Name, Task__r.Id, Task__r.Case_Record_Type__c, Task__r.Trigger_After_Completion__c FROM Task_Mappings__r) "+ 
+                                   "FROM Substage_Mapping1__c "+  
+                                   "WHERE Stage_Mapping__r.Opportunity__c = '"+opportunityId+"' AND Substage__r.Id IN("+subStgArray+")";
+        var substageMappingResult = sforce.connection.query(substageMappingQuery);
+        var subStageMapping = substageMappingResult.getArray("records");
+        //console.log('Mappings -->');
+        //console.log(subStageMapping);
+        
+        var startedStages = 0;
+        $.each(subStageMapping, function (i, subStg) {
+            //console.log('Stage/Substage for loop'); 
+            //if stage is completed
+           // console.log(subStg);
+            if(subStg.Completed__c == 'true'){
+                    //console.log('Substage completed');
+                    $('#'+subStg.Stage_Mapping__r.Stage__c).parent().removeClass('panel-default').addClass('panel-success');
+                    $('#'+subStg.Stage_Mapping__r.Stage__c).append('<span class="glyphicon glyphicon-ok pull-right"</span>');
+                    if(subStg.Task_Mappings__r != null){
+                        $.each(subStg.Task_Mappings__r.getArray("records"), function (j, task) {
+                            // disable and check all completed tasks
+                            $('#'+task.Task__r.Id).attr('disabled', true);
+                            if(task.Completed__c == 'true'){
+                                $('#'+task.Task__r.Id).attr('checked', true);
+                            }
+                        })
+                   }
+            }
+            else{
+                if(subStg.Task_Mappings__r != null){
+                    $.each(subStg.Task_Mappings__r.getArray("records"), function (j, task) {
+                        // disable and check all completed tasks
+                        if(task.Completed__c == 'true'){
+                            $('#'+task.Task__r.Id).attr('disabled', true).attr('checked', true);
+                        }
+                        
+                    })
+                    // if stage is not completed and substage has been started, update panel head to yellow, add exclamation, add mark done button
+                    
+                    if(subStg.Stage_Mapping__r.Completed__c == 'false' && subStg.Stage_Mapping__r.Started__c == 'true'){
+                        if(!$('#'+subStg.Stage_Mapping__r.Stage__c).parent().hasClass('panel-warning')){
+                            startedStages++;
+                            $('#'+subStg.Stage_Mapping__r.Stage__c).parent().removeClass('panel-info').addClass('panel-warning');
+                            $('#'+subStg.Stage_Mapping__r.Stage__c).append('<span class="glyphicon glyphicon-exclamation-sign pull-right"</span>');
+                            $('#'+subStg.Stage_Mapping__r.Stage__c).next().next().append('<button type="button" class="btn btn-default btn-xs pull-right markDone" id="mdButton'+subStg.Stage_Mapping__r.Stage__c+'" data-stageId="'+subStg.Stage_Mapping__r.Stage__c+'">Mark Done</button>');
+                        }
+                    }
+                        // if stage is not completed and substage is not started, update panel head to blue, add start stage button
+                        if(subStg.Stage_Mapping__r.Completed__c == 'false' && subStg.Stage_Mapping__r.Started__c == 'false' ){
+                            if(!$('#'+subStg.Stage_Mapping__r.Stage__c).parent().hasClass('panel-info')){
+                              //  console.log('Are stages being marked as blue?');    
+                                $('#'+subStg.Stage_Mapping__r.Stage__c).parent().removeClass('panel-default').addClass('panel-info');
+                                if(oppty.Playbook__r.Stage_Progression__c == 'Sequential'){
+                                    $('#'+subStg.Stage_Mapping__r.Stage__c).next().next().append('<button type="button" class="btn btn-default btn-xs pull-right startStage" disabled id="ssButton'+subStg.Stage_Mapping__r.Stage__c+'" data-stageId="'+subStg.Stage_Mapping__r.Stage__c+'">Start Stage</button>');
+                                }else{
+                                    $('#'+subStg.Stage_Mapping__r.Stage__c).next().next().append('<button type="button" class="btn btn-default btn-xs pull-right startStage" id="ssButton'+subStg.Stage_Mapping__r.Stage__c+'" data-stageId="'+subStg.Stage_Mapping__r.Stage__c+'">Start Stage</button>');
+                                }
+                                $('#'+subStg.Stage_Mapping__r.Stage__c).next().find('input[type=checkbox]').each(function(){
+                                    var chBoxId = $(this).attr('id');
+                                    $('#'+chBoxId).attr('disabled', true);
+                                });    
+                            }
+                       }
+                 }
+            }
+        })
+        
+        
+        if(startedStages == 0 && oppty.Playbook__r.Stage_Progression__c == 'Sequential'){
+           // console.log('Sequential - start stage');
+            var found = 0;
+            $(document).find('.panel').each(function(){
+             //   console.log('Panel');
+                if($(this).hasClass('.panel-info') && found<1){
+                    found++;
+                    stageId = $(this).children().attr('id');
+                 //   console.log(stageId);
+                    $('#ssButton'+stageId).removeAttr('disabled');
+                }
+            });
+        
+        }
+        
+        
+        // Mark Done Button onClick - mark stage and substage(s) as completed, disable checkboxes, disable save button
+        
+        $(document).on("click",".markDone",(function(){
+        // console.log('Mark Done clicked');
+         var stageId = $(this).attr('data-stageId');
+        // console.log(stageId);
+         
+         var updateStageRecord = [];
+         var updateSubstageRecords = [];
+             var stgMapping = new sforce.SObject("Stage_Mapping__c");
+             var subStgMapping = new sforce.SObject("Substage_Mapping1__c");
+             $.each(subStageMapping, function (i, subStg) {
+                 if(subStg.Stage_Mapping__r.Stage__c == stageId){
+                     subStgMapping.Id = subStg.Id;
+                     subStgMapping.Completed__c = true;
+                     
+                     stgMapping.Id = subStg.Stage_Mapping__r.Id;
+                     stgMapping.Completed__c = true;        
+                 }
+             });
+             updateSubstageRecords.push(subStgMapping);
+             updateStageRecord.push(stgMapping);
+             
+             var subStgResult = sforce.connection.update(updateSubstageRecords);
+             var stgResult = sforce.connection.update(updateStageRecord);
+             if (stgResult[0].getBoolean("success") && subStgResult[0].getBoolean("success")){
+               // console.log('Success');
+                $('#'+stageId).next().children().find('input[type=checkbox]').each(function(){
+                    var chBoxId = $(this).attr('id');
+                    $('#'+chBoxId).attr('disabled', true);
+                });
+                $('#'+stageId).parent().removeClass('panel-warning').addClass('panel-success');
+                $('#'+stageId).find('span').remove()
+                $('#'+stageId).append('<span class="glyphicon glyphicon-ok pull-right"</span>');
+                $('#'+stageId).next().next().find('#mdButton'+stageId).remove();
+                var isDisabled = $('#'+stageId).next().next().find('.savebutton').attr("disabled")
+                if(isDisabled !== 'disabled'){
+                    $('#'+stageId).next().next().find('.savebutton').attr("disabled", "disabled");
+                }    
+              
+              // Sequential - mark done is complete, find all stages except next stage and disable the start stage button.
+              if(oppty.Playbook__r.Stage_Progression__c == 'Sequential'){
+                  $('.startStage').attr("disabled", "disabled");
+                  $('#'+stageId).parent().next().find('.startStage').removeAttr('disabled');
+                  
+              }     
+                
+             }else{
+                // console.log('Fail');
+                // console.log(stgResult);
+                // console.log(subStgResult);
+             } 
+             
+                  
+             
+            // console.log('Mark Done exit');              
+        }));
+        
+        
+        // Start Stage Button onClick
+        $(document).on("click",".startStage",(function(){
+             // console.log('Start Stage clicked');
+             var stageId = $(this).attr('data-stageId');
+             // console.log(stageId);
+             var updateSubstageRecords = [];
+             var subStgMapping = new sforce.SObject("Substage_Mapping1__c");
+             $.each(subStageMapping, function (i, subStg) {
+                 if(subStg.Stage_Mapping__r.Stage__c == stageId){
+                     subStgMapping.Id = subStg.Id;
+                     subStgMapping.Started__c = true;        
+                 }
+             });
+             updateSubstageRecords.push(subStgMapping);
+             //console.log(updateSubstageRecords);
+             var result = sforce.connection.update(updateSubstageRecords); 
+             if (result[0].getBoolean("success")){
+             //   console.log('Success');
+              //  console.log(result);
+                $('#'+stageId).next().children().find('input[type=checkbox]').each(function(){
+                    var chBoxId = $(this).attr('id');
+                    $('#'+chBoxId).attr('disabled', false);
+                });
+                $('#'+stageId).parent().removeClass('panel-info').addClass('panel-warning');
+                $('#'+stageId).append('<span class="glyphicon glyphicon-exclamation-sign pull-right"</span>');
+                $('#'+stageId).next().next().find('#ssButton'+stageId).remove();
+                $('#'+stageId).next().next().append('<button type="button" class="btn btn-default btn-xs pull-right markDone" id="mdButton'+stageId+'" data-stageId="'+stageId+'">Mark Done</button>');
+                        
+                
+             }else{
+               // console.log('Fail');
+               // console.log(result);
+             }    
+                //console.log('Start Stage exit');           
+        }));
+        
+        
+        
+         
+         // Hide panel body and footer on load
+            $(".todopanelbody").hide(); 
+            $(".todopanelfooter").hide(); 
+         
+         // execute logic when save button is clicked
+         $(document).on("click",".savebutton",(function(){   
+             
+            // console.log('Save button clicked');
+             var taskIdList =[];
+             var saveButtonId = $(this).attr('id');
+             
+             //$("#"+saveButtonId).parent().append('<div class="slds-spinner--small pull-left" id="savespinner"><img src="{!URLFOR($Resource.salesforce_lightning,'/assets/images/spinners/slds_spinner_brand.gif')}" /></div>');
+             
+             
+             var bodyId = $("#"+saveButtonId).parent().prev().attr('id');
+             $("#"+bodyId).find(":input").each(function(i,chbox){
+                if(chbox.disabled == false && chbox.checked == true){   
+                    var taskId = ($(this).attr('id'));
+                    taskIdList.push(taskId);
+                }
+             })
+            // console.log(taskIdList);
+             //sforce.connection.sessionId = "{!$Api.Session_ID}";
+             
+             var newRecords = [];
+             var taskMappingsWithCases = []; 
+             $.each(taskIdList, function (i, taskID) {
+                 var taskMapping = new sforce.SObject("Task_Mapping__c"); 
+                  $.each(subStageMapping, function (j, subStg) {
+                      if(subStg.Task_Mappings__r != null){
+                          $.each(subStg.Task_Mappings__r.getArray("records"), function (k, task) {    
+                              if(task.Task__r.Id == taskID){
+                                  taskMapping.Id = task.Id;
+                                  taskMapping.Completed__c = 1;
+                                  var now = new Date();
+                                  taskMapping.Date_Time_Completed__c = now;
+                                  taskMappingsWithCases.push(task.Id);
+                              }
+                          });
+                      }
+                  });
+                 
+                 newRecords.push(taskMapping);
+                 
+ 
+             })
+            
+          //  console.log(newRecords);
+           if(newRecords.length > 0){
+            var result = sforce.connection.update(newRecords); 
+             if (result[0].getBoolean("success")){
+               // console.log('Success');
+              //  console.log(result);
+                $.each(taskIdList, function (i, taskID) {
+                    $('#'+taskID).attr('disabled', true);
+                });
+                
+                var caseCreation = sforce.apex.execute("PlaybookCaseCreationHandler","createCases", {opportunityId:oppty.Id,tMIds:taskMappingsWithCases});  
+                
+               
+                
+             }else{
+                // console.log('Fail');
+                // console.log(result);
+             }      
+           }
+           
+           
+           var isDisabled = $(this).attr("disabled");
+           if(isDisabled !== 'disabled'){
+              $(this).attr("disabled", "disabled");
+           } 
+           
+           
+          // console.log('save button exit');
+           //$("#savespinner").remove();
+           
+         }));
+         
+         
+         // Enable save button when enabled checkbox is clicked
+         $(document).on("click",".checkbox",(function(){
+         
+          //   console.log('checkbox clicked');
+             
+             var chboxdivId = $(this).attr('id');
+             var chboxDisabled = $(this).children().children().attr('disabled');
+             
+           //  console.log(chboxdivId);
+          //   console.log(chboxDisabled);
+             if(chboxDisabled != 'disabled'){
+                 var saveDisabled = $("#"+chboxdivId).parent().next().find('.savebutton').attr('disabled');
+                 if(saveDisabled == 'disabled'){
+                //     console.log('here now');
+                     $("#"+chboxdivId).parent().next().find('.savebutton').removeAttr('disabled');         
+                 }
+             }
+            // console.log('checkbox exit');
+         })); 
+         
+         
+         // toggle panel body-footer on panel head click
+         $(".todopanelhead").click(function(){
+             var clickedId = $(this).attr('id');
+             $("#"+clickedId).siblings().toggle("fast");
+         });
+         
+        
+     });   
+   
+    </script>
+      
+      
+      
+      <style type="text/css">
+              .slds-list__item,.slds-card__header,.slds-card__body, .slds-no-flex ,.slds-button-group,.slds-card,.slds body{
+                  background-color:white
+              }
+      </style>    
+    
+    
+    
+ </head>
+ 
+ 
+<body style="background-color:#F4F6F9">
+    <div class="container">
+        <div class="slds">
+                    <!-- <div class="slds-box--x-small slds-theme--shade slds-m-top--x-large">
+                         <p><strong>PLAYBOOK</strong></p>
+                     </div>                   &nbsp; -->   
+                     <div class="panel-group" id="opptyToDo"></div>
+        </div>
+    </div>
+</body>
+ 
+
+</html>
+</apex:page>

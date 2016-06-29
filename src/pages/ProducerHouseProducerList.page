@@ -1,0 +1,162 @@
+<apex:page sideBar="false" showHeader="false" standardController="Account" extensions="ProducerHouseController" readonly="true" >
+    <apex:stylesheet value="{!URLFOR($Resource.DataTables_1_10_2, '/css/jquery.dataTables.min.css')}" />
+    <apex:includeScript value="{!$Resource.jquery_1_11_1}" />
+    <apex:includeScript value="{!URLFOR($Resource.DataTables_1_10_2, '/js/jquery.dataTables.min.js')}"/>
+    <style>
+        .accordion div.accordion-label label h4 {
+            white-space: nowrap;
+        }
+        .media-holder {
+            width:100% !important;
+        }
+        body {
+            background:white;
+        }
+        .accordion-title{
+            font-size:16px;
+            font-weight:bold;
+            margin:20px 10px;
+        }
+        .dataTables_length{
+            display:none !important;
+        }
+    
+        .data-table thead th {
+            background-color:#1797C0 !important;
+            color:#fff;
+            font-weight:bold;
+        }
+          
+        .setup-icon {
+            height: 16px;
+            left: 98%;
+            position: absolute;
+            top: 0;
+            width: 16px;
+            z-index: 10000;
+            cursor:pointer;        
+        }
+        
+    </style>
+     <script type="text/javascript">
+        
+        $(document).ready(function(){
+            $('.openTab').find("a").attr("target","_blank");
+            
+            jQuery.extend( jQuery.fn.dataTableExt.oSort, {
+                "datetime-us-flex-pre": function ( a ) {
+                    // If there's no slash, then it's not an actual date, so return zero for sorting
+                    if(a.indexOf('/') === -1 || a.indexOf('&nbsp') != -1) {
+                        return '0';
+                    } 
+                    else {
+                        // Set optional items to zero
+                        var hour = 0,
+                        min = 0,
+                        ap = 0;
+                        // Execute match. Requires month, day, year. Can be mm/dd or m/d. Can be yy or yyyy
+                        // Time is optional. am/pm is optional
+                        // TODO - remove extra time column from array
+                        var b = a.match(/(\d{1,2})\/(\d{1,2})\/(\d{2,4})( (\d{1,2}):(\d{1,2}))? ?(am|pm|AM|PM|Am|Pm)?/),
+                        month = b[1],
+                        day = b[2],
+                        year = b[3];
+                        // If time exists then output hours and minutes
+                        if (b[4] != undefined) {
+                            hour = b[5];
+                            min = b[6];
+                        }
+                        // if using am/pm then change the hour to 24 hour format for sorting
+                        if (b[7] != undefined) {
+                            ap = b[7];
+                            if(hour == '12') 
+                                hour = '0';
+                                if(ap == 'PM') 
+                                    hour = parseInt(hour, 10)+12;
+                        }
+         
+                        // for 2 digit years, changes to 20__ if less than 70
+                        if(year.length == 2){
+                            if(parseInt(year, 10) < 70) 
+                                year = '20'+year;
+                            else
+                                year = '19'+year;
+                        }
+                        // Converts single digits
+                        if(month.length == 1)
+                            month = '0'+month;
+                        if(day.length == 1)
+                            day = '0'+day;
+                        if(hour.length == 1)
+                            hour = '0'+hour;
+                        if(min.length == 1)
+                            min = '0'+min;
+                        var tt = year+month+day+hour+min;
+                        return tt;
+                    }
+                },
+                "datetime-us-flex-asc": function ( a, b ) {
+                return a - b;
+                },
+                "datetime-us-flex-desc": function ( a, b ) {
+                return b - a;
+                }
+            });
+            $('.producer-table').DataTable({
+                
+                columnDefs: [
+                    { 
+                        type: 'datetime-us-flex', targets: [2]
+                    }
+                ],
+               "order" :[[2,"asc"]]
+                
+            });                      
+        });
+
+    </script>
+
+
+    <span class="accordion-title">Producers </span><br/><br/>
+    <apex:outputPanel rendered="{!IF(producerList.size > 0, true, false)}" style="width:100%">
+        <table class=" producer-table data-table"  style="width:100%">
+            <thead>
+                <tr>
+                    <th>{!$Label.Producer}</th>
+                    <th>{!$ObjectType.National_Producer_Number__c.Fields.NPN__c.Label}</th>
+                    <th>{!$ObjectType.Account.Fields.Producer_Number__c.Label}</th>
+                    <th>{!$ObjectType.Account.Fields.BillingAddress.Label}</th>
+                </tr>
+            </thead>
+            <tbody>
+                <apex:repeat value="{!producerList}" var="producerObj">
+                    <tr>
+                        <td>
+                            <a href="/{!producerObj.Id}" target="_top">
+                                <apex:outputText style="text-decoration: underline;" value="{!producerObj.Name}"/>
+                            </a>
+                        </td>
+                         <td>
+                            <apex:outputText value="{!producerObj.National_Producer_Number__c}"/>
+                        </td>
+                        <td>
+                            <div class="openTab">
+                                <apex:outputField value="{!producerObj.Producer_Number__c}" />
+                            </div> 
+                        </td>
+                        <td>
+                            <apex:outputText value="{!producerObj.BillingStreet} {!producerObj.BillingCity} {!producerObj.BillingState} {!producerObj.BillingPostalCode}" />
+                        </td> 
+                    </tr>
+                </apex:repeat>
+                
+            </tbody>
+        </table>
+       
+    </apex:outputPanel>
+    <apex:outputPanel rendered="{!IF(producerList.size > 0,false, true)}" style="margin-left:20px">
+        No Producers to show.
+    </apex:outputPanel>    
+<c:LinkOverrideScript />
+    
+</apex:page>
